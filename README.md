@@ -1,8 +1,10 @@
-# Idiomas Express — Francês rumo a Luxemburgo
+# Cedilha — francês a partir do português
 
-PWA para acelerar o francês de dois falantes de português brasileiro (perfis **Lucas** e **Eduarda**). Funciona 100% offline depois da primeira abertura e pode ser instalado na tela inicial do celular.
+**Cedilha** é um PWA para acelerar o francês de dois falantes de português brasileiro (perfis **Lucas** e **Eduarda**). Funciona 100% offline depois da primeira abertura e pode ser instalado na tela inicial do celular.
 
 **Stack:** Vite + TypeScript (sem framework) · IndexedDB via [`idb`](https://github.com/jakearchibald/idb) · Web Speech API (TTS) · MediaRecorder + Azure Speech (avaliação de pronúncia) · [`ts-fsrs`](https://github.com/open-spaced-repetition/ts-fsrs) (revisão espaçada) · `vite-plugin-pwa` (service worker/Workbox) · Netlify.
+
+**Nome e marca.** O ç é a letra que o português e o francês têm em comum (poucas línguas a usam), e está no primeiro padrão que o app ensina: -ção → -tion. O símbolo é esse ç em traço fino: o "c" em azul francês e a cedilha em damasco, o lado português. Não há mascote, pontos nem sequência de dias; o progresso aparece só no anel da sessão de hoje.
 
 ---
 
@@ -216,7 +218,8 @@ Limitações conhecidas que **não** foram corrigidas nesta versão, com o motiv
 
 1. **Não testado em celular físico.** O ambiente de QA só tinha Chromium; iPhone/Safari (WebKit) e Android real foram emulados (tamanho de tela, toque, DPR), não executados. *Por quê:* não havia aparelho nem WebKit disponível. **Conferir manualmente no primeiro uso:** voz francesa no iPhone e no Android, pedido de permissão do microfone, gravação + avaliação do Azure no Safari (que grava em MP4/AAC, convertido para WAV pela Web Audio API) e instalação na tela inicial.
 2. **iPhone: o áudio automático da Revisão pode não tocar no primeiro cartão.** O Safari só libera a síntese de voz depois de um toque do usuário. Tocar no botão de áudio uma vez resolve para o resto da sessão. *Por quê:* é uma política do iOS e não dá para contornar.
-3. **A qualidade da voz depende do aparelho.** A Web Speech API usa as vozes instaladas no sistema. Se não houver voz francesa, o app **desativa o áudio e avisa** (em vez de ler francês com sotaque de outra língua); Ajustes explica como instalar a voz. Em navegadores que não informam lista de vozes (alguns WebViews), o app pede `fr-FR` pelo atributo `lang`, e é o sistema que escolhe. *Por quê:* não há TTS embutido offline na v1 (seria um novo recurso, com Azure TTS ou arquivos de áudio).
+3. **A qualidade e a lista de vozes dependem do aparelho.** Ajustes mostra as vozes francesas do aparelho e explica cada situação: procurando, nenhuma voz listada pelo navegador, vozes sem francês ou lista pronta. A lista é relida por alguns segundos, porque o Safari/iOS às vezes não avisa quando as vozes carregam. Nos testes deste repositório o Chromium de automação não expõe **nenhuma** voz (mesmo com espeak-ng/speech-dispatcher instalados), por isso as vozes são simuladas. Em celular e desktop reais a lista vem do sistema.
+    A Web Speech API usa as vozes instaladas no sistema. Se não houver voz francesa, o app **desativa o áudio e avisa** (em vez de ler francês com sotaque de outra língua); Ajustes explica como instalar a voz. Em navegadores que não informam lista de vozes (alguns WebViews), o app pede `fr-FR` pelo atributo `lang`, e é o sistema que escolhe. *Por quê:* não há TTS embutido offline na v1 (seria um novo recurso, com Azure TTS ou arquivos de áudio).
 4. **`audio_generated` não guarda áudio.** A Web Speech API não entrega o áudio sintetizado. O campo marca só que a palavra já foi falada com sucesso naquele aparelho. *Por quê:* limitação da API (veja "Sobre o áudio").
 5. **A primeira abertura precisa de internet.** O app e o seed (~110 KB) só ficam disponíveis offline depois de baixados uma vez. Sem rede na primeira visita, o navegador mostra a própria página de erro. *Por quê:* é o funcionamento normal de um PWA; não há como servir algo antes de o service worker existir.
 6. **A avaliação de pronúncia precisa de internet e de chave.** Offline ou sem chave, o módulo 6 continua servindo para ouvir, gravar e comparar, mas sem nota. A chamada real ao Azure **não foi executada nesta passada** (não havia chave): os testes usam uma resposta simulada com o formato documentado pela Microsoft, e o proxy foi testado com chave inválida (erro tratado). *Por quê:* a chave é pessoal. Confira com a sua na primeira gravação.

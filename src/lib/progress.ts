@@ -58,7 +58,7 @@ function isProgressFile(x: unknown): x is ProgressFile {
  * e em empate o que tiver mais repetições. Atividades são unidas por id.
  */
 export async function importProgress(raw: unknown): Promise<ImportSummary> {
-  if (!isProgressFile(raw)) throw new Error('Arquivo inválido: não é uma exportação de progresso do Idiomas Express.');
+  if (!isProgressFile(raw)) throw new Error('Arquivo inválido: não é uma exportação de progresso do Cedilha.');
   const db = await getDB();
   const tx = db.transaction(['users', 'review_states', 'activity', 'words'], 'readwrite');
   const summary: ImportSummary = { statesAdded: 0, statesUpdated: 0, statesKept: 0, activityAdded: 0 };

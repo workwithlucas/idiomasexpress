@@ -101,7 +101,33 @@ test('sem voz francesa: não fala em outro idioma e avisa', async ({ page }) => 
   await expect(page.locator('.toast', { hasText: 'Nenhuma voz em francês' })).toBeVisible();
   expect(await page.evaluate(() => (window as unknown as { __spoken: number }).__spoken)).toBe(0);
   await page.goto('/#/ajustes');
-  await expect(page.getByTestId('no-french-voice')).toBeVisible();
+  await expect(page.getByTestId('voice-info').locator('[data-status="no-french"]')).toContainText('nenhuma em francês');
+});
+
+test('vozes que chegam tarde e SEM o aviso voiceschanged (Safari) aparecem em Ajustes', async ({ page }) => {
+  await page.addInitScript(() => {
+    const mk = (name: string, lang: string) => ({ name, lang, voiceURI: name, localService: true, default: false });
+    const list = [mk('Amélie', 'fr-CA'), mk('Thomas', 'fr_FR'), mk('Samantha', 'en-US')];
+    let ready = false;
+    setTimeout(() => (ready = true), 1200);
+    speechSynthesis.getVoices = () => (ready ? list : []) as unknown as SpeechSynthesisVoice[];
+    // de propósito: nunca dispara "voiceschanged"
+  });
+  await login(page);
+  await page.goto('/#/ajustes');
+  await expect(page.getByTestId('voice-select').locator('option')).toHaveText(['Automática (Thomas)', 'Amélie · Canadá', 'Thomas · França']);
+  await expect(page.getByTestId('voice-info')).toContainText('2 vozes francesas');
+});
+
+test('navegador sem lista de vozes: Ajustes explica, não fica em branco', async ({ page }) => {
+  await page.addInitScript(() => {
+    speechSynthesis.getVoices = () => [];
+  });
+  await login(page);
+  await page.goto('/#/ajustes');
+  await expect(page.getByTestId('voice-info')).toContainText('Procurando');
+  await expect(page.getByTestId('voice-info').locator('[data-status="none-listed"]')).toContainText('Testar voz', { timeout: 8000 });
+  await expect(page.getByTestId('voice-info')).toContainText('iPhone');
 });
 
 test('com voz francesa disponível, sempre usa ela (mesmo com preferência antiga inválida)', async ({ page }) => {

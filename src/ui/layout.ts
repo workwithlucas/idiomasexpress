@@ -7,10 +7,10 @@ import { stopSpeaking } from '../lib/tts';
 import { getClockOffsetDays } from '../lib/clock';
 
 const TABS: { id: TabId; label: string; icon: string; href: string }[] = [
-  { id: 'home', label: 'Hoje', icon: 'home', href: '/' },
-  { id: 'review', label: 'Revisar', icon: 'review', href: '/revisao' },
-  { id: 'learn', label: 'Aprender', icon: 'learn', href: '/aprender' },
-  { id: 'settings', label: 'Ajustes', icon: 'settings', href: '/ajustes' },
+  { id: 'home', label: 'Hoje', icon: 'tabToday', href: '/' },
+  { id: 'review', label: 'Revisar', icon: 'tabReview', href: '/revisao' },
+  { id: 'learn', label: 'Aprender', icon: 'tabLearn', href: '/aprender' },
+  { id: 'settings', label: 'Ajustes', icon: 'tabSettings', href: '/ajustes' },
 ];
 
 let root: HTMLElement;
@@ -53,7 +53,7 @@ async function renderRoute(): Promise<void> {
     return; // outra navegação começou enquanto esta carregava
   }
   current = result;
-  document.title = result.title === 'Hoje' ? 'Idiomas Express' : `${result.title} · Idiomas Express`;
+  document.title = result.title === 'Hoje' ? 'Cedilha' : `${result.title} · Cedilha`;
 
   if (result.bare) {
     render(root, h('main', { class: 'page page--bare', id: 'main' }, result.content));

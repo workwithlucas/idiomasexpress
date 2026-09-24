@@ -58,8 +58,8 @@ export default defineConfig(({ mode }) => {
         includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
         manifest: {
           id: '/',
-          name: 'Idiomas Express — Francês',
-          short_name: 'Idiomas Express',
+          name: 'Cedilha — francês a partir do português',
+          short_name: 'Cedilha',
           description: 'Francês para brasileiros, rumo a Luxemburgo: cognatos, pronúncia, frases por situação e revisão espaçada.',
           lang: 'pt-BR',
           start_url: '/',

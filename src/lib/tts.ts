@@ -12,13 +12,53 @@ export const ttsSupported = typeof window !== 'undefined' && 'speechSynthesis' i
 
 function refreshVoices() {
   if (!ttsSupported) return;
-  voices = speechSynthesis.getVoices();
-  listeners.forEach((fn) => fn());
+  const next = speechSynthesis.getVoices();
+  const changed = next.length !== voices.length || next.some((v, i) => v.voiceURI !== voices[i]?.voiceURI);
+  voices = next;
+  if (changed || !pollingDone) listeners.forEach((fn) => fn());
+}
+
+/**
+ * A lista de vozes chega de forma assíncrona e o aviso "voiceschanged" não é
+ * confiável: o Safari/iOS muitas vezes nunca o dispara, e alguns WebViews de
+ * Android preenchem a lista tarde. Por isso, enquanto a lista estiver vazia,
+ * relemos getVoices() a cada 250 ms por até 4 s.
+ */
+let pollingDone = false;
+let pollTimer: number | undefined;
+
+export function ensureVoices(): void {
+  if (!ttsSupported || voices.length) {
+    pollingDone = true;
+    return;
+  }
+  pollingDone = false;
+  window.clearInterval(pollTimer);
+  const started = Date.now();
+  pollTimer = window.setInterval(() => {
+    refreshVoices();
+    if (voices.length || Date.now() - started > 4_000) {
+      window.clearInterval(pollTimer);
+      pollingDone = true;
+      listeners.forEach((fn) => fn());
+    }
+  }, 250);
 }
 
 if (ttsSupported) {
   refreshVoices();
   speechSynthesis.addEventListener?.('voiceschanged', refreshVoices);
+  ensureVoices();
+}
+
+export type VoiceStatus = 'unsupported' | 'loading' | 'none-listed' | 'no-french' | 'ok';
+
+/** Situação das vozes deste aparelho, para a tela de Ajustes explicar. */
+export function voiceStatus(): VoiceStatus {
+  if (!ttsSupported) return 'unsupported';
+  if (frenchVoices().length) return 'ok';
+  if (voices.length) return 'no-french';
+  return pollingDone ? 'none-listed' : 'loading';
 }
 
 export function onVoicesChanged(fn: () => void): () => void {

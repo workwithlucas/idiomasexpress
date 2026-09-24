@@ -19,8 +19,8 @@ export const profileView: View = async () => {
       h(
         'div',
         { class: 'profile__hero' },
-        h('div', { class: 'profile__mark', 'aria-hidden': 'true' }, brandMark(64)),
-        h('p', { class: 'eyebrow' }, 'Idiomas Express'),
+        h('div', { class: 'profile__brand' }, h('span', { class: 'profile__mark', 'aria-hidden': 'true' }, brandMark(56)), h('span', { class: 'profile__name' }, 'Cedilha')),
+        h('p', { class: 'profile__tagline' }, 'francês a partir do português'),
         h('h1', { class: 'profile__title' }, 'Bonjour ! Quem é você?'),
       ),
       h(

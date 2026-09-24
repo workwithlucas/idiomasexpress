@@ -18,7 +18,7 @@ export const learnView: View = () => ({
           null,
           h(
             'a',
-            { class: `module-card module-card--${m.accent}`, href: `#${m.route}`, dataset: { module: m.id } },
+            { class: 'module-card', href: `#${m.route}`, dataset: { module: m.id } },
             h('span', { class: 'module-card__icon' }, icon(m.icon, 24)),
             h('strong', null, m.title),
             h('span', null, m.subtitle),

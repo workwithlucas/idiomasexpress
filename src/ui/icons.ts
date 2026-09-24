@@ -1,5 +1,12 @@
 /** Ícones em traço (estilo Lucide, 24×24), desenhados inline para funcionar offline. */
 const PATHS: Record<string, string> = {
+  // Abas: cada ícone mostra a função da aba neste app.
+  tabToday: '<circle cx="12" cy="12" r="8.5" opacity=".35"/><path d="M12 3.5a8.5 8.5 0 0 1 7.4 12.7"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/>', // anel de progresso da sessão do dia
+  tabReview: '<path d="M8.5 5V4.8A1.3 1.3 0 0 1 9.8 3.5h8.4a1.3 1.3 0 0 1 1.3 1.3v10.4a1.3 1.3 0 0 1-1.3 1.3H17"/><rect x="4.5" y="7" width="12" height="13.5" rx="1.5"/><path d="M8 12h5M8 15.5h3.5"/>', // cartões que voltam
+  tabLearn: '<path d="M5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H11l-4.5 4v-4h-1A1.5 1.5 0 0 1 4 14.5v-9A1.5 1.5 0 0 1 5.5 4z"/><path d="M9.6 11h4.8a2.4 2.4 0 1 0-.7 1.9"/><path d="M12.4 6.6l1.4-1.4"/>', // balão com "é"
+  tabSettings: '<path d="M4 7h8.5M16.5 7H20M4 17h3.5M11.5 17H20"/><circle cx="14.5" cy="7" r="2"/><circle cx="9.5" cy="17" r="2"/>', // controles (voz, velocidade)
+  // Palavras-irmãs: lupa (descobrir) com o til do português dentro.
+  discover: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.9-4.9"/><path d="M7.6 11.2c.9-1.2 1.9-1.2 2.9 0s2 1.2 2.9 0"/>',
   home: '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/>',
   review: '<path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/><path d="M12 8v4l3 2"/>',
   learn: '<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/><path d="M9 8h7"/>',
@@ -62,24 +69,18 @@ export function icon(name: string, size = 20): SVGSVGElement {
 }
 
 /**
- * Marca do app: dois círculos de traço fino que se sobrepõem — francês (azul)
- * e português (damasco). A interseção ganha um tom suave: o que os dois
- * idiomas têm em comum.
+ * Marca do app: um "ç" de traço fino. O ç é a letra que o português e o
+ * francês têm em comum (poucas línguas usam) — e está no primeiro padrão que o
+ * app ensina, -ção → -tion. O "c" em azul francês; a cedilha em damasco, o
+ * lado português.
  */
-let markSeq = 0;
-
 export function brandMark(size = 32): SVGSVGElement {
-  const clip = `bm-clip-${++markSeq}`;
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('viewBox', '0 0 48 48');
+  svg.setAttribute('viewBox', '0 0 48 46');
   svg.setAttribute('width', String(size));
   svg.setAttribute('height', String(size));
   svg.setAttribute('aria-hidden', 'true');
   svg.classList.add('brand-mark');
-  svg.innerHTML =
-    `<defs><clipPath id="${clip}"><circle cx="18" cy="24" r="12"/></clipPath></defs>` +
-    `<circle cx="30" cy="24" r="12" class="brand-mark__lens" clip-path="url(#${clip})"/>` +
-    '<circle cx="18" cy="24" r="12" class="brand-mark__fr"/>' +
-    '<circle cx="30" cy="24" r="12" class="brand-mark__pt"/>';
+  svg.innerHTML = '<path d="M32.2 11.9 A12 12 0 1 0 32.2 28.1" class="brand-mark__c"/><path d="M24.3 32.2 C25.4 33.8 29.6 34.3 29.3 36.9 C29 39.3 25.6 40 22.6 39.1" class="brand-mark__ced"/>';
   return svg;
 }

@@ -5,7 +5,7 @@ import { navigate } from '../ui/router';
 import { content, loadContent } from '../db/repo';
 import { getMeta } from '../db/database';
 import { currentUser, notifyProgressChanged } from '../ui/session';
-import { allVoicesCount, frenchVoices, onVoicesChanged, pickVoice, speak, ttsSupported } from '../lib/tts';
+import { ensureVoices, frenchVoices, onVoicesChanged, pickVoice, speak, voiceStatus } from '../lib/tts';
 import { prefs, setPrefs } from '../lib/prefs';
 import { downloadJson, exportProgress, importProgress } from '../lib/progress';
 import { azureStatus } from '../lib/pronunciation';
@@ -30,22 +30,48 @@ export const settingsView: View = async () => {
   const voiceSelect = h('select', {
     class: 'select',
     'aria-label': 'Voz francesa',
+    'data-testid': 'voice-select',
     onchange: () => setPrefs({ voiceURI: voiceSelect.value || null }),
   });
-  const voiceWarning = h('p', { class: 'form-error', hidden: true, 'data-testid': 'no-french-voice' },
-    'Nenhuma voz francesa neste aparelho: o áudio fica desativado para não tocar em outro idioma. ',
-    'Android: Configurações → Texto para fala → Google → instalar dados de voz "Français". ',
-    'iPhone: Ajustes → Acessibilidade → Conteúdo Falado → Vozes → Français.');
+  const voiceInfo = h('div', { class: 'voice-info', 'data-testid': 'voice-info' });
+  const REGION: Record<string, string> = { fr: 'França', ca: 'Canadá', be: 'Bélgica', ch: 'Suíça', lu: 'Luxemburgo' };
+  const regionOf = (lang: string) => REGION[lang.toLowerCase().replace('_', '-').split('-')[1] ?? 'fr'] ?? lang;
+  const INSTALL = h(
+    'ul',
+    { class: 'voice-help' },
+    h('li', null, h('strong', null, 'Android: '), 'Configurações → Acessibilidade → Texto para fala → Google → Instalar dados de voz → Français.'),
+    h('li', null, h('strong', null, 'iPhone: '), 'Ajustes → Acessibilidade → Conteúdo Falado → Vozes → Français (baixe uma "Aprimorada").'),
+    h('li', null, h('strong', null, 'Computador: '), 'use Chrome ou Edge (já trazem vozes francesas online).'),
+  );
   const fillVoices = () => {
+    const status = voiceStatus();
     const voices = frenchVoices();
-    voiceWarning.hidden = !(voices.length === 0 && allVoicesCount() > 0);
     const active = pickVoice();
+    voiceSelect.disabled = status !== 'ok';
     render(
       voiceSelect,
-      h('option', { value: '' }, voices.length ? `Automática${active ? ` (${active.name})` : ''}` : 'Nenhuma voz francesa encontrada'),
-      voices.map((v) => h('option', { value: v.voiceURI, selected: prefs().voiceURI === v.voiceURI }, `${v.name} · ${v.lang}${v.localService ? '' : ' · online'}`)),
+      status === 'ok'
+        ? [
+            h('option', { value: '' }, `Automática${active ? ` (${active.name})` : ''}`),
+            voices.map((v) => h('option', { value: v.voiceURI, selected: prefs().voiceURI === v.voiceURI }, `${v.name} · ${regionOf(v.lang)}${v.localService ? '' : ' · online'}`)),
+          ]
+        : h('option', { value: '' }, status === 'loading' ? 'Procurando vozes…' : 'Nenhuma voz francesa disponível'),
+    );
+    const note = (text: string, extra?: Node) => h('div', { class: 'voice-note', dataset: { status } }, h('p', null, text), extra);
+    render(
+      voiceInfo,
+      status === 'ok'
+        ? h('p', { class: 'muted', dataset: { status } }, voices.length === 1 ? '1 voz francesa neste aparelho. Com duas ou mais, o treino de ouvido alterna entre elas.' : `${voices.length} vozes francesas neste aparelho — o treino de ouvido alterna entre elas.`)
+        : status === 'loading'
+          ? h('p', { class: 'muted', dataset: { status } }, 'Procurando as vozes do aparelho…')
+          : status === 'no-french'
+            ? note('Este aparelho tem vozes, mas nenhuma em francês. Para não ler francês com sotaque de outra língua, o áudio fica desligado até você instalar uma:', INSTALL)
+            : status === 'none-listed'
+              ? note('Este navegador não mostra a lista de vozes. O app pede francês ao sistema mesmo assim — toque em "Testar voz" para conferir. Se não ouvir nada ou ouvir outro idioma, instale uma voz francesa:', INSTALL)
+              : note('Este navegador não tem síntese de voz. Use Chrome, Edge ou Safari atualizados.'),
     );
   };
+  ensureVoices();
   fillVoices();
   const unsubscribeVoices = onVoicesChanged(fillVoices);
 
@@ -125,9 +151,8 @@ export const settingsView: View = async () => {
       ),
       section(
         'Voz em francês',
-        !ttsSupported && h('p', { class: 'form-error' }, 'Este navegador não tem síntese de voz.'),
         field('Voz', voiceSelect),
-        voiceWarning,
+        voiceInfo,
         field('Velocidade', h('div', { class: 'range' }, rateInput, rateValue)),
         h('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => void speak("Bonjour ! On va apprendre le français ensemble.") }, icon('play', 16), 'Testar voz'),
       ),
@@ -147,7 +172,7 @@ export const settingsView: View = async () => {
             'button',
             {
               class: 'btn btn--primary btn--sm', type: 'button', 'data-testid': 'export',
-              onclick: async () => downloadJson(await exportProgress(), `idiomasexpress-progresso-${dayKey(new Date())}.json`),
+              onclick: async () => downloadJson(await exportProgress(), `cedilha-progresso-${dayKey(new Date())}.json`),
             },
             icon('download', 16), 'Exportar progresso',
           ),

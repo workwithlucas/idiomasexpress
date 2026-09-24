@@ -1,7 +1,8 @@
 /* ==========================================================================
-   Idiomas Express — design system
-   Mobile-first. Identidade: dois idiomas próximos que se sobrepõem — azul
-   francês e damasco (o calor do português) sobre um papel claro. Traços finos,
+   Cedilha — design system
+   Mobile-first. Identidade "Cedilha": o ç, letra que português e francês têm
+   em comum — c em azul francês, cedilha em damasco (o calor do português),
+   sobre um papel claro. Traços finos,
    muito espaço em branco. Sem verde, mascote, pontos ou troféus.
    Fraunces (títulos) + Inter (texto).
    ========================================================================== */
@@ -844,8 +845,23 @@ ol {
   gap: 10px;
 }
 
-.profile__mark {
-  margin-bottom: 8px;
+.profile__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.profile__name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.7rem;
+  letter-spacing: -0.01em;
+}
+
+.profile__tagline {
+  color: var(--ink-3);
+  margin-top: -6px;
 }
 
 .profile__title {
@@ -916,43 +932,18 @@ ol {
   font-size: 0.88rem;
 }
 
-/* ---- Hoje ---------------------------------------------------------------- */
-.greeting h2 {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 1.75rem;
-  margin-top: 2px;
-}
-
-.greeting .eyebrow::first-letter {
-  text-transform: uppercase;
-}
-
-.stats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.module-card__icon {
-  --accent: var(--a-blue);
-  width: 42px;
-  height: 42px;
-  border-radius: 13px;
-  display: grid;
-  place-items: center;
+/* Ícones dos cards: uma linguagem só — traço fino, mesma cor, sem bloco de fundo. */
+.module-card__icon,
+.scene-card__icon {
+  display: block;
   flex: none;
-  color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 13%, transparent);
+  color: var(--primary);
 }
 
-.module-card--violet .module-card__icon { --accent: var(--a-violet); }
-.module-card--teal .module-card__icon { --accent: var(--a-teal); }
-.module-card--amber .module-card__icon { --accent: var(--a-amber); }
-.module-card--rose .module-card__icon { --accent: var(--a-rose); }
-.module-card--red .module-card__icon { --accent: var(--a-red); }
-.module-card--sky .module-card__icon { --accent: var(--a-sky); }
-.module-card--indigo .module-card__icon { --accent: var(--a-indigo); }
+.module-card__icon .icon,
+.scene-card__icon .icon {
+  stroke-width: 1.5;
+}
 
 /* ---- Aprender ------------------------------------------------------------ */
 .module-grid {
@@ -1767,16 +1758,6 @@ ol {
   font-size: 0.78rem;
 }
 
-.scene-card__icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 15px;
-  display: grid;
-  place-items: center;
-  color: var(--a-indigo);
-  background: color-mix(in srgb, var(--a-indigo) 12%, transparent);
-}
-
 .sentence-list {
   display: flex;
   flex-direction: column;
@@ -1870,22 +1851,20 @@ ol {
    ========================================================================== */
 
 /* ---- Marca: dois círculos que se sobrepõem -------------------------------- */
-.brand-mark__fr,
-.brand-mark__pt {
+.brand-mark__c,
+.brand-mark__ced {
   fill: none;
   stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
-.brand-mark__fr {
+.brand-mark__c {
   stroke: var(--primary);
 }
 
-.brand-mark__pt {
+.brand-mark__ced {
   stroke: var(--apricot);
-}
-
-.brand-mark__lens {
-  fill: color-mix(in srgb, var(--lilac) 18%, transparent);
 }
 
 /* ---- Movimento: toda troca de tela/passo entra suave --------------------- */
@@ -1903,14 +1882,6 @@ ol {
 
 .row--between {
   justify-content: space-between;
-}
-
-/* ---- Hoje ---------------------------------------------------------------- */
-.greeting h2 {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 1.9rem;
-  line-height: 1.15;
 }
 
 .today {
@@ -1932,7 +1903,7 @@ ol {
   grid-column: 1 / -1;
 }
 
-.today__text h3 {
+.today__text h2 {
   font-family: var(--font-display);
   font-size: 1.35rem;
   font-weight: 600;
@@ -1977,39 +1948,6 @@ ol {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--primary);
-}
-
-.week {
-  display: flex;
-  justify-content: space-between;
-  padding: 0 6px;
-}
-
-.week__day {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  color: var(--ink-3);
-  font-size: 0.72rem;
-}
-
-.week__dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: 1.5px solid var(--line-strong);
-  transition: background 0.3s;
-}
-
-.week__day--on .week__dot {
-  background: var(--apricot);
-  border-color: var(--apricot);
-}
-
-.week__day--today small {
-  color: var(--ink);
-  font-weight: 700;
 }
 
 .nudge {
@@ -2728,12 +2666,6 @@ ol {
   border-color: var(--primary);
 }
 
-.scene-card__icon--lg {
-  width: 60px;
-  height: 60px;
-  border-radius: 18px;
-}
-
 .false-card__fr {
   flex: 1;
   font-size: 1.1rem;
@@ -2786,6 +2718,24 @@ ol {
   animation: rec-pulse 1.3s ease-out infinite;
 }
 
+.voice-note {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--apricot-soft);
+  color: var(--ink-2);
+  font-size: 0.9rem;
+}
+
+.voice-help {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-left: 2px;
+}
+
 /* ---- Telas estreitas (ex.: Galaxy Fold dobrado, 280 px) ------------------- */
 .search input,
 .select,
@@ -2817,10 +2767,6 @@ ol {
   .ring__chart {
     width: 54px;
     height: 54px;
-  }
-
-  .greeting h2 {
-    font-size: 1.5rem;
   }
 }
 
