@@ -1,0 +1,98 @@
+import { readFileSync } from 'node:fs';
+import type { IncomingMessage, ServerResponse } from 'node:http';
+import { loadEnv, type Plugin } from 'vite';
+import { defineConfig } from 'vitest/config';
+import { VitePWA } from 'vite-plugin-pwa';
+import { handlePronunciation, type AzureConfig } from './server/pronunciation.ts';
+
+/**
+ * Serve /api/pronunciation durante `vite dev` e `vite preview`, com a mesma
+ * lógica da Netlify Function. Assim a chave do Azure (lida do .env, sem
+ * prefixo VITE_) fica só no processo Node e nunca vai para o navegador.
+ */
+function azureSpeechApi(cfg: AzureConfig): Plugin {
+  const middleware = async (req: IncomingMessage, res: ServerResponse, next: () => void) => {
+    if (!req.url?.startsWith('/api/pronunciation')) return next();
+    try {
+      const chunks: Buffer[] = [];
+      for await (const chunk of req) chunks.push(chunk as Buffer);
+      const headers = new Headers();
+      for (const [k, v] of Object.entries(req.headers)) {
+        if (typeof v === 'string') headers.set(k, v);
+      }
+      const request = new Request(new URL(req.url, 'http://localhost'), {
+        method: req.method,
+        headers,
+        body: req.method === 'POST' ? Buffer.concat(chunks) : undefined,
+      });
+      const response = await handlePronunciation(request, cfg);
+      res.statusCode = response.status;
+      response.headers.forEach((value, key) => res.setHeader(key, value));
+      res.end(Buffer.from(await response.arrayBuffer()));
+    } catch (e) {
+      res.statusCode = 500;
+      res.setHeader('content-type', 'application/json');
+      res.end(JSON.stringify({ error: 'upstream', message: (e as Error).message }));
+    }
+  };
+  return {
+    name: 'azure-speech-api',
+    configureServer: (server) => void server.middlewares.use(middleware),
+    configurePreviewServer: (server) => void server.middlewares.use(middleware),
+  };
+}
+
+const seedVersion: number = JSON.parse(readFileSync(new URL('./public/seed/seed.json', import.meta.url), 'utf8')).version;
+
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+  return {
+    define: {
+      __SEED_VERSION__: JSON.stringify(seedVersion),
+    },
+    plugins: [
+      azureSpeechApi({ key: env.AZURE_SPEECH_KEY, region: env.AZURE_SPEECH_REGION }),
+      VitePWA({
+        registerType: 'prompt',
+        injectRegister: false,
+        includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
+        manifest: {
+          id: '/',
+          name: 'Idiomas Express — Francês',
+          short_name: 'Idiomas Express',
+          description: 'Francês para brasileiros, rumo a Luxemburgo: cognatos, pronúncia, frases por situação e revisão espaçada.',
+          lang: 'pt-BR',
+          start_url: '/',
+          scope: '/',
+          display: 'standalone',
+          orientation: 'portrait',
+          background_color: '#F6F4EF',
+          theme_color: '#1D2A4D',
+          categories: ['education'],
+          icons: [
+            { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+            { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+            { src: 'icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          ],
+        },
+        workbox: {
+          // App shell + seed + fontes: tudo pré-cacheado para uso 100% offline.
+          globPatterns: ['**/*.{js,css,html,svg,png,woff2,json}'],
+          // Subconjuntos de fonte que o conteúdo (pt/fr/IPA) nunca usa: o
+          // navegador só os baixaria por unicode-range, então não pré-cacheamos.
+          globIgnores: ['**/*-{cyrillic,cyrillic-ext,greek,greek-ext,vietnamese}-wght-*.woff2'],
+          navigateFallback: '/index.html',
+          navigateFallbackDenylist: [/^\/api\//],
+          cleanupOutdatedCaches: true,
+        },
+      }),
+    ],
+    build: {
+      target: 'es2022',
+    },
+    test: {
+      include: ['tests/unit/**/*.test.ts'],
+      environment: 'node',
+    },
+  };
+});
