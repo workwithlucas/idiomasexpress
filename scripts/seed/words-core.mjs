@@ -168,7 +168,7 @@ sentir | sentir | sɑ̃tiʁ | verbos | | |
 revenir | voltar | ʁəvniʁ | verbos | | | re + venir (vir) = vir de novo → voltar.
 essayer | tentar; experimentar | eseje | verbos | | | Essayer → "ensaiar": tentar.
 aider | ajudar | ede | verbos | | | Aider → "aide" (assistente): ajudar.
-habiter | morar | abite | casa | | cr_ar_er |
+habiter | morar; habitar | abite | casa | | cr_ar_er |
 changer | trocar, mudar | ʃɑ̃ʒe | verbos | | | Changer → "câmbio" (change): trocar.
 montrer | mostrar | mɔ̃tʁe | verbos | | cr_ar_er |
 porter | levar; vestir | pɔʁte | verbos | | | Porter → "portar": levar consigo.

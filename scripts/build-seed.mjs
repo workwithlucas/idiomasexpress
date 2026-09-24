@@ -16,7 +16,7 @@ import {
 
 /** Incrementar quando o conteúdo mudar: o app repopula as tabelas de conteúdo
  *  (sem tocar no progresso dos usuários) ao detectar uma versão nova. */
-export const SEED_VERSION = 1;
+export const SEED_VERSION = 2;
 
 const THEMES = new Set([
   'essenciais', 'verbos', 'cotidiano', 'tempo', 'pessoas', 'lugares', 'numeros', 'casa',
@@ -94,7 +94,8 @@ function ref(fr, ctx) {
 
 const cognate_rules = COGNATE_RULES.map((r) => {
   const examples = words.filter((w) => w.cognate_rule_id === r.id).map((w) => w.id);
-  if (examples.length < 3) fail(`regra ${r.id} tem só ${examples.length} exemplos (mínimo 3)`);
+  // 3 para descobrir a regra + pelo menos 2 para aplicar sozinho.
+  if (examples.length < 5) fail(`regra ${r.id} tem só ${examples.length} exemplos (mínimo 5)`);
   return { id: r.id, pattern: r.pattern, explanation: r.explanation, examples };
 });
 if (cognate_rules.length < 15) fail('são necessárias pelo menos 15 regras de cognatos');
@@ -114,7 +115,8 @@ const minimal_pairs = MINIMAL_PAIRS.map((p) => ({
 if (minimal_pairs.length < 10) fail('são necessários pelo menos 10 pares mínimos');
 
 const reading_rules = READING_RULES.map((r) => {
-  if (r.examples.length < 3 || r.examples.length > 5) fail(`regra de leitura ${r.id}: use 3 a 5 exemplos`);
+  // 3 para descobrir + pelo menos 2 para aplicar sozinho.
+  if (r.examples.length < 5 || r.examples.length > 6) fail(`regra de leitura ${r.id}: use 5 ou 6 exemplos`);
   return {
     id: r.id,
     grapheme: r.grapheme,

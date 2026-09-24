@@ -228,3 +228,13 @@ export function modulesPracticedToday(activity: Activity[], today: Date = now())
   const key = dayKey(today);
   return new Set(activity.filter((a) => dayKey(new Date(a.at)) === key).map((a) => a.module));
 }
+
+/**
+ * Regras (de cognato ou de leitura) que o perfil já descobriu. Registradas
+ * como atividade "discover:<id>" — sem tabela nova.
+ */
+export async function getDiscovered(userId: string): Promise<Set<string>> {
+  const out = new Set<string>();
+  for (const a of await getActivity(userId)) if (a.kind.startsWith('discover:')) out.add(a.kind.slice('discover:'.length));
+  return out;
+}

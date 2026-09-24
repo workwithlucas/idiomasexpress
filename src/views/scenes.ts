@@ -1,37 +1,36 @@
 import { h } from '../ui/dom';
 import { icon } from '../ui/icons';
 import type { View } from '../ui/router';
-import { content, logActivity } from '../db/repo';
+import { content } from '../db/repo';
 import { currentUser } from '../ui/session';
 import { playButton, wordRow } from '../ui/components';
-import { fillFrame, primaryPt } from '../lib/text';
+import { fillFrame, pickRandom, primaryPt, shuffle } from '../lib/text';
 import { stopSpeaking } from '../lib/tts';
+import { produceLine, recognizeLine, type SceneLine } from '../exercises/scene';
+import { frenchSentence, swap, type Exercise } from '../exercises/common';
+import { ring } from './session';
+
+const ROUND = 6;
 
 export const scenesView: View = () => {
   const c = content();
   return {
-    title: 'Frases por situação',
+    title: 'Situações reais',
     back: '/aprender',
     tab: 'learn',
     content: h(
-      'div',
-      { class: 'stack' },
-      h('p', { class: 'lead' }, 'O vocabulário e os moldes de frase de cada situação real da mudança — tudo reaproveitado dos outros módulos.'),
-      h(
-        'ul',
-        { class: 'scene-grid' },
-        c.scenes.map((s) =>
+      'ul',
+      { class: 'scene-grid' },
+      c.scenes.map((s) =>
+        h(
+          'li',
+          null,
           h(
-            'li',
-            null,
-            h(
-              'a',
-              { class: 'scene-card', href: `#/situacoes/${s.id}`, dataset: { scene: s.id } },
-              h('span', { class: 'scene-card__icon' }, icon(s.icon, 24)),
-              h('strong', null, s.name),
-              h('span', null, s.description),
-              h('small', null, `${s.word_ids.length} palavras · ${s.frame_ids.length} moldes`),
-            ),
+            'a',
+            { class: 'scene-card', href: `#/situacoes/${s.id}`, dataset: { scene: s.id } },
+            h('span', { class: 'scene-card__icon' }, icon(s.icon, 24)),
+            h('strong', null, s.name),
+            h('span', null, s.description),
           ),
         ),
       ),
@@ -39,58 +38,106 @@ export const scenesView: View = () => {
   };
 };
 
+/** Frases da cena: cada molde com uma palavra sorteada do seu slot. */
+function sceneLines(frameIds: string[]): SceneLine[] {
+  const c = content();
+  return frameIds.flatMap((id) => {
+    const f = c.frameById.get(id);
+    if (!f) return [];
+    const w = c.wordById.get(pickRandom(f.slot_pool_ids))!;
+    return [{ fr: fillFrame(f.template, w.fr), pt: fillFrame(f.pt, primaryPt(w)) }];
+  });
+}
+
 export const sceneDetailView: View = ({ params }) => {
   const c = content();
+  const user = currentUser();
   const scene = c.sceneById.get(params.id);
   if (!scene) throw new Error('Situação não encontrada.');
-  void logActivity(currentUser().id, 'scenes', 'open');
-  const frames = scene.frame_ids.map((id) => c.frameById.get(id)!).filter(Boolean);
-  const words = scene.word_ids.map((id) => c.wordById.get(id)!).filter(Boolean);
+  const stage = h('div');
+  let current: Exercise | null = null;
+
+  const intro = () =>
+    swap(
+      stage,
+      h(
+        'section',
+        { class: 'hero-lite' },
+        h('span', { class: 'scene-card__icon scene-card__icon--lg' }, icon(scene.icon, 30)),
+        h('h2', null, scene.name),
+        h('p', { class: 'muted' }, scene.description),
+        h('button', { class: 'btn btn--primary btn--block btn--lg', type: 'button', 'data-testid': 'scene-start', onclick: practice }, 'Praticar', icon('arrowRight', 18)),
+      ),
+      h(
+        'details',
+        { class: 'known' },
+        h('summary', null, 'Todas as frases e palavras'),
+        h(
+          'ul',
+          { class: 'sentence-list' },
+          scene.frame_ids.flatMap((id) => {
+            const f = c.frameById.get(id);
+            if (!f) return [];
+            return f.slot_pool_ids.slice(0, 3).map((wid) => {
+              const w = c.wordById.get(wid)!;
+              const fr = fillFrame(f.template, w.fr);
+              return h('li', { class: 'sentence' }, playButton(fr, { size: 'sm' }), h('span', { class: 'sentence__text' }, frenchSentence(fr), h('small', null, fillFrame(f.pt, primaryPt(w)))));
+            });
+          }),
+        ),
+        h('ul', { class: 'word-list' }, scene.word_ids.map((id) => c.wordById.get(id)).filter(Boolean).map((w) => wordRow(w!))),
+      ),
+    );
+
+  /**
+   * Rodada de 6: produzir, reconhecer, produzir… — começa e termina
+   * produzindo, então pelo menos metade pede para a pessoa dizer a frase.
+   */
+  const practice = () => {
+    // Cenas com poucos moldes ganham uma segunda passada, com outras palavras.
+    const pool = [...shuffle(sceneLines(scene.frame_ids)), ...shuffle(sceneLines(scene.frame_ids))];
+    const lines = pool.filter((l, k) => pool.findIndex((x) => x.fr === l.fr) === k).slice(0, ROUND);
+    let i = 0;
+    let right = 0;
+    const next = () => {
+      current?.cleanup?.();
+      if (i >= lines.length) {
+        swap(
+          stage,
+          h(
+            'div',
+            { class: 'session-done', 'data-testid': 'scene-done' },
+            ring(1),
+            h('h2', null, 'Boa!'),
+            h('p', { class: 'muted' }, `${right} de ${Math.ceil(lines.length / 2)} frases saíram de primeira.`),
+            h('button', { class: 'btn btn--primary btn--block', type: 'button', onclick: practice }, 'Outra rodada'),
+            h('a', { class: 'btn btn--ghost btn--block', href: '#/situacoes' }, 'Outras situações'),
+          ),
+        );
+        return;
+      }
+      const line = lines[i];
+      const produce = i % 2 === 0;
+      i++;
+      current = (produce ? produceLine : recognizeLine)(line, user.id, (r) => {
+        if (produce && r.correct) right++;
+        next();
+      });
+      swap(stage, h('div', { class: 'stack' }, h('div', { class: 'progress' }, h('span', { class: 'progress__bar', style: `width:${((i - 1) / lines.length) * 100}%` })), current.el));
+    };
+    next();
+  };
+
+  intro();
 
   return {
     title: scene.name,
     back: '/situacoes',
     tab: 'learn',
-    cleanup: stopSpeaking,
-    content: h(
-      'div',
-      { class: 'stack' },
-      h('div', { class: 'scene-hero' }, h('span', { class: 'scene-card__icon' }, icon(scene.icon, 26)), h('p', null, scene.description)),
-      h('h2', { class: 'list-heading' }, 'Frases prontas'),
-      h(
-        'ul',
-        { class: 'frame-list' },
-        frames.map((f) =>
-          h(
-            'li',
-            { class: 'card frame-item' },
-            h(
-              'div',
-              { class: 'frame-item__head' },
-              h('div', null, h('strong', { lang: 'fr' }, f.template), h('small', null, f.pt)),
-              h('a', { class: 'icon-btn', href: `#/frases?frame=${f.id}`, title: 'Abrir no construtor', 'aria-label': `Abrir "${f.template}" no construtor` }, icon('puzzle', 18)),
-            ),
-            h(
-              'ul',
-              { class: 'sentence-list' },
-              f.slot_pool_ids.map((id) => {
-                const w = c.wordById.get(id)!;
-                const sentence = fillFrame(f.template, w.fr);
-                return h(
-                  'li',
-                  { class: 'sentence' },
-                  playButton(sentence, { size: 'sm' }),
-                  h('span', { class: 'sentence__text' }, h('span', { lang: 'fr' }, sentence), h('small', null, fillFrame(f.pt, primaryPt(w)))),
-                  h('a', { class: 'icon-btn icon-btn--sm', href: `#/fala?texto=${encodeURIComponent(sentence)}`, title: 'Praticar pronúncia', 'aria-label': `Praticar "${sentence}"` }, icon('mic', 16)),
-                );
-              }),
-            ),
-            f.note_pt && h('p', { class: 'note' }, icon('info', 16), f.note_pt),
-          ),
-        ),
-      ),
-      h('h2', { class: 'list-heading' }, `Vocabulário (${words.length})`),
-      h('ul', { class: 'word-list card' }, words.map((w) => wordRow(w))),
-    ),
+    cleanup: () => {
+      current?.cleanup?.();
+      stopSpeaking();
+    },
+    content: stage,
   };
 };

@@ -10,8 +10,8 @@ const targets = [
   { file: 'public/icons/icon-192.png', size: 192, pad: 0, bg: 'transparent' },
   { file: 'public/icons/icon-512.png', size: 512, pad: 0, bg: 'transparent' },
   // Maskable: conteúdo dentro da "safe zone" (80%) e fundo sólido.
-  { file: 'public/icons/icon-maskable-512.png', size: 512, pad: 0.12, bg: '#1d2a4d' },
-  { file: 'public/apple-touch-icon.png', size: 180, pad: 0.06, bg: '#1d2a4d' },
+  { file: 'public/icons/icon-maskable-512.png', size: 512, pad: 0.12, bg: '#f7f6f2' },
+  { file: 'public/apple-touch-icon.png', size: 180, pad: 0.06, bg: '#f7f6f2' },
 ];
 
 const browser = await chromium.launch();

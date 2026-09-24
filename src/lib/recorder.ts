@@ -21,6 +21,11 @@ export class VoiceRecorder {
   private recorder: MediaRecorder | null = null;
   private chunks: Blob[] = [];
 
+  /** Fluxo do microfone em uso (para a análise de melodia ao vivo). */
+  get mediaStream(): MediaStream | null {
+    return this.stream;
+  }
+
   get recording(): boolean {
     return this.recorder?.state === 'recording';
   }

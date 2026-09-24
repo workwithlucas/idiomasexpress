@@ -4,7 +4,8 @@
  */
 const TARGET_RATE = 16_000;
 
-export async function toWav16kMono(blob: Blob): Promise<Blob> {
+/** Decodifica a gravação e devolve amostras mono a 16 kHz. */
+export async function decodeMono16k(blob: Blob): Promise<Float32Array> {
   const decoded = await decode(await blob.arrayBuffer());
   const length = Math.max(1, Math.ceil(decoded.duration * TARGET_RATE));
   // OfflineAudioContext com 1 canal e 16 kHz faz o downmix e o resample.
@@ -14,7 +15,13 @@ export async function toWav16kMono(blob: Blob): Promise<Blob> {
   src.connect(offline.destination);
   src.start();
   const rendered = await offline.startRendering();
-  return new Blob([encodePcm16Wav(rendered.getChannelData(0), TARGET_RATE)], { type: 'audio/wav' });
+  return rendered.getChannelData(0);
+}
+
+export const WAV_RATE = TARGET_RATE;
+
+export async function toWav16kMono(blob: Blob): Promise<Blob> {
+  return new Blob([encodePcm16Wav(await decodeMono16k(blob), TARGET_RATE)], { type: 'audio/wav' });
 }
 
 async function decode(data: ArrayBuffer): Promise<AudioBuffer> {

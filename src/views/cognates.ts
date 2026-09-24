@@ -1,50 +1,60 @@
 import { h, render } from '../ui/dom';
 import { icon } from '../ui/icons';
 import type { View } from '../ui/router';
-import { content, logActivity } from '../db/repo';
-import { currentUser } from '../ui/session';
-import { addReviewButton, ipa, playButton, segmented, wordRow } from '../ui/components';
+import { content, getDiscovered } from '../db/repo';
+import { currentUser, notifyProgressChanged } from '../ui/session';
+import { addReviewButton, playButton, segmented } from '../ui/components';
+import { cognateLesson } from '../exercises/cognate';
+import { swap, type Exercise } from '../exercises/common';
+import { stopSpeaking } from '../lib/tts';
+import type { CognateRule } from '../db/schema';
 
-export const cognatesView: View = ({ query }) => {
+export const cognatesView: View = async ({ query }) => {
   const c = content();
+  const user = currentUser();
   const body = h('div', { class: 'stack' });
-  let logged = false;
-  const logOnce = () => {
-    if (!logged) void logActivity(currentUser().id, 'cognates', 'study');
-    logged = true;
+  let current: Exercise | null = null;
+
+  const home = async () => {
+    current?.cleanup?.();
+    current = null;
+    const found = await getDiscovered(user.id);
+    const rules = c.cognateRules;
+    const next = rules.find((r) => !found.has(r.id));
+    const known = rules.filter((r) => found.has(r.id));
+    swap(
+      body,
+      h(
+        'section',
+        { class: 'hero-lite' },
+        progressDots(known.length, rules.length),
+        h('h2', null, next ? 'Descubra um padrão novo' : 'Você já descobriu todos!'),
+        h('p', { class: 'muted' }, `${known.length} de ${rules.length}`),
+        h('button', { class: 'btn btn--primary btn--block btn--lg', type: 'button', 'data-testid': 'discover-next', onclick: () => start(next ?? rules[Math.floor(Math.random() * rules.length)]) }, next ? 'Descobrir' : 'Praticar um', icon('arrowRight', 18)),
+      ),
+      known.length > 0 &&
+        h(
+          'details',
+          { class: 'known' },
+          h('summary', null, 'Padrões que você já descobriu'),
+          h('ul', { class: 'known__list' }, known.map((r) => h('li', null, h('button', { class: 'known__item', type: 'button', onclick: () => start(r) }, r.pattern, icon('chevronRight', 16))))),
+        ),
+    );
   };
 
-  const showRules = () =>
-    render(
-      body,
-      h('p', { class: 'lead' }, `O português já te dá milhares de palavras francesas. Aprenda ${c.cognateRules.length} regras de conversão e reconheça-as na hora.`),
-      h(
-        'div',
-        { class: 'accordion' },
-        c.cognateRules.map((rule) => {
-          const words = rule.examples.map((id) => c.wordById.get(id)!).filter(Boolean);
-          const details = h(
-            'details',
-            { class: 'rule', dataset: { rule: rule.id }, ontoggle: () => details.open && logOnce() },
-            h(
-              'summary',
-              { class: 'rule__summary' },
-              h('span', { class: 'rule__pattern' }, rule.pattern),
-              h('span', { class: 'rule__count' }, `${words.length} palavras`),
-              icon('chevronDown', 18),
-            ),
-            h('div', { class: 'rule__body' }, h('p', { class: 'rule__explain' }, rule.explanation), h('ul', { class: 'word-list' }, words.map((w) => wordRow(w)))),
-          );
-          return details;
-        }),
-      ),
-    );
+  const start = (rule: CognateRule) => {
+    current = cognateLesson(rule, user.id, () => {
+      notifyProgressChanged();
+      void home();
+    });
+    swap(body, current.el);
+  };
 
   const showFalse = () => {
-    logOnce();
+    current?.cleanup?.();
+    current = null;
     render(
       body,
-      h('div', { class: 'callout callout--warn' }, icon('alert', 20), h('p', null, 'Falsos cognatos parecem português, mas significam outra coisa. São os erros mais comuns (e mais engraçados) de brasileiros.')),
       h(
         'ul',
         { class: 'false-list' },
@@ -57,7 +67,7 @@ export const cognatesView: View = ({ query }) => {
               'div',
               { class: 'false-card__head' },
               playButton(w.fr, { wordId: w.id, size: 'sm' }),
-              h('div', { class: 'false-card__words' }, h('strong', { lang: 'fr' }, w.fr), ipa(w.ipa)),
+              h('strong', { class: 'false-card__fr', lang: 'fr' }, w.fr),
               h('span', { class: 'false-card__neq' }, '≠ ', h('s', null, f.looks_like)),
               addReviewButton(w),
             ),
@@ -69,24 +79,38 @@ export const cognatesView: View = ({ query }) => {
   };
 
   const initial = query.get('aba') === 'falsos' ? 'false' : 'rules';
-  (initial === 'false' ? showFalse : showRules)();
+  if (initial === 'false') showFalse();
+  else await home();
 
   return {
-    title: 'Cognatos',
+    title: 'Palavras-irmãs',
     back: '/aprender',
     tab: 'learn',
+    cleanup: () => {
+      current?.cleanup?.();
+      stopSpeaking();
+    },
     content: h(
       'div',
       { class: 'stack' },
       segmented(
         [
-          { value: 'rules', label: `Regras (${c.cognateRules.length})` },
-          { value: 'false', label: `Falsos amigos (${c.falseCognates.length})` },
+          { value: 'rules', label: 'Padrões' },
+          { value: 'false', label: 'Falsos amigos' },
         ],
         initial,
-        (v) => (v === 'rules' ? showRules() : showFalse()),
+        (v) => (v === 'rules' ? void home() : showFalse()),
       ),
       body,
     ),
   };
 };
+
+/** Pontinhos de progresso (quantos padrões já descobertos). */
+export function progressDots(done: number, total: number): HTMLElement {
+  return h(
+    'div',
+    { class: 'dots', role: 'img', 'aria-label': `${done} de ${total}` },
+    Array.from({ length: total }, (_, i) => h('span', { class: `dots__dot${i < done ? ' dots__dot--on' : ''}` })),
+  );
+}

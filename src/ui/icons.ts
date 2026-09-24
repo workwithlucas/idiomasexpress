@@ -60,3 +60,26 @@ export function icon(name: string, size = 20): SVGSVGElement {
   svg.innerHTML = PATHS[name] ?? PATHS.info;
   return svg;
 }
+
+/**
+ * Marca do app: dois círculos de traço fino que se sobrepõem — francês (azul)
+ * e português (damasco). A interseção ganha um tom suave: o que os dois
+ * idiomas têm em comum.
+ */
+let markSeq = 0;
+
+export function brandMark(size = 32): SVGSVGElement {
+  const clip = `bm-clip-${++markSeq}`;
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 48 48');
+  svg.setAttribute('width', String(size));
+  svg.setAttribute('height', String(size));
+  svg.setAttribute('aria-hidden', 'true');
+  svg.classList.add('brand-mark');
+  svg.innerHTML =
+    `<defs><clipPath id="${clip}"><circle cx="18" cy="24" r="12"/></clipPath></defs>` +
+    `<circle cx="30" cy="24" r="12" class="brand-mark__lens" clip-path="url(#${clip})"/>` +
+    '<circle cx="18" cy="24" r="12" class="brand-mark__fr"/>' +
+    '<circle cx="30" cy="24" r="12" class="brand-mark__pt"/>';
+  return svg;
+}

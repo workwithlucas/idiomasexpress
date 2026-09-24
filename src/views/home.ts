@@ -2,15 +2,11 @@ import { h } from '../ui/dom';
 import { icon } from '../ui/icons';
 import type { View } from '../ui/router';
 import { currentUser } from '../ui/session';
-import {
-  computeStreak, content, countIntroducedToday, getActivity, getNewWords, getReviewStats, modulesPracticedToday,
-} from '../db/repo';
+import { getActivity, getReviewStats } from '../db/repo';
 import { dayKey, now } from '../lib/clock';
-import { prefs } from '../lib/prefs';
-import { formatInterval } from '../lib/fsrs';
-import { ipa, playButton } from '../ui/components';
-import { withArticle } from '../lib/text';
+import { loadPlan, SESSION_SIZE } from '../lib/session';
 import { MODULES } from './modules';
+import { ring } from './session';
 
 function greeting(d: Date): string {
   const hr = d.getHours();
@@ -19,92 +15,87 @@ function greeting(d: Date): string {
   return 'Bonsoir';
 }
 
-/** Palavra do dia: determinística por data, entre as 300 mais frequentes. */
-function wordOfTheDay() {
-  const core = content().words.filter((w) => w.freq_rank <= 300 && (w.memory_hook_pt || w.cognate_rule_id));
-  const key = dayKey(now());
-  let hash = 0;
-  for (const c of key) hash = (hash * 31 + c.charCodeAt(0)) >>> 0;
-  return core[hash % core.length];
+/** Últimos 7 dias: bolinha cheia = praticou. Sem pontos, sem troféus. */
+function week(activityDays: Set<string>): HTMLElement {
+  const today = now();
+  const letters = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(today);
+    d.setDate(d.getDate() - (6 - i));
+    return d;
+  });
+  return h(
+    'div',
+    { class: 'week', 'aria-label': 'Seus últimos 7 dias' },
+    days.map((d) =>
+      h(
+        'span',
+        { class: `week__day${activityDays.has(dayKey(d)) ? ' week__day--on' : ''}${dayKey(d) === dayKey(today) ? ' week__day--today' : ''}` },
+        h('span', { class: 'week__dot' }),
+        h('small', null, letters[d.getDay()]),
+      ),
+    ),
+  );
 }
 
 export const homeView: View = async () => {
   const user = currentUser();
-  const [stats, activity, introduced] = await Promise.all([
-    getReviewStats(user.id),
-    getActivity(user.id),
-    countIntroducedToday(user.id),
-  ]);
-  const newAvailable = (await getNewWords(user.id, Math.max(0, prefs().newPerDay - introduced))).length;
-  const streak = computeStreak(activity);
-  const doneToday = modulesPracticedToday(activity);
-  const wotd = wordOfTheDay();
+  const [stats, activity] = await Promise.all([getReviewStats(user.id), getActivity(user.id)]);
+  const plan = loadPlan(user.id);
   const t = now();
-  const total = stats.dueNow + newAvailable;
+  const total = plan?.items.length ?? SESSION_SIZE;
+  const done = plan ? Math.min(plan.index, total) : 0;
+  const finished = !!plan && done >= total;
+  const days = new Set(activity.map((a) => dayKey(new Date(a.at))));
 
-  const reviewCard = h(
-    'section',
-    { class: 'hero-card' },
-    h('p', { class: 'eyebrow eyebrow--light' }, 'Revisão de hoje'),
-    total > 0
-      ? [
-          h('div', { class: 'hero-card__count' }, h('span', { class: 'hero-card__num', 'data-testid': 'due-count' }, String(stats.dueNow)), h('span', null, stats.dueNow === 1 ? 'revisão' : 'revisões')),
-          h('p', { class: 'hero-card__sub' }, `+ ${newAvailable} palavra${newAvailable === 1 ? '' : 's'} nova${newAvailable === 1 ? '' : 's'} disponíve${newAvailable === 1 ? 'l' : 'is'}`),
-          h('a', { class: 'btn btn--light btn--block', href: '#/revisao' }, 'Começar revisão', icon('arrowRight', 18)),
-        ]
-      : [
-          h('div', { class: 'hero-card__count' }, h('span', { class: 'hero-card__num', 'data-testid': 'due-count' }, '0'), h('span', null, 'revisões')),
-          h(
-            'p',
-            { class: 'hero-card__sub' },
-            stats.nextDue ? `Tudo em dia! Próxima revisão em ${formatInterval(t, stats.nextDue)}.` : 'Tudo em dia! Aumente o limite de palavras novas em Ajustes se quiser mais.',
-          ),
-        ],
-  );
+  const cta = finished
+    ? h('a', { class: 'btn btn--ghost btn--block', href: '#/sessao?nova=1', 'data-testid': 'session-more' }, 'Mais uma rodada')
+    : h('a', { class: 'btn btn--primary btn--block btn--lg', href: '#/sessao', 'data-testid': 'session-start' }, done ? 'Continuar' : 'Começar', icon('arrowRight', 18));
 
   return {
     title: 'Hoje',
     tab: 'home',
     content: h(
       'div',
-      { class: 'stack' },
-      h('div', { class: 'greeting' }, h('p', { class: 'eyebrow' }, t.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })), h('h2', null, `${greeting(t)}, ${user.name} !`)),
-      reviewCard,
+      { class: 'stack stack--lg' },
+      h('div', { class: 'greeting' }, h('h2', null, `${greeting(t)}, ${user.name}`)),
       h(
-        'div',
-        { class: 'stats' },
-        stat('flame', String(streak), streak === 1 ? 'dia seguido' : 'dias seguidos'),
-        stat('learn', String(stats.inStudy), 'em estudo'),
-        stat('sparkles', String(stats.mature), 'consolidadas'),
-      ),
-      wotd &&
+        'section',
+        { class: 'today' },
+        ring(finished ? 1 : done / total, finished ? undefined : `${done}/${total}`),
         h(
-          'section',
-          { class: 'card wotd' },
-          h('p', { class: 'eyebrow' }, 'Palavra do dia'),
-          h(
-            'div',
-            { class: 'wotd__row' },
-            h('div', null, h('div', { class: 'wotd__fr', lang: 'fr' }, withArticle(wotd)), h('div', { class: 'wotd__meta' }, ipa(wotd.ipa), ' · ', wotd.pt)),
-            playButton(wotd.fr, { wordId: wotd.id, size: 'lg' }),
-          ),
-          wotd.memory_hook_pt && h('p', { class: 'wotd__hook' }, wotd.memory_hook_pt),
-          wotd.cognate_rule_id && h('p', { class: 'wotd__hook' }, `Cognato: ${content().ruleById.get(wotd.cognate_rule_id)?.pattern}`),
+          'div',
+          { class: 'today__text' },
+          h('h3', null, finished ? 'Feito por hoje' : 'Sua sessão de hoje'),
+          h('p', null, finished ? 'Volte amanhã — ou siga um pouco mais.' : done ? 'Continue de onde parou.' : 'Um pouco de tudo, misturado.'),
         ),
-      h('h3', { class: 'list-heading' }, 'Módulos'),
+        cta,
+      ),
+      week(days),
+      stats.dueNow > 0 &&
+        h(
+          'a',
+          { class: 'nudge', href: '#/revisao', 'data-testid': 'due-nudge' },
+          icon('review', 18),
+          h('span', null, `${stats.dueNow} ${stats.dueNow === 1 ? 'palavra quer' : 'palavras querem'} ser lembrada${stats.dueNow === 1 ? '' : 's'}`),
+          h('span', { hidden: true, 'data-testid': 'due-count' }, String(stats.dueNow)),
+          icon('chevronRight', 16),
+        ),
+      stats.dueNow === 0 && h('span', { hidden: true, 'data-testid': 'due-count' }, '0'),
+      h('h3', { class: 'list-heading' }, 'Por conta própria'),
       h(
         'ul',
-        { class: 'module-list' },
+        { class: 'module-grid' },
         MODULES.map((m) =>
           h(
             'li',
             null,
             h(
               'a',
-              { class: `module-tile module-tile--${m.accent}`, href: `#${m.route}`, dataset: { module: m.id } },
-              h('span', { class: 'module-tile__icon' }, icon(m.icon, 22)),
-              h('span', { class: 'module-tile__text' }, h('strong', null, m.title), h('span', null, m.subtitle)),
-              doneToday.has(m.id) ? h('span', { class: 'module-tile__done', title: 'Praticado hoje' }, icon('check', 16)) : icon('chevronRight', 18),
+              { class: `module-card module-card--${m.accent}`, href: `#${m.route}`, dataset: { module: m.id } },
+              h('span', { class: 'module-card__icon' }, icon(m.icon, 22)),
+              h('strong', null, m.title),
+              h('span', null, m.subtitle),
             ),
           ),
         ),
@@ -112,7 +103,3 @@ export const homeView: View = async () => {
     ),
   };
 };
-
-function stat(iconName: string, value: string, label: string) {
-  return h('div', { class: 'stat' }, h('span', { class: 'stat__icon' }, icon(iconName, 18)), h('strong', null, value), h('span', null, label));
-}

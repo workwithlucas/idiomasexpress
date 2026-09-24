@@ -2,7 +2,6 @@ import type { ModuleId } from '../db/schema';
 
 export interface ModuleInfo {
   id: ModuleId;
-  n: number;
   route: string;
   title: string;
   subtitle: string;
@@ -10,14 +9,14 @@ export interface ModuleInfo {
   accent: string;
 }
 
-/** Os 8 módulos, na ordem sugerida de estudo. */
+/** Os 8 módulos, para quem quiser praticar um só. */
 export const MODULES: ModuleInfo[] = [
-  { id: 'cognates', n: 1, route: '/cognatos', title: 'Cognatos', subtitle: 'Regras PT → FR e falsos amigos', icon: 'link', accent: 'blue' },
-  { id: 'reading', n: 2, route: '/leitura', title: 'Regras de leitura', subtitle: 'Como cada letra soa', icon: 'type', accent: 'violet' },
-  { id: 'listening', n: 3, route: '/escuta', title: 'Discriminação sonora', subtitle: 'Treine o ouvido com pares mínimos', icon: 'ear', accent: 'teal' },
-  { id: 'builder', n: 4, route: '/frases', title: 'Construtor de frases', subtitle: 'Complete moldes e ouça a frase', icon: 'puzzle', accent: 'amber' },
-  { id: 'memory', n: 5, route: '/memoria', title: 'Associação de memória', subtitle: 'Ganchos para palavras não cognatas', icon: 'brain', accent: 'rose' },
-  { id: 'speaking', n: 6, route: '/fala', title: 'Repetição falada', subtitle: 'Grave-se e receba nota do Azure', icon: 'mic', accent: 'red' },
-  { id: 'review', n: 7, route: '/revisao', title: 'Revisão espaçada', subtitle: 'FSRS: o que revisar hoje', icon: 'review', accent: 'green' },
-  { id: 'scenes', n: 8, route: '/situacoes', title: 'Frases por situação', subtitle: 'Creche, banco, entrevista…', icon: 'map', accent: 'indigo' },
+  { id: 'cognates', route: '/cognatos', title: 'Palavras-irmãs', subtitle: 'Descubra os padrões PT → FR', icon: 'link', accent: 'blue' },
+  { id: 'reading', route: '/leitura', title: 'Como se lê', subtitle: 'Letras e seus sons', icon: 'type', accent: 'violet' },
+  { id: 'listening', route: '/escuta', title: 'Ouvido fino', subtitle: 'Sons parecidos, vozes diferentes', icon: 'ear', accent: 'teal' },
+  { id: 'builder', route: '/frases', title: 'Monte a frase', subtitle: 'Complete e ouça', icon: 'puzzle', accent: 'amber' },
+  { id: 'memory', route: '/memoria', title: 'Truques de memória', subtitle: 'Para as palavras difíceis', icon: 'brain', accent: 'rose' },
+  { id: 'speaking', route: '/fala', title: 'Fale e compare', subtitle: 'Sua voz × a do nativo', icon: 'mic', accent: 'red' },
+  { id: 'review', route: '/revisao', title: 'Revisar', subtitle: 'O que está pra vencer', icon: 'review', accent: 'sky' },
+  { id: 'scenes', route: '/situacoes', title: 'Situações reais', subtitle: 'Creche, banco, médico…', icon: 'map', accent: 'indigo' },
 ];

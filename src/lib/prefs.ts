@@ -5,10 +5,12 @@ export interface Prefs {
   speechRate: number;
   newPerDay: number;
   autoplay: boolean;
+  /** Toques curtos de acerto/erro. */
+  sounds: boolean;
 }
 
 const KEY = 'ie.prefs';
-const DEFAULTS: Prefs = { currentUserId: null, voiceURI: null, speechRate: 0.9, newPerDay: 10, autoplay: true };
+const DEFAULTS: Prefs = { currentUserId: null, voiceURI: null, speechRate: 0.9, newPerDay: 10, autoplay: true, sounds: true };
 
 let cache: Prefs | null = null;
 

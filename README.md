@@ -6,20 +6,36 @@ PWA para acelerar o francês de dois falantes de português brasileiro (perfis *
 
 ---
 
-## Módulos
+## Como o app ensina
 
-| # | Módulo | O que faz |
-|---|--------|-----------|
-| 1 | **Cognatos** | 20 regras de conversão PT→FR (‑ção→‑tion, ‑dade→‑té, ‑oso→‑eux, ‑mente→‑ment, ‑ário→‑aire, ‑vel→‑ble…), cada uma com suas palavras, tradução e áudio. Aba separada com 16 **falsos cognatos** (attendre ≠ atender, rester ≠ restar…). |
-| 2 | **Regras de leitura** | 35 regras letra→som (eau = "ô", oi = "uá", consoantes finais mudas, nasais, liaison, elisão…), com 3–5 exemplos e áudio cada. |
-| 3 | **Discriminação sonora** | 17 pares mínimos (jeune/jaune, vin/vent/vont, tu/tout, rue/roue, deux/des, poisson/poison…). Dois modos: "qual você ouviu?" e "qual veio primeiro?", com feedback imediato. |
-| 4 | **Construtor de frases** | 30 moldes ("je veux ___", "j'ai mal à la ___"…). Escolha ou digite a palavra do slot (acentos opcionais) e ouça a frase completa para repetir. |
-| 5 | **Associação de memória** | Ganchos em português para as palavras **não cognatas**, com busca e filtro por tema. Conteúdo de apoio, sem quiz. |
-| 6 | **Repetição falada** | Ouça o modelo (normal ou devagar), grave sua voz, ouça sua gravação e receba nota do **Azure Pronunciation Assessment** (fr‑FR): pronúncia, precisão, fluência, completude, nota por palavra e por fonema. |
-| 7 | **Revisão espaçada** | FSRS (ts-fsrs): palavras vencidas + novas do dia (padrão 10, ajustável), botões Errei/Difícil/Bom/Fácil com o próximo intervalo visível. |
-| 8 | **Frases por situação** | Creche, banco, entrevista de emprego, médico, supermercado, commune e dia a dia. Reaproveita as palavras e os moldes já cadastrados. |
+### Sessão de hoje (tela de entrada)
+Cada dia começa com uma sessão de **16 passos intercalados**: tipos de exercício misturados, **nunca dois do mesmo tipo seguidos**, porque intercalar dá retenção melhor a longo prazo do que estudar em blocos.
+- **Metade é lembrar palavras:** primeiro as que **venceram** na revisão espaçada (prioridade), depois palavras novas do dia.
+- **Metade é conteúdo novo:** descobrir padrões de palavras-irmãs e de leitura, completar frases (sempre uma com ligação) e treinar o ouvido.
+- A sessão fica salva neste aparelho: dá para pausar (✕) e continuar depois. O tamanho está em `SESSION_SIZE` (`src/lib/session.ts`).
 
-Também: tela **Hoje** (revisões pendentes, sequência de dias, palavra do dia, módulos praticados hoje), seleção de perfil, e **Ajustes** (voz, velocidade, limite diário, exportar/importar progresso, status do Azure, simulação de data para testes).
+### Os 8 módulos (também acessíveis sozinhos, em "Por conta própria")
+
+| Módulo | Mecanismo |
+|--------|-----------|
+| **Palavras-irmãs** (cognatos) | **Por dedução, não por declaração.** Você vê 3 pares PT → FR *sem a regra*, toca no pedaço que muda, e **só então** aparece a regra ("-ção → -tion"), como confirmação. Depois aplica sozinho em 2–3 palavras novas, digitando. 20 padrões. Aba de **falsos amigos** (attendre ≠ atender…). |
+| **Como se lê** (regras de leitura) | Mesmo fluxo: ouve 3 palavras, deduz como aquelas letras soam (2–3 opções), recebe a confirmação e depois reconhece palavras novas pelo ouvido. 35 regras. |
+| **Ouvido fino** (pares mínimos) | Treino de **alta variabilidade de falantes**: cada rodada sorteia outra voz francesa do aparelho, priorizando uma feminina e uma masculina. Com uma voz só, varia de leve a altura e a velocidade (plano B). As duas palavras de uma rodada saem na mesma voz. |
+| **Monte a frase** | Complete o molde e ouça a frase inteira. Os pontos de **ligação** (liaison: *petit‿ami*, *vous‿êtes*) aparecem marcados, e o áudio já sai ligado. Depois, **"Fale você"**: você repete e vê sua melodia ao lado da do francês. 40 moldes, 10 feitos para gerar ligação. |
+| **Truques de memória** | Ganchos em português para as palavras que **não** se parecem com o português. |
+| **Fale e compare** | Grave-se e veja **sua melodia e seu ritmo** × os do francês (no aparelho, offline), mais a **nota por som** do Azure (por palavra e fonema), quando configurado. Uma não depende da outra. |
+| **Revisar** (revisão espaçada, FSRS) | O cartão alterna a direção pelo número de revisões feitas (campo `reps`, que já existia no `ReviewState`): **par → reconhecer** (francês → português), **ímpar → produzir** (português → francês). |
+| **Situações reais** | Creche, banco, entrevista, médico, mercado, commune, dia a dia. A prática alterna **produzir** (ver a situação em português e dizer em francês) e **reconhecer** (ouvir e entender), começando por produzir: pelo menos metade pede produção. |
+
+### Melodia e ritmo ("Sua melodia")
+O Azure só dá nota de prosódia para inglês. Para o francês, o app mede a **altura da voz (pitch)** de quem fala com **autocorrelação**, sem bibliotecas (`src/lib/pitch.ts`). A medição é feita **ao vivo** durante a gravação, via `AnalyserNode` da Web Audio API (`src/lib/pitchTracker.ts`), e cai para a análise do arquivo gravado se a captura ao vivo falhar. O gráfico sobrepõe duas linhas no mesmo eixo de tempo: **francês** (meta) e **você**. Embaixo, as sílabas aparecem como batidas, para comparar o ritmo. Duas dicas curtas: a direção da voz no fim da frase e o ritmo.
+
+**Importante:** a Web Speech API toca a voz nativa direto no alto-falante e **não entrega as amostras de áudio**, então não há como medir o pitch dela no navegador. Por isso a linha "francês" é **modelada** (`src/lib/prosody.ts`) a partir das regras de entonação do francês, que são bem regulares:
+- sílabas de duração parecida;
+- a última sílaba de cada grupo é mais longa;
+- afirmativa desce no fim, pergunta de sim/não sobe, pergunta com *où/quand/comment…* desce.
+
+Quando a voz do aparelho informa o início de cada palavra (eventos `boundary`), o **ritmo** da meta usa esses tempos reais. O extrator de pitch recebe amostras genéricas: se um dia houver áudio nativo gravado (ex.: Azure TTS), a mesma função o analisa. Veja "Known issues".
 
 ---
 
@@ -122,7 +138,7 @@ Para levar o progresso para outro aparelho: **Ajustes → Exportar progresso** (
 
 ## Testar a revisão espaçada sem esperar
 
-**Ajustes → Ferramentas de teste → +1 dia** avança a data do app (fica um aviso amarelo no topo enquanto estiver ativo). "Voltar à data real" desfaz. O teste E2E usa isso para conferir que, depois de uma sessão, as palavras esquecidas ("Errei") voltam no dia seguinte e as acertadas ("Bom") dois dias depois, exatamente como o FSRS agendou.
+**Ajustes → Para testar → +1 dia** avança a data do app (fica um aviso amarelo no topo enquanto estiver ativo). "Voltar à data real" desfaz. O teste E2E usa isso para conferir que, depois de uma sessão, as palavras esquecidas ("Não lembrei") voltam no dia seguinte, as lembradas ("Lembrei") uns dias depois e as "Fácil" só depois de ~10 dias, exatamente como o FSRS agendou.
 
 ---
 
@@ -131,8 +147,8 @@ Para levar o progresso para outro aparelho: **Ajustes → Exportar progresso** (
 O conteúdo é escrito em `scripts/seed/` e compilado por `scripts/build-seed.mjs` em `public/seed/seed.json`. O app carrega esse JSON no primeiro uso e popula o IndexedDB. O build **falha** se houver referência quebrada, palavra duplicada, número errado de palavras no núcleo, gancho de memória em palavra cognata etc.
 
 - `words-core.mjs`: as **300 palavras mais frequentes do francês falado**, em ordem aproximada de frequência (curadoria baseada em listas de corpora de fala e legendas, como Lexique 3/OpenSubtitles, agrupando conjugações no infinitivo). Cada palavra tem tradução, IPA, tema e, quando se aplica, regra de cognato **ou** gancho de memória.
-- `words-extra.mjs`: 212 palavras complementares, necessárias para exemplos de cognatos, pares mínimos, falsos cognatos e cenas (ranks 301+, na ordem de utilidade, não do corpus).
-- `content.mjs`: regras de cognatos, falsos cognatos, pares mínimos, regras de leitura, moldes de frase, cenas e perfis.
+- `words-extra.mjs`: 216 palavras complementares, necessárias para exemplos de cognatos, pares mínimos, falsos cognatos e cenas (ranks 301+, na ordem de utilidade, não do corpus).
+- `content.mjs`: regras de cognatos, falsos cognatos, pares mínimos, regras de leitura, moldes de frase (incluindo os 10 de ligação, `f_lia_*`), cenas e perfis. Cada regra tem pelo menos 5 exemplos: 3 para descobrir e 2 ou mais para aplicar (o build confere). O campo `sound` das regras de leitura é uma descrição em português simples ("\"ô\"", "\"i\" com biquinho"), já que a interface não mostra transcrição fonética. O IPA continua nos dados das palavras.
 
 Para mudar o conteúdo: edite esses arquivos, aumente `SEED_VERSION` em `build-seed.mjs` e rode `npm run seed`. Na próxima abertura, o app atualiza as tabelas de conteúdo **sem apagar o progresso**.
 
@@ -159,34 +175,39 @@ O TTS é a Web Speech API do próprio aparelho. Ela não entrega o áudio gerado
 │   │   ├── schema.ts             # tipos (Word, CognateRule, ReviewState…)
 │   │   ├── database.ts           # stores/índices IndexedDB + população pelo seed
 │   │   └── repo.ts               # consultas: conteúdo, revisão, atividade
-│   ├── lib/                      # fsrs, tts, gravação, WAV, Azure, export/import, relógio
-│   ├── ui/                       # hyperscript, roteador por hash, layout, componentes
-│   ├── views/                    # uma tela por módulo + hoje, perfil, ajustes
+│   ├── lib/                      # fsrs, tts (vozes), gravação, WAV, pitch, prosódia, liaison,
+│   │                             #   sessão diária, Azure, export/import, relógio, sons
+│   ├── exercises/                # exercícios reutilizáveis (sessão e módulos usam os mesmos)
+│   ├── ui/                       # hyperscript, roteador por hash, layout, componentes, gráfico
+│   ├── views/                    # sessão, hoje, um módulo por tela, perfil, ajustes
 │   └── styles/main.css           # design system (claro/escuro, mobile-first)
 └── tests/
-    ├── unit/                     # vitest
-    └── e2e/                      # playwright: fluxo completo + offline
+    ├── unit/                     # vitest: seed, FSRS, pitch, prosódia, liaison, sessão…
+    ├── e2e/                      # playwright: sessão completa, módulos, offline, falhas
+    └── fixtures/voz-sintetica.wav  # "voz" do microfone falso (scripts/make-voice-fixture.mjs)
 ```
 
 ## Verificação de qualidade (QA)
 
-Última passada completa: build de produção (`vite preview`) no Chromium 141, emulando celulares.
+Última passada: build de produção (`vite preview`) no Chromium 141, emulando celulares, com um microfone falso tocando uma voz sintética (`tests/fixtures/voz-sintetica.wav`).
 
 | Verificação | Como foi feita | Resultado |
 |---|---|---|
-| Fluxo completo do zero | IndexedDB limpo → seed → perfil → 8 módulos → revisão → dia seguinte simulado (`tests/e2e/full-flow.spec.ts`) | ✔ |
-| Erros no console | Todas as telas e interações, tema claro e escuro, online e offline | 0 erros, 0 avisos |
-| IndexedDB vazio/corrompido | Tabelas de conteúdo apagadas, perfis apagados, `ReviewState` inválido/órfão, `localStorage` corrompido, banco apagado com o app aberto (`tests/e2e/robustness.spec.ts`) | Recupera sozinho (repopula conteúdo, reinicia só o estado corrompido) |
-| 100% offline | Rede desligada: recarregar, abrir link direto a frio, todos os módulos, avaliar cartões | ✔, nenhum recurso faltando |
-| Cache do service worker | Inspeção do Cache Storage: `index.html`, JS, CSS, fontes, ícones, manifest e `seed/seed.json` (22 entradas) | ✔; atualização de versão testada sem perda de progresso |
-| TTS em francês | Listas de vozes simuladas: fr+en, só en/pt, vazia, carregamento tardio, preferência salva inválida | Sempre voz francesa; sem voz francesa **não fala** e avisa |
-| Microfone | Permitido, negado (`NotAllowedError`), sem microfone, contexto HTTP inseguro, toque múltiplo, sair da tela gravando | Mensagem clara em cada caso; microfone sempre liberado; 1 só stream |
-| Azure sem chave / chave inválida / API fora do ar | Servidor sem variáveis, com chave falsa, e respondendo HTML | Avisa, grava e deixa comparar sem nota; nunca trava |
-| FSRS | Unitário + E2E com avanço de data: "Fácil" (~10 d, com fuzz) × "Errei" (volta no mesmo dia) | ✔ |
-| Responsividade | 280 px (Galaxy Fold), 360, 375 (iPhone SE), 412, 430, paisagem e iPad: medição automática de overflow horizontal em todas as telas | 0 overflow |
-| Acessibilidade | axe-core em todas as telas, claro e escuro | 0 violações |
-| Lighthouse 13.5 (mobile) | Primeira visita e tela "Hoje" com perfil | Performance 99 / 100 · Acessibilidade 100 · Boas práticas 100 · SEO 100 |
-| Lighthouse 11.7.1 (último com a categoria PWA) | Primeira visita | PWA 100 · instalável (0 erros de instalabilidade no Chrome) |
+| Sessão diária do zero | IndexedDB limpo → seed → perfil → 16 passos respondidos | 16 passos, 8 de revisão, 5 tipos, **0 repetições seguidas**, **0 erros/avisos no console** |
+| `reps` persiste | Lido do IndexedDB, página fechada e reaberta; e no dia seguinte a mesma palavra volta em modo "produzir" | Idêntico; alterna reconhecer/produzir |
+| Melodia independente do Azure | Azure sem chave, com erro 500, respondendo OK e offline | O gráfico aparece nos 4 casos; a nota falha com uma mensagem calma, sem travar |
+| Melodia offline | Rede desligada, service worker ativo | Gráfico e dicas aparecem; 0 recursos faltando |
+| Detector de pitch | Sinais sintéticos de 90 a 320 Hz, 48 kHz, subida contínua, ruído, silêncio | Erro < 2%; ruído e silêncio não viram "voz" |
+| Vozes variadas | Duas vozes francesas simuladas | As rodadas alternam Amélie / Thomas; com uma voz só, variam altura e velocidade |
+| Descoberta antes da regra | E2E confere que a regra **não** está na tela antes da tentativa | ✔ |
+| Ligação (liaison) | Unitário (moldes ≥ 10, casos com e sem ligação, h aspirado) + E2E em "C'est un ami." | ✔ |
+| IndexedDB vazio/corrompido, microfone negado, sem voz francesa | `tests/e2e/robustness.spec.ts` (10 cenários) | Recupera ou avisa, sem travar |
+| FSRS | Unitário + E2E com avanço de data: "Fácil" (~10 d) × "Não lembrei" (mesmo dia) | ✔ |
+| Responsividade | 280 px (Galaxy Fold), 412, paisagem; todas as telas e estados novos | 0 overflow |
+| Acessibilidade | axe-core em todas as telas e estados, claro e escuro | 0 violações |
+| Lighthouse 13.5 (mobile) | Primeira visita e tela "Hoje" com perfil | 100 em Performance, Acessibilidade, Boas práticas e SEO |
+| Lighthouse 11.7.1 (último com PWA) | Primeira visita | PWA 100 · 0 erros de instalabilidade |
+| Estabilidade dos testes | 46 unitários; 15 E2E × 3 repetições | 46/46 · 45/45 |
 
 ## Known issues
 
@@ -203,8 +224,15 @@ Limitações conhecidas que **não** foram corrigidas nesta versão, com o motiv
 9. **O limite de "palavras novas por dia" inclui as adicionadas manualmente** (botão de marcador nos módulos). *Por quê:* comportamento definido na v1 (o limite vale para o total de palavras que entram no dia); mudar seria mudança de regra, não correção.
 10. **Duas abas abertas ao mesmo tempo** compartilham o progresso, mas os contadores (badge de revisão, tela Hoje) de uma aba só se atualizam ao navegar nela. *Por quê:* sincronização entre abas seria funcionalidade nova. O uso previsto é o app instalado, com uma janela só.
 11. **Paisagem:** no navegador a tela fica compacta mas utilizável. O app instalado abre travado em retrato (`orientation: portrait` no manifest), que é o uso principal.
-12. **Um só pacote de JavaScript (~90 KB, 31 KB gzip).** O Lighthouse aponta ~22 KB não usados na primeira tela. *Por quê:* dividir o código por módulo traria complexidade para ganho desprezível (Performance já em 99–100, e tudo vem do cache depois da primeira visita).
+12. **Um só pacote de JavaScript (~115 KB, 40 KB gzip).** O Lighthouse aponta ~22 KB não usados na primeira tela. *Por quê:* dividir o código por módulo traria complexidade para ganho desprezível (Performance já em 99–100, e tudo vem do cache depois da primeira visita).
 13. **O Lighthouse atual (12+) não tem mais a categoria "PWA".** A nota de PWA acima usa o Lighthouse 11.7.1, a última versão que a mede. A instalabilidade também foi confirmada direto no Chrome.
+14. **A melodia "francês" é modelada, não extraída da voz nativa.** A Web Speech API não entrega o áudio que sintetiza, então o pitch da voz nativa não pode ser medido no navegador. O que é medido de verdade é **a sua voz** (autocorrelação, ao vivo). A meta segue as regras de entonação do francês, e o **ritmo** dela usa os tempos reais da voz nativa quando o aparelho informa o início das palavras. *Por quê:* extrair da voz nativa exige áudio gravado (ex.: Azure TTS ou arquivos), o que mexe na integração com o Azure e no esquema de dados, e esta etapa proibia os dois. O extrator já aceita qualquer áudio, então é só ligar quando houver.
+15. **O detector de pitch foi validado com sinais sintéticos e o microfone falso do Chromium, não com vozes humanas reais.** Com AGC e cancelamento de eco do celular ligados, vozes muito graves (< 70 Hz) ou sussurradas saem como "não deu pra ouvir". *Por quê:* não havia gravações humanas neste ambiente. Confira com a sua voz nas primeiras sessões.
+16. **As dicas de melodia são deliberadamente simples** (direção da voz no fim e ritmo geral). A contagem de sílabas é aproximada, pela escrita, então frases com muitos "e" mudos podem ficar com a meta um pouco mais longa. *Por quê:* dicas curtas e sem jargão eram o objetivo. Uma análise fina por sílaba precisaria de áudio nativo (item 14).
+17. **A sessão diária fica salva por aparelho** (`localStorage`). No celular da Eduarda e no do Lucas, cada um tem a sua; exportar/importar leva o progresso, não a sessão em andamento. *Por quê:* guardar a sessão no banco mudaria o esquema de dados, o que esta etapa não permitia.
+18. **Descobrir uma regra adiciona os exemplos dela à revisão**, e isso conta no limite de palavras novas do dia (item 9). Num dia com muitas descobertas, a metade de revisão da sessão seguinte vem cheia de vencidas. *Por quê:* é o comportamento esperado (o que foi descoberto precisa ser revisto), mas vale saber.
+19. **"Fale você" dentro de Monte a frase é pulável**, e na sessão isso acontece em 2 dos 16 passos. Quem pular sempre não vê a própria melodia na sessão (continua disponível em "Fale e compare"). *Por quê:* obrigar gravação trava quem estuda no ônibus ou sem microfone.
+20. **O IPA não aparece mais na interface** (pedido de leveza: zero termo técnico). A pronúncia vem do áudio e das descrições em português. O IPA continua nos dados, para uso futuro.
 
 ## Fora do escopo da v1 (de propósito)
 Nenhuma IA generalista, nenhuma conversa livre, nenhuma sincronização automática e nenhum login. A escolha de perfil é local.

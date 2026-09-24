@@ -1,85 +1,76 @@
 import { h } from '../ui/dom';
-import type { View, ViewResult } from '../ui/router';
-import { content, logActivity } from '../db/repo';
-import { currentUser } from '../ui/session';
-import { ipa, playButton } from '../ui/components';
-import { speakSequence } from '../lib/tts';
 import { icon } from '../ui/icons';
-import type { ReadingExample } from '../db/schema';
+import type { View } from '../ui/router';
+import { content, getDiscovered } from '../db/repo';
+import { currentUser, notifyProgressChanged } from '../ui/session';
+import { readingLesson, resolveExample } from '../exercises/reading';
+import { swap, type Exercise } from '../exercises/common';
+import { speakSequence, stopSpeaking } from '../lib/tts';
+import type { ReadingRule } from '../db/schema';
+import { progressDots } from './cognates';
 
-function resolveExample(e: ReadingExample): { fr: string; ipa: string; pt: string; wordId?: string } {
-  if ('word_id' in e) {
-    const w = content().wordById.get(e.word_id)!;
-    return { fr: w.fr, ipa: w.ipa, pt: w.pt, wordId: w.id };
-  }
-  return e;
-}
+export const readingView: View = async () => {
+  const c = content();
+  const user = currentUser();
+  const body = h('div', { class: 'stack' });
+  let current: Exercise | null = null;
 
-export const readingView: View = () => {
-  const rules = content().readingRules;
-  let logged = false;
-  // Qualquer áudio tocado nesta tela conta como prática do dia.
-  const logOnce = () => {
-    if (!logged) void logActivity(currentUser().id, 'reading', 'listen');
-    logged = true;
+  const home = async () => {
+    current?.cleanup?.();
+    current = null;
+    const found = await getDiscovered(user.id);
+    const rules = c.readingRules;
+    const next = rules.find((r) => !found.has(r.id));
+    const known = rules.filter((r) => found.has(r.id));
+    swap(
+      body,
+      h(
+        'section',
+        { class: 'hero-lite' },
+        progressDots(known.length, rules.length),
+        h('h2', null, next ? 'Descubra como se lê' : 'Você já descobriu todas!'),
+        h('p', { class: 'muted' }, `${known.length} de ${rules.length}`),
+        h('button', { class: 'btn btn--primary btn--block btn--lg', type: 'button', 'data-testid': 'discover-next', onclick: () => start(next ?? rules[Math.floor(Math.random() * rules.length)]) }, next ? 'Descobrir' : 'Praticar uma', icon('arrowRight', 18)),
+      ),
+      known.length > 0 &&
+        h(
+          'details',
+          { class: 'known' },
+          h('summary', null, 'O que você já descobriu'),
+          h(
+            'ul',
+            { class: 'known__list' },
+            known.map((r) =>
+              h(
+                'li',
+                { class: 'known__row', dataset: { rule: r.id } },
+                h('button', { class: 'icon-btn icon-btn--sm', type: 'button', 'aria-label': `Ouvir exemplos de ${r.grapheme}`, onclick: () => void speakSequence(r.examples.slice(0, 3).map((e) => resolveExample(e).fr), 450) }, icon('play', 14)),
+                h('button', { class: 'known__item', type: 'button', onclick: () => start(r) }, h('span', { lang: 'fr' }, r.grapheme), ' → ', r.sound, icon('chevronRight', 16)),
+              ),
+            ),
+          ),
+        ),
+    );
   };
 
-  const view: ViewResult = {
-    title: 'Regras de leitura',
+  const start = (rule: ReadingRule) => {
+    current = readingLesson(rule, user.id, () => {
+      notifyProgressChanged();
+      void home();
+    });
+    swap(body, current.el);
+  };
+
+  await home();
+
+  return {
+    title: 'Como se lê',
     back: '/aprender',
     tab: 'learn',
-    content: h(
-      'div',
-      { class: 'stack' },
-      h('p', { class: 'lead' }, `O francês parece caótico, mas é bem regular. ${rules.length} regras cobrem quase tudo que você vai ler.`),
-      h(
-        'ol',
-        { class: 'reading-list' },
-        rules.map((rule, i) => {
-          const examples = rule.examples.map(resolveExample);
-          return h(
-            'li',
-            { class: 'reading-card', dataset: { rule: rule.id } },
-            h(
-              'div',
-              { class: 'reading-card__head' },
-              h('span', { class: 'reading-card__n' }, String(i + 1)),
-              h('div', { class: 'reading-card__grapheme', lang: 'fr' }, rule.grapheme),
-              h('span', { class: 'reading-card__arrow' }, icon('arrowRight', 16)),
-              h('div', { class: 'reading-card__sound' }, `[${rule.sound}]`),
-              h(
-                'button',
-                {
-                  class: 'icon-btn',
-                  type: 'button',
-                  title: 'Ouvir todos os exemplos',
-                  'aria-label': `Ouvir todos os exemplos de ${rule.grapheme}`,
-                  onclick: () => {
-                    void speakSequence(examples.map((e) => e.fr), 500);
-                  },
-                },
-                icon('play', 18),
-              ),
-            ),
-            h('p', { class: 'reading-card__tip' }, rule.tip_pt),
-            h(
-              'ul',
-              { class: 'chips' },
-              examples.map((e) =>
-                h(
-                  'li',
-                  { class: 'chip-example' },
-                  playButton(e.fr, { wordId: e.wordId, size: 'sm' }),
-                  h('span', { class: 'chip-example__text' }, h('strong', { lang: 'fr' }, e.fr), ipa(e.ipa), h('small', null, e.pt)),
-                ),
-              ),
-            ),
-          );
-        }),
-      ),
-    ),
+    cleanup: () => {
+      current?.cleanup?.();
+      stopSpeaking();
+    },
+    content: body,
   };
-  // Captura: os botões de áudio param a propagação do clique.
-  (view.content as HTMLElement).addEventListener('click', (e) => (e.target as Element).closest('button') && logOnce(), true);
-  return view;
 };

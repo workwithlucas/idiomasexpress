@@ -81,7 +81,30 @@ let callId = 0;
  * é francesa, não fala e avisa. Se o navegador não expõe lista nenhuma (alguns
  * WebViews), pede fr-FR pelo atributo lang, que é o melhor possível ali.
  */
-export async function speak(text: string, opts: { rate?: number } = {}): Promise<boolean> {
+export interface SpeakOptions {
+  rate?: number;
+  pitch?: number;
+  /** Voz específica (ex.: variação de falantes no treino de ouvido). Precisa ser francesa. */
+  voice?: SpeechSynthesisVoice | null;
+}
+
+/**
+ * Tempo real da fala nativa (TTS): duração total e início de cada palavra,
+ * vindos dos eventos "boundary". Usado para ancorar o ritmo da melodia-alvo
+ * no módulo de fala. Guardado por texto, só para a velocidade normal.
+ */
+export interface NativeTiming {
+  duration: number;
+  /** Início de cada palavra em segundos, na ordem do texto. */
+  wordStarts: { charIndex: number; t: number }[];
+}
+const nativeTimings = new Map<string, NativeTiming>();
+
+export function getNativeTiming(text: string): NativeTiming | undefined {
+  return nativeTimings.get(text);
+}
+
+export async function speak(text: string, opts: SpeakOptions = {}): Promise<boolean> {
   if (!ttsSupported) {
     reportProblem('unsupported');
     return false;
@@ -98,7 +121,9 @@ export async function speak(text: string, opts: { rate?: number } = {}): Promise
     await voicesReady();
     if (myCall !== callId) return false; // outro áudio foi pedido enquanto esperávamos
   }
-  const voice = pickVoice();
+  // Compara por nome: a lista de vozes pode ter sido recriada desde que o perfil foi montado.
+  const requested = opts.voice ? (frenchVoices().find((v) => v.name === opts.voice!.name) ?? null) : null;
+  const voice = requested ?? pickVoice();
   if (!voice && voices.length) {
     reportProblem('no-french-voice');
     return false;
@@ -108,6 +133,15 @@ export async function speak(text: string, opts: { rate?: number } = {}): Promise
     if (voice) u.voice = voice;
     u.lang = voice ? normLang(voice.lang) : 'fr-FR';
     u.rate = opts.rate ?? prefs().speechRate;
+    if (opts.pitch) u.pitch = opts.pitch;
+    // Mede o ritmo nativo (início de cada palavra) na velocidade padrão.
+    const measure = !opts.rate && !opts.pitch && !opts.voice;
+    let startedAt = 0;
+    const wordStarts: NativeTiming['wordStarts'] = [];
+    u.onstart = () => (startedAt = performance.now());
+    u.onboundary = (e) => {
+      if (startedAt && e.name !== 'sentence') wordStarts.push({ charIndex: e.charIndex, t: (performance.now() - startedAt) / 1000 });
+    };
     // Salvaguarda: alguns ambientes nunca disparam onend.
     const timeout = setTimeout(() => finish(false), 4000 + (text.length * 180) / Math.min(1, u.rate));
     const finish = (ok: boolean) => {
@@ -116,7 +150,17 @@ export async function speak(text: string, opts: { rate?: number } = {}): Promise
       resolve(ok);
     };
     speaking = { resolve: finish };
-    u.onend = () => finish(true);
+    u.onend = () => {
+      if (measure && startedAt) {
+        // Normaliza para a velocidade 1,0 (a velocidade padrão do app é ajustável).
+        const k = u.rate || 1;
+        nativeTimings.set(text, {
+          duration: ((performance.now() - startedAt) / 1000) * k,
+          wordStarts: wordStarts.map((w) => ({ charIndex: w.charIndex, t: w.t * k })),
+        });
+      }
+      finish(true);
+    };
     u.onerror = () => finish(false);
     speechSynthesis.speak(u);
     // Alguns navegadores (Chrome/Android) ficam "pausados" após inatividade.
@@ -133,11 +177,54 @@ export function stopSpeaking(): void {
 }
 
 /** Fala uma sequência com pausa entre os itens (ex.: par mínimo). */
-export async function speakSequence(texts: string[], gapMs = 700): Promise<boolean> {
+export async function speakSequence(texts: string[], gapMs = 700, opts: SpeakOptions = {}): Promise<boolean> {
   for (let i = 0; i < texts.length; i++) {
-    const ok = await speak(texts[i]);
+    const ok = await speak(texts[i], opts);
     if (!ok) return false;
     if (i < texts.length - 1) await new Promise((r) => setTimeout(r, gapMs));
   }
   return true;
+}
+
+// ---- Vários falantes (treino de ouvido) -----------------------------------
+
+export interface SpeakerProfile {
+  /** Rótulo neutro para a interface ("voz 1", "voz 2"…). */
+  id: number;
+  voice: SpeechSynthesisVoice | null;
+  pitch: number;
+  rate: number;
+}
+
+const FEMALE = /(am[ée]lie|audrey|aur[ée]lie|marie|c[ée]line|denise|julie|hortense|virginie|l[ée]a|chantal|claire|sylvie|eloise|[ée]lo[ïi]se|vivienne|brigitte|coralie|jacqueline|yvette|google fran[çc]ais|female|femme|x-frc|x-frd)/i;
+const MALE = /(thomas|nicolas|henri|paul|daniel|mathieu|jacques|guillaume|antoine|r[ée]mi|yannick|j[ée]r[ôo]me|alain|claude|fabrice|gr[ée]goire|jean|male|homme|x-frb)/i;
+
+export function guessGender(v: SpeechSynthesisVoice): 'f' | 'm' | '?' {
+  if (FEMALE.test(v.name) || FEMALE.test(v.voiceURI)) return 'f';
+  if (MALE.test(v.name) || MALE.test(v.voiceURI)) return 'm';
+  return '?';
+}
+
+/**
+ * Falantes para o treino de alta variabilidade: o ouvido aprende o contraste
+ * quando o mesmo som vem de vozes diferentes.
+ * - 2+ vozes francesas: usa até 4 diferentes, priorizando uma feminina e uma masculina.
+ * - 1 ou nenhuma: varia sutilmente altura e velocidade da mesma voz (plano B).
+ */
+export function speakerPool(): SpeakerProfile[] {
+  const fr = frenchVoices();
+  const unique = [...new Map(fr.map((v) => [v.name, v])).values()];
+  if (unique.length >= 2) {
+    const f = unique.filter((v) => guessGender(v) === 'f');
+    const m = unique.filter((v) => guessGender(v) === 'm');
+    const rest = unique.filter((v) => !f.includes(v) && !m.includes(v));
+    const ordered = [f[0], m[0], ...f.slice(1), ...m.slice(1), ...rest].filter(Boolean) as SpeechSynthesisVoice[];
+    return ordered.slice(0, 4).map((voice, i) => ({ id: i + 1, voice, pitch: 1, rate: 0.9 }));
+  }
+  const base = unique[0] ?? null;
+  return [
+    { id: 1, voice: base, pitch: 1, rate: 0.9 },
+    { id: 2, voice: base, pitch: 0.8, rate: 0.85 },
+    { id: 3, voice: base, pitch: 1.2, rate: 0.95 },
+  ];
 }

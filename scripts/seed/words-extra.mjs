@@ -218,4 +218,8 @@ casser | quebrar | kase | cotidiano | | | Falso amigo: casser = QUEBRAR. "Casar"
 embrasser | beijar | ɑ̃bʁase | pessoas | | | Falso amigo: embrasser = BEIJAR (não é abraçar).
 prétendre | afirmar, alegar | pʁetɑ̃dʁ | cotidiano | | | Falso amigo: prétendre = AFIRMAR. "Pretender" é avoir l'intention.
 facteur | carteiro | faktœʁ | cotidiano | m | | Falso amigo: le facteur = o CARTEIRO.
+optimiste | otimista | ɔptimist | sentimentos | | cr_ista_iste |
+moderniser | modernizar | mɔdɛʁnize | trabalho | | cr_izar_iser |
+appartement | apartamento | apaʁtəmɑ̃ | casa | m | | Quase igual: apartamento → appartement (com dois P).
+occupé | ocupado | ɔkype | descricao | | | Occupé → "ocupado" (o C dobra).
 `;

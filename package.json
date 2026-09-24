@@ -11,7 +11,8 @@
     "icons": "node scripts/generate-icons.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "fixture": "node scripts/make-voice-fixture.mjs"
   },
   "dependencies": {
     "@fontsource-variable/fraunces": "^5.3.0",

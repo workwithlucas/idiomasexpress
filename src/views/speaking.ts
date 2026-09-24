@@ -3,29 +3,34 @@ import { icon } from '../ui/icons';
 import type { View } from '../ui/router';
 import { content, logActivity } from '../db/repo';
 import { currentUser } from '../ui/session';
-import { ipa, playButton } from '../ui/components';
-import { speak, stopSpeaking } from '../lib/tts';
+import { playButton } from '../ui/components';
+import { getNativeTiming, speak, stopSpeaking } from '../lib/tts';
 import { describeMicError, recordingSupported, recordingUnavailableReason, VoiceRecorder } from '../lib/recorder';
-import { toWav16kMono } from '../lib/wav';
+import { decodeMono16k, toWav16kMono, WAV_RATE } from '../lib/wav';
 import { assessPronunciation, azureStatus, PronunciationError, type AzureStatus, type PronunciationResult, type WordScore } from '../lib/pronunciation';
 import { fillFrame, pickRandom, primaryPt } from '../lib/text';
+import { PitchTracker } from '../lib/pitchTracker';
+import { analyzeSamples } from '../lib/pitch';
+import { compareProsody, targetContour, userContour, type UserContour } from '../lib/prosody';
+import { prosodyChart } from '../ui/prosodyChart';
+import { frenchSentence, liaisonNote } from '../exercises/common';
+import { cue } from '../lib/sounds';
 
 interface Target {
   text: string;
   pt?: string;
-  ipa?: string;
   wordId?: string;
 }
 
 const MAX_SECONDS = 15;
 
 const ERROR_LABELS: Record<string, string> = {
-  Mispronunciation: 'pronúncia',
-  Omission: 'omitida',
+  Mispronunciation: 'soou diferente',
+  Omission: 'faltou',
   Insertion: 'a mais',
   UnexpectedBreak: 'pausa',
   MissingBreak: 'sem pausa',
-  Monotone: 'monótona',
+  Monotone: 'sem melodia',
 };
 
 function tone(score: number): 'good' | 'ok' | 'bad' {
@@ -35,7 +40,7 @@ function tone(score: number): 'good' | 'ok' | 'bad' {
 function randomWord(): Target {
   const pool = content().words.filter((w) => w.freq_rank <= 300 && w.fr.length >= 3);
   const w = pickRandom(pool);
-  return { text: w.fr, pt: w.pt, ipa: w.ipa, wordId: w.id };
+  return { text: w.fr, pt: w.pt, wordId: w.id };
 }
 
 function randomSentence(): Target {
@@ -47,22 +52,30 @@ function randomSentence(): Target {
 
 export const speakingView: View = ({ query }) => {
   const fromQuery = query.get('texto');
-  let target: Target = fromQuery ? { text: fromQuery.slice(0, 200) } : randomWord();
+  let target: Target = fromQuery ? { text: fromQuery.slice(0, 200) } : randomSentence();
   const recorder = new VoiceRecorder();
+  const tracker = new PitchTracker();
   let recordingUrl: string | null = null;
   let recordedBlob: Blob | null = null;
   let timer: number | undefined;
   let azure: AzureStatus | 'checking' = 'checking';
+  let starting = false;
+  let left = false; // saiu da tela enquanto o pedido de permissão estava aberto
+  let attempt = 0; // descarta resultados de uma gravação antiga
 
   const targetBox = h('div', { class: 'stack stack--sm' });
   const recorderBox = h('div');
-  const resultBox = h('div');
-  const statusBox = h('div');
+  const errorBox = h('div');
+  const resultBox = h('section', { class: 'stack', 'data-testid': 'speak-result' });
+  const prosodyBox = h('div');
+  const azureBox = h('div');
 
   const resetRecording = () => {
+    attempt++;
     if (recordingUrl) URL.revokeObjectURL(recordingUrl);
     recordingUrl = null;
     recordedBlob = null;
+    render(errorBox);
     render(resultBox);
   };
 
@@ -79,41 +92,39 @@ export const speakingView: View = ({ query }) => {
       h(
         'div',
         { class: 'card target' },
-        h('p', { class: 'eyebrow' }, '1 · Ouça o modelo'),
-        h('p', { class: 'target__text', lang: 'fr', 'data-testid': 'speak-target' }, target.text),
-        (target.ipa || target.pt) && h('p', { class: 'target__meta' }, target.ipa && ipa(target.ipa), target.ipa && target.pt && ' · ', target.pt),
+        h('p', { class: 'eyebrow' }, 'Ouça'),
+        h('div', { 'data-testid': 'speak-target' }, frenchSentence(target.text, 'fr-sentence--big')),
+        target.pt && h('p', { class: 'target__meta' }, target.pt),
+        liaisonNote(target.text),
         h(
           'div',
           { class: 'row' },
           playButton(target.text, { wordId: target.wordId, size: 'lg', label: 'Ouvir' }),
           playButton(target.text, { wordId: target.wordId, size: 'lg', rate: 0.65, label: 'Ouvir devagar' }),
-          h('span', { class: 'hint' }, 'Normal e devagar'),
         ),
       ),
       h(
         'div',
         { class: 'row row--wrap' },
-        h('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => setTarget(randomWord()), 'data-testid': 'another-word' }, icon('shuffle', 16), 'Outra palavra'),
-        h('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => setTarget(randomSentence()), 'data-testid': 'another-sentence' }, icon('shuffle', 16), 'Outra frase'),
+        h('button', { class: 'chip-btn', type: 'button', onclick: () => setTarget(randomSentence()), 'data-testid': 'another-sentence' }, icon('shuffle', 14), 'Outra frase'),
+        h('button', { class: 'chip-btn', type: 'button', onclick: () => setTarget(randomWord()), 'data-testid': 'another-word' }, icon('shuffle', 14), 'Uma palavra'),
       ),
     );
 
-  const renderRecorder = (state: 'idle' | 'starting' | 'recording' | 'recorded' | 'busy', seconds = 0) => {
+  const renderRecorder = (state: 'idle' | 'starting' | 'recording' | 'recorded', seconds = 0) => {
     if (!recordingSupported) {
       render(recorderBox, h('div', { class: 'callout callout--warn', 'data-testid': 'rec-unavailable' }, icon('alert', 20), h('p', null, recordingUnavailableReason())));
       return;
     }
     const mainBtn =
       state === 'recording'
-        ? h('button', { class: 'rec rec--on', type: 'button', onclick: stopRecording, 'aria-label': 'Parar gravação', 'data-testid': 'rec-stop' }, icon('stop', 30))
-        : h('button', { class: 'rec', type: 'button', onclick: startRecording, disabled: state === 'busy' || state === 'starting', 'aria-label': 'Gravar', 'data-testid': 'rec-start' }, icon('mic', 30));
-
+        ? h('button', { class: 'rec rec--on', type: 'button', onclick: stopRecording, 'aria-label': 'Parar', 'data-testid': 'rec-stop' }, icon('stop', 30))
+        : h('button', { class: 'rec', type: 'button', onclick: startRecording, disabled: state === 'starting', 'aria-label': state === 'recorded' ? 'Gravar de novo' : 'Gravar', 'data-testid': 'rec-start' }, icon('mic', 30));
     render(
       recorderBox,
       h(
         'div',
         { class: 'card recorder' },
-        h('p', { class: 'eyebrow' }, '2 · Grave sua voz'),
         h(
           'div',
           { class: 'recorder__main' },
@@ -121,40 +132,32 @@ export const speakingView: View = ({ query }) => {
           h(
             'p',
             { class: 'recorder__status' },
-            state === 'recording' ? h('span', { class: 'rec-dot' }, `Gravando… ${seconds}s`) : state === 'recorded' ? 'Gravado. Ouça e compare com o modelo.' : state === 'busy' ? 'Processando…' : state === 'starting' ? 'Aguardando o microfone… (permita o acesso se o navegador pedir)' : 'Toque para gravar e fale a frase.',
+            state === 'recording'
+              ? h('span', { class: 'rec-dot' }, `Gravando… ${seconds}s`)
+              : state === 'starting'
+                ? 'Liberando o microfone…'
+                : state === 'recorded'
+                  ? 'Toque para gravar de novo.'
+                  : 'Agora você: toque e fale.',
           ),
         ),
         recordingUrl && state !== 'recording' && h('audio', { class: 'recorder__audio', controls: true, src: recordingUrl, 'data-testid': 'own-recording' }),
-        state === 'recorded' &&
-          h(
-            'div',
-            { class: 'stack stack--sm' },
-            h('p', { class: 'eyebrow' }, '3 · Avalie'),
-            h(
-              'button',
-              { class: 'btn btn--primary btn--block', type: 'button', onclick: evaluate, disabled: azure !== 'configured', 'data-testid': 'evaluate' },
-              icon('sparkles', 18),
-              'Avaliar pronúncia (Azure)',
-            ),
-          ),
       ),
     );
   };
-
-  let starting = false;
-  let left = false; // usuário saiu da tela enquanto o pedido de permissão estava aberto
 
   const startRecording = async () => {
     if (starting || recorder.recording) return; // toque duplo não abre dois microfones
     starting = true;
     resetRecording();
     stopSpeaking();
+    tracker.prepare(); // precisa acontecer dentro do toque (iOS)
     renderRecorder('starting');
     try {
       await recorder.start();
     } catch (e) {
       renderRecorder('idle');
-      render(resultBox, h('div', { class: 'callout callout--error', 'data-testid': 'mic-error' }, icon('alert', 20), h('p', null, describeMicError(e))));
+      render(errorBox, h('div', { class: 'callout callout--error', 'data-testid': 'mic-error' }, icon('alert', 20), h('p', null, describeMicError(e))));
       return;
     } finally {
       starting = false;
@@ -163,6 +166,14 @@ export const speakingView: View = ({ query }) => {
       recorder.release();
       return;
     }
+    if (recorder.mediaStream) {
+      try {
+        tracker.start(recorder.mediaStream);
+      } catch (e) {
+        console.warn('Melodia ao vivo indisponível; usando a gravação.', e);
+      }
+    }
+    cue('tap');
     let seconds = 0;
     renderRecorder('recording', 0);
     timer = window.setInterval(() => {
@@ -174,60 +185,127 @@ export const speakingView: View = ({ query }) => {
 
   const stopRecording = async () => {
     window.clearInterval(timer);
+    const frames = tracker.stop();
+    const myAttempt = attempt;
     try {
       recordedBlob = await recorder.stop();
       recordingUrl = URL.createObjectURL(recordedBlob);
       void logActivity(currentUser().id, 'speaking', 'record', { word_id: target.wordId });
       renderRecorder('recorded');
+      renderResultShell();
+      // Melodia e nota são independentes: a melodia é local e sai sempre.
+      void showProsody(recordedBlob, frames, myAttempt);
     } catch (e) {
       renderRecorder('idle');
-      render(resultBox, h('div', { class: 'callout callout--error' }, icon('alert', 20), h('p', null, (e as Error).message)));
+      render(errorBox, h('div', { class: 'callout callout--error' }, icon('alert', 20), h('p', null, (e as Error).message)));
+    }
+  };
+
+  const renderResultShell = () => {
+    render(resultBox, prosodyBox, azureBox);
+    render(prosodyBox, h('div', { class: 'card loading' }, h('span', { class: 'spinner' }), 'Desenhando sua melodia…'));
+    renderAzurePanel();
+  };
+
+  const showProsody = async (blob: Blob, liveFrames: ReturnType<PitchTracker['stop']>, myAttempt: number) => {
+    let user: UserContour | null = userContour(liveFrames);
+    if (!user) {
+      // Plano B: analisa o arquivo gravado (mesmo algoritmo, sem depender do tempo real).
+      try {
+        user = userContour(analyzeSamples(await decodeMono16k(blob), WAV_RATE));
+      } catch (e) {
+        console.warn('Não foi possível analisar a gravação.', e);
+      }
+    }
+    if (myAttempt !== attempt) return;
+    if (!user) {
+      render(
+        prosodyBox,
+        h('div', { class: 'card prosody', 'data-testid': 'prosody' }, h('p', { class: 'eyebrow' }, 'Sua melodia'), h('p', { class: 'muted', 'data-testid': 'prosody-empty' }, 'Não deu pra ouvir sua voz direito. Tente mais perto do microfone.')),
+      );
+      return;
+    }
+    const tgt = targetContour(target.text, getNativeTiming(target.text));
+    const fb = compareProsody(tgt, user);
+    render(
+      prosodyBox,
+      h(
+        'div',
+        { class: 'card prosody', 'data-testid': 'prosody' },
+        h('p', { class: 'eyebrow' }, 'Sua melodia'),
+        prosodyChart(tgt, user),
+        h(
+          'ul',
+          { class: 'prosody__tips', 'data-testid': 'prosody-tips' },
+          fb.lines.map((l, i) => h('li', { class: (i === 0 ? fb.melodyOk : fb.rhythmOk) ? 'tip tip--ok' : 'tip' }, l)),
+        ),
+      ),
+    );
+  };
+
+  const renderAzurePanel = () => {
+    if (azure === 'configured') {
+      render(
+        azureBox,
+        h('button', { class: 'btn btn--ghost btn--block', type: 'button', onclick: evaluate, 'data-testid': 'evaluate' }, icon('sparkles', 18), 'Ver nota da pronúncia'),
+      );
+    } else if (azure !== 'checking') {
+      render(
+        azureBox,
+        h(
+          'p',
+          { class: 'soft-note', 'data-testid': 'azure-status' },
+          icon('info', 16),
+          azure === 'not_configured'
+            ? 'A nota por som ainda não foi ligada neste app (veja o README). A melodia acima funciona sem ela.'
+            : azure === 'offline'
+              ? 'Sem internet: a nota por som volta quando conectar. A melodia acima funciona offline.'
+              : 'A nota por som está fora do ar agora. A melodia acima continua valendo.',
+        ),
+      );
     }
   };
 
   const evaluate = async () => {
     if (!recordedBlob) return;
-    renderRecorder('busy');
-    render(resultBox, h('div', { class: 'card loading' }, h('span', { class: 'spinner' }), 'Enviando para o Azure…'));
+    const myAttempt = attempt;
+    render(azureBox, h('div', { class: 'card loading' }, h('span', { class: 'spinner' }), 'Calculando a nota…'));
     try {
       const wav = await toWav16kMono(recordedBlob);
       const result = await assessPronunciation(wav, target.text);
+      if (myAttempt !== attempt) return;
       void logActivity(currentUser().id, 'speaking', 'assess', { word_id: target.wordId, score: result.pronunciation });
-      renderResult(result);
+      renderScore(result);
     } catch (e) {
-      const msg = e instanceof PronunciationError ? e.message : `Não foi possível avaliar: ${(e as Error).message}`;
-      render(resultBox, h('div', { class: 'callout callout--error', 'data-testid': 'assess-error' }, icon('alert', 20), h('p', null, msg)));
+      if (myAttempt !== attempt) return;
+      console.warn('Nota de pronúncia indisponível:', e);
+      // Mensagem curta e sem jargão; o detalhe técnico fica no console.
+      const code = e instanceof PronunciationError ? e.code : 'upstream';
+      const msg =
+        code === 'offline' || code === 'network'
+          ? 'Sem conexão para a nota agora. A melodia acima continua valendo.'
+          : code === 'no_speech'
+            ? 'Não deu pra ouvir a frase inteira. Tente de novo, mais perto do microfone.'
+            : 'Não deu pra calcular a nota agora. A melodia acima continua valendo.';
+      render(azureBox, h('p', { class: 'soft-note', 'data-testid': 'assess-error' }, icon('info', 16), msg));
     }
-    renderRecorder('recorded');
   };
 
-  const renderResult = (r: PronunciationResult) => {
+  const renderScore = (r: PronunciationResult) => {
     const detail = h('div', { class: 'phonemes' });
     const showWord = (w: WordScore) =>
       render(
         detail,
         h('div', { class: 'phonemes__head' }, h('strong', { lang: 'fr' }, w.word), playButton(w.word, { size: 'sm' }), h('span', { class: `score-tag score-tag--${tone(w.accuracy)}` }, `${w.accuracy}`)),
-        w.phonemes.length
-          ? h('ul', { class: 'phonemes__list' }, w.phonemes.map((p) => h('li', { class: `phoneme phoneme--${tone(p.accuracy)}` }, h('span', { class: 'phoneme__sym' }, p.phoneme), h('span', null, String(p.accuracy)))))
-          : h('p', { class: 'muted' }, 'Sem detalhe de fonemas para esta palavra.'),
+        w.phonemes.length ? h('ul', { class: 'phonemes__list' }, w.phonemes.map((p) => h('li', { class: `phoneme phoneme--${tone(p.accuracy)}` }, h('span', { class: 'phoneme__sym' }, p.phoneme), h('span', null, String(p.accuracy))))) : null,
       );
-
     render(
-      resultBox,
+      azureBox,
       h(
         'div',
         { class: 'card result', 'data-testid': 'assess-result' },
-        h('p', { class: 'eyebrow' }, 'Resultado'),
-        h(
-          'div',
-          { class: 'rings' },
-          ring('Pronúncia', r.pronunciation),
-          ring('Precisão', r.accuracy),
-          ring('Fluência', r.fluency),
-          ring('Completude', r.completeness),
-        ),
-        r.recognizedText && h('p', { class: 'result__heard' }, 'O Azure entendeu: ', h('em', { lang: 'fr' }, `“${r.recognizedText}”`)),
-        h('p', { class: 'eyebrow' }, 'Por palavra — toque para ver os fonemas'),
+        h('p', { class: 'eyebrow' }, 'Nota por som'),
+        h('div', { class: 'rings' }, scoreRing('Geral', r.pronunciation), scoreRing('Sons', r.accuracy), scoreRing('Fluidez', r.fluency), scoreRing('Completa', r.completeness)),
         h(
           'div',
           { class: 'word-scores' },
@@ -236,69 +314,45 @@ export const speakingView: View = ({ query }) => {
               'button',
               { class: `word-score word-score--${tone(w.accuracy)}`, type: 'button', onclick: () => showWord(w) },
               h('span', { lang: 'fr' }, w.word),
-              h('small', null, w.errorType !== 'None' ? `${w.accuracy} · ${ERROR_LABELS[w.errorType] ?? w.errorType}` : String(w.accuracy)),
+              h('small', null, w.errorType !== 'None' ? ERROR_LABELS[w.errorType] ?? String(w.accuracy) : String(w.accuracy)),
             ),
           ),
         ),
         detail,
-        h('p', { class: 'legend' }, h('span', { class: 'dot dot--good' }), '≥ 80 ótimo ', h('span', { class: 'dot dot--ok' }), '60–79 quase ', h('span', { class: 'dot dot--bad' }), '< 60 treinar'),
       ),
     );
     const worst = [...r.words].sort((a, b) => a.accuracy - b.accuracy)[0];
     if (worst) showWord(worst);
   };
 
-  const renderStatus = () => {
-    if (azure === 'configured' || azure === 'checking') return render(statusBox);
-    render(
-      statusBox,
-      h(
-        'div',
-        { class: 'callout callout--info', 'data-testid': 'azure-status' },
-        icon('info', 20),
-        h(
-          'p',
-          null,
-          azure === 'not_configured'
-            ? 'A nota automática usa o Azure Speech, que ainda não foi configurado (veja o README). Você pode gravar e comparar com o modelo normalmente.'
-            : azure === 'offline'
-              ? 'Sem internet: a nota do Azure volta quando houver conexão. Enquanto isso, grave e compare com o modelo.'
-              : 'O serviço de avaliação está indisponível agora. Grave e compare com o modelo; tente a nota mais tarde.',
-        ),
-      ),
-    );
-  };
-
   renderTarget();
   renderRecorder('idle');
   void azureStatus().then((s) => {
     azure = s;
-    renderStatus();
-    renderRecorder(recordedBlob ? 'recorded' : 'idle');
+    if (recordedBlob) renderAzurePanel();
   });
-
   if (fromQuery) void speak(target.text);
 
   return {
-    title: 'Repetição falada',
+    title: 'Fale e compare',
     back: fromQuery ? '/frases' : '/aprender',
     tab: 'learn',
     cleanup: () => {
       left = true;
       window.clearInterval(timer);
+      tracker.dispose();
       recorder.release();
       if (recordingUrl) URL.revokeObjectURL(recordingUrl);
       stopSpeaking();
     },
-    content: h('div', { class: 'stack' }, statusBox, targetBox, recorderBox, resultBox),
+    content: h('div', { class: 'stack' }, targetBox, recorderBox, errorBox, resultBox),
   };
 };
 
-function ring(label: string, value: number): HTMLElement {
+function scoreRing(label: string, value: number): HTMLElement {
   const r = 26;
   const circ = 2 * Math.PI * r;
-  const ns = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(ns, 'svg');
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('viewBox', '0 0 64 64');
   svg.innerHTML =
     `<circle cx="32" cy="32" r="${r}" class="ring__track"/>` +

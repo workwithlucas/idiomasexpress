@@ -10,7 +10,7 @@ test.use({ serviceWorkers: 'block' });
 async function login(page: Page) {
   await page.goto('/');
   await page.click('[data-user="u_lucas"]');
-  await expect(page.locator('.hero-card')).toBeVisible();
+  await expect(page.locator('.today')).toBeVisible();
 }
 
 /** Executa uma alteração direta no IndexedDB do app. */
@@ -47,7 +47,7 @@ test('conteúdo apagado com seed_version intacto é repopulado no próximo boot'
   await mutateDB(page, ['words', 'frames', 'users'], "['words','frames','users'].forEach((s) => tx.objectStore(s).clear());");
   await page.reload();
   // Perfis voltaram, e o perfil salvo continua ativo.
-  await expect(page.locator('.hero-card')).toBeVisible();
+  await expect(page.locator('.today')).toBeVisible();
   await page.goto('/#/frases');
   await expect(page.locator('.slot-option').first()).toBeVisible();
   await page.goto('/#/fala');
@@ -70,7 +70,7 @@ test('estado de revisão corrompido não trava a revisão', async ({ page }) => 
   await page.goto('/#/revisao');
   await page.getByTestId('reveal').click();
   await page.locator('.rate__btn--good').click();
-  await expect(page.getByTestId('flash-fr')).toBeVisible();
+  await expect(page.locator('.review-card')).toBeVisible();
   expect(errors.filter((e) => !e.includes('corrompido'))).toEqual([]);
 });
 
@@ -96,8 +96,8 @@ test('sem voz francesa: não fala em outro idioma e avisa', async ({ page }) => 
     };
   });
   await login(page);
-  await page.goto('/#/leitura');
-  await page.locator('.chip-example .play').first().click();
+  await page.goto('/#/memoria');
+  await page.locator('.hook-card .play').first().click();
   await expect(page.locator('.toast', { hasText: 'Nenhuma voz em francês' })).toBeVisible();
   expect(await page.evaluate(() => (window as unknown as { __spoken: number }).__spoken)).toBe(0);
   await page.goto('/#/ajustes');
@@ -128,8 +128,8 @@ test('com voz francesa disponível, sempre usa ela (mesmo com preferência antig
     localStorage.setItem('ie.prefs', JSON.stringify({ voiceURI: 'Samantha' }));
   });
   await login(page);
-  await page.goto('/#/leitura');
-  await page.locator('.chip-example .play').first().click();
+  await page.goto('/#/memoria');
+  await page.locator('.hook-card .play').first().click();
   await expect.poll(() => page.evaluate(() => (window as unknown as { __utt: unknown[] }).__utt)).toEqual([{ voice: 'Thomas', lang: 'fr-FR' }]);
 });
 
@@ -174,16 +174,40 @@ test('toque múltiplo em Gravar abre um único microfone', async ({ page, contex
   await page.getByTestId('rec-stop').click();
 });
 
-test('Azure sem chave: avisa e permite seguir sem nota', async ({ page, context }) => {
+test('Azure sem chave: avisa, e a melodia aparece mesmo assim', async ({ page, context }) => {
   await context.grantPermissions(['microphone']);
   await login(page);
-  await page.goto('/#/fala?texto=bonjour');
-  await expect(page.getByTestId('azure-status')).toContainText('ainda não foi configurado');
+  await page.goto(`/#/fala?texto=${encodeURIComponent('Je veux manger.')}`);
   await page.getByTestId('rec-start').click();
-  await page.waitForTimeout(1200);
+  await page.waitForTimeout(2600);
   await page.getByTestId('rec-stop').click();
   await expect(page.getByTestId('own-recording')).toBeVisible();
-  await expect(page.getByTestId('evaluate')).toBeDisabled();
+  await expect(page.getByTestId('prosody-tips')).toBeVisible();
+  expect(await page.getByTestId('contour-user').count()).toBeGreaterThan(0);
+  await expect(page.getByTestId('azure-status')).toContainText('ainda não foi ligada');
+  await expect(page.getByTestId('evaluate')).toHaveCount(0);
   await page.getByTestId('another-sentence').click();
   await expect(page.getByTestId('rec-start')).toBeEnabled();
+});
+
+test('Azure falhando (erro 500): nota avisa com calma, melodia continua', async ({ page, context }) => {
+  const errors = collectErrors(page);
+  await context.grantPermissions(['microphone']);
+  await page.route('**/api/pronunciation**', (route) =>
+    route.request().method() === 'GET'
+      ? route.fulfill({ json: { configured: true } })
+      : route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ error: 'upstream', message: 'Azure respondeu 500' }) }),
+  );
+  await login(page);
+  await page.goto(`/#/fala?texto=${encodeURIComponent('Je veux manger.')}`);
+  await page.getByTestId('rec-start').click();
+  await page.waitForTimeout(2600);
+  await page.getByTestId('rec-stop').click();
+  await expect(page.getByTestId('prosody-tips')).toBeVisible();
+  await page.getByTestId('evaluate').click();
+  await expect(page.getByTestId('assess-error')).toContainText('A melodia acima continua valendo');
+  await expect(page.getByTestId('assess-error')).not.toContainText('500'); // sem jargão técnico
+  await expect(page.getByTestId('prosody')).toBeVisible();
+  // O 500 aparece como falha de rede no console (esperado); nada além disso.
+  expect(errors.filter((e) => !e.includes('500') && !e.includes('Nota de pronúncia indisponível'))).toEqual([]);
 });

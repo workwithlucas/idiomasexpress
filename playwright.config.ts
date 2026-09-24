@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { defineConfig, devices } from '@playwright/test';
 
 // E2E do fluxo completo sobre o build de produção (vite preview).
@@ -12,7 +13,13 @@ export default defineConfig({
     baseURL: 'http://localhost:4174',
     permissions: ['microphone'],
     launchOptions: {
-      args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'],
+      // Microfone falso tocando uma "voz" sintética (scripts/make-voice-fixture.mjs),
+      // para a análise de melodia ter o que medir.
+      args: [
+        '--use-fake-device-for-media-stream',
+        '--use-fake-ui-for-media-stream',
+        `--use-file-for-fake-audio-capture=${fileURLToPath(new URL('./tests/fixtures/voz-sintetica.wav', import.meta.url))}`,
+      ],
     },
     trace: 'retain-on-failure',
   },

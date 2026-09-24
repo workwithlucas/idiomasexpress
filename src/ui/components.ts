@@ -33,9 +33,6 @@ export function playButton(text: string, opts: { wordId?: string; label?: string
   return btn;
 }
 
-export function ipa(text: string): HTMLElement {
-  return h('span', { class: 'ipa', lang: 'fr-FR-fonipa' }, `/${text}/`);
-}
 
 /** Botão "+ revisão" que adiciona a palavra ao FSRS do perfil ativo. */
 export function addReviewButton(word: Word): HTMLButtonElement {
@@ -71,7 +68,7 @@ export function wordRow(word: Word, extra?: Child, opts: { review?: boolean } = 
       'div',
       { class: 'word-row__text' },
       h('div', { class: 'word-row__fr', lang: 'fr' }, withArticle(word)),
-      h('div', { class: 'word-row__meta' }, ipa(word.ipa), h('span', { class: 'word-row__pt' }, word.pt)),
+      h('div', { class: 'word-row__meta' }, h('span', { class: 'word-row__pt' }, word.pt)),
       extra,
     ),
     opts.review !== false && addReviewButton(word),

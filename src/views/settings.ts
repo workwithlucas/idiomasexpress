@@ -64,6 +64,7 @@ export const settingsView: View = async () => {
     { class: 'select select--sm', 'aria-label': 'Palavras novas por dia', onchange: () => { setPrefs({ newPerDay: Number(newPerDay.value) }); notifyProgressChanged(); } },
     [5, 10, 15, 20, 30, 50].map((n) => h('option', { value: String(n), selected: prefs().newPerDay === n }, String(n))),
   );
+  const soundsToggle = h('input', { type: 'checkbox', class: 'switch', checked: prefs().sounds, 'aria-label': 'Sons de acerto', onchange: () => setPrefs({ sounds: soundsToggle.checked }) });
   const autoplay = h('input', { type: 'checkbox', class: 'switch', checked: prefs().autoplay, 'aria-label': 'Tocar áudio automaticamente', onchange: () => setPrefs({ autoplay: autoplay.checked }) });
 
   // --- Progresso -----------------------------------------------------------
@@ -125,19 +126,20 @@ export const settingsView: View = async () => {
       section(
         'Voz em francês',
         !ttsSupported && h('p', { class: 'form-error' }, 'Este navegador não tem síntese de voz.'),
-        field('Voz', voiceSelect, 'Vozes marcadas "online" precisam de internet.'),
+        field('Voz', voiceSelect),
         voiceWarning,
         field('Velocidade', h('div', { class: 'range' }, rateInput, rateValue)),
         h('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => void speak("Bonjour ! On va apprendre le français ensemble.") }, icon('play', 16), 'Testar voz'),
       ),
       section(
-        'Revisão espaçada',
-        field('Palavras novas por dia', newPerDay, 'Por perfil, em ordem de frequência.'),
-        field('Tocar áudio ao mostrar a palavra', autoplay),
+        'Estudo',
+        field('Palavras novas por dia', newPerDay),
+        field('Tocar o áudio sozinho', autoplay),
+        field('Sons de acerto', soundsToggle),
       ),
       section(
         'Progresso e sincronização',
-        h('p', { class: 'muted' }, 'Tudo fica salvo só neste aparelho. Para levar o progresso a outro celular, exporte aqui e importe lá (os dois perfis vão juntos; em conflito, vale a revisão mais recente).'),
+        h('p', { class: 'muted' }, 'Fica tudo neste aparelho. Para levar a outro celular: exporte aqui, importe lá.'),
         h(
           'div',
           { class: 'row row--wrap' },
@@ -154,12 +156,12 @@ export const settingsView: View = async () => {
         ),
       ),
       section(
-        'Avaliação de pronúncia',
-        field('Azure Speech', azureBox, 'Chave e região ficam no servidor (.env / Netlify).'),
+        'Nota de pronúncia',
+        field('Serviço de nota', azureBox),
       ),
       section(
-        'Ferramentas de teste',
-        h('p', { class: 'muted' }, 'Avance a data do app para conferir o agendamento da revisão espaçada sem esperar.'),
+        'Para testar',
+        h('p', { class: 'muted' }, 'Avance a data para testar a revisão sem esperar.'),
         clockInfo,
         h(
           'div',
@@ -174,7 +176,7 @@ export const settingsView: View = async () => {
         h(
           'p',
           { class: 'muted' },
-          `Conteúdo v${seedVersion ?? '?'}: ${c.words.length} palavras (300 mais frequentes + vocabulário de situações), ${c.cognateRules.length} regras de cognatos, ${c.readingRules.length} regras de leitura, ${c.minimalPairs.length} pares mínimos, ${c.frames.length} moldes e ${c.scenes.length} situações. Revisão agendada com FSRS (ts-fsrs).`,
+          `${c.words.length} palavras, ${c.cognateRules.length} padrões de palavras-irmãs, ${c.readingRules.length} jeitos de ler, ${c.minimalPairs.length} pares de sons, ${c.frames.length} frases e ${c.scenes.length} situações. Versão do conteúdo: ${seedVersion ?? '?'}.`,
         ),
         h(
           'button',

@@ -1,5 +1,5 @@
 import { h, render } from './dom';
-import { icon } from './icons';
+import { brandMark, icon } from './icons';
 import { match, navigate, parseHash, type TabId, type ViewResult } from './router';
 import { maybeUser, onSessionChange } from './session';
 import { getReviewStats } from '../db/repo';
@@ -71,7 +71,7 @@ function header(r: ViewResult): HTMLElement {
     { class: 'topbar' },
     r.back
       ? h('a', { class: 'topbar__back', href: `#${r.back}`, 'aria-label': 'Voltar' }, icon('chevronLeft', 22))
-      : h('span', { class: 'topbar__brand', 'aria-hidden': 'true' }, 'é'),
+      : h('a', { class: 'topbar__brand', href: '#/', 'aria-label': 'Início' }, brandMark(30)),
     h('h1', { class: 'topbar__title' }, r.title),
     user &&
       h(
@@ -89,7 +89,7 @@ function tabbar(active?: TabId): HTMLElement {
     TABS.map((t) =>
       h(
         'a',
-        { class: 'tabbar__item', href: `#${t.href}`, 'aria-current': t.id === active ? 'page' : undefined, dataset: { tab: t.id } },
+        { class: 'tabbar__item', href: `#${t.href}`, 'aria-label': t.label, 'aria-current': t.id === active ? 'page' : undefined, dataset: { tab: t.id } },
         h('span', { class: 'tabbar__icon' }, icon(t.icon, 22), t.id === 'review' && h('span', { class: 'badge', hidden: true, 'data-badge': 'review' })),
         h('span', { class: 'tabbar__label' }, t.label),
       ),

@@ -1,5 +1,5 @@
 import { h } from '../ui/dom';
-import { icon } from '../ui/icons';
+import { brandMark, icon } from '../ui/icons';
 import type { View } from '../ui/router';
 import { navigate } from '../ui/router';
 import { getReviewStats, listUsers } from '../db/repo';
@@ -19,10 +19,9 @@ export const profileView: View = async () => {
       h(
         'div',
         { class: 'profile__hero' },
-        h('div', { class: 'profile__mark', 'aria-hidden': 'true' }, 'é'),
+        h('div', { class: 'profile__mark', 'aria-hidden': 'true' }, brandMark(64)),
         h('p', { class: 'eyebrow' }, 'Idiomas Express'),
-        h('h1', { class: 'profile__title' }, 'Bonjour ! Quem vai estudar agora?'),
-        h('p', { class: 'profile__lead' }, 'Cada perfil tem sua própria revisão e progresso, salvos neste aparelho.'),
+        h('h1', { class: 'profile__title' }, 'Bonjour ! Quem é você?'),
       ),
       h(
         'ul',
@@ -47,7 +46,7 @@ export const profileView: View = async () => {
                 'span',
                 { class: 'profile-card__text' },
                 h('strong', null, u.name),
-                h('span', null, stats[i].inStudy ? `${stats[i].inStudy} palavras em estudo · ${stats[i].dueNow} para revisar` : 'Começando agora'),
+                h('span', null, stats[i].inStudy ? `${stats[i].inStudy} palavras no caminho` : 'Começando agora'),
               ),
               icon('chevronRight', 20),
             ),
