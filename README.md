@@ -212,7 +212,7 @@ O TTS é a Web Speech API do próprio aparelho. Ela não entrega o áudio gerado
 | IndexedDB vazio/corrompido, microfone negado, sem voz francesa | `tests/e2e/robustness.spec.ts` (10 cenários) | Recupera ou avisa, sem travar |
 | FSRS | Unitário + E2E com avanço de data: "Fácil" (~10 d) × "Não lembrei" (mesmo dia) | ✔ |
 | Responsividade | 280 px (Galaxy Fold), 412, paisagem; todas as telas e estados novos | 0 overflow |
-| Acessibilidade | axe-core em todas as telas e estados, claro e escuro | Escuro: 0 violações. Claro: só os 2 contrastes definidos pela spec (item 21) |
+| Acessibilidade | axe-core em todas as telas e estados, claro e escuro | 0 violações (com o `accent` claro #B54A2B, item 21) |
 | Lighthouse 13.5 (mobile) | Primeira visita e tela "Hoje" com perfil | 100 em Performance, Acessibilidade, Boas práticas e SEO |
 | Lighthouse 11.7.1 (último com PWA) | Primeira visita | PWA 100 · 0 erros de instalabilidade |
 | Estabilidade dos testes | 47 unitários; 15 E2E × 3 repetições (e × 2 após o último ajuste) | 47/47 · 45/45 · 30/30 |
@@ -242,12 +242,12 @@ Limitações conhecidas que **não** foram corrigidas nesta versão, com o motiv
 18. **Descobrir uma regra adiciona os exemplos dela à revisão**, e isso conta no limite de palavras novas do dia (item 9). Num dia com muitas descobertas, a metade de revisão da sessão seguinte vem cheia de vencidas. *Por quê:* é o comportamento esperado (o que foi descoberto precisa ser revisto), mas vale saber.
 19. **"Fale você" dentro de Monte a frase é pulável**, e na sessão isso acontece em 2 dos 16 passos. Quem pular sempre não vê a própria melodia na sessão (continua disponível em "Fale e compare"). *Por quê:* obrigar gravação trava quem estuda no ônibus ou sem microfone.
 20. **O IPA não aparece mais na interface** (pedido de leveza: zero termo técnico). A pronúncia vem do áudio e das descrições em português. O IPA continua nos dados, para uso futuro.
-21. **Contraste do accent no tema claro (definido pelo design system, não alterado).**
-    - Texto branco (`on-accent`) sobre `accent` #F1704E: **2,93:1**, nos botões primários de 15px/600.
-    - O contador "0/16" em `accent` sobre `surface-soft`: **2,51:1**.
-    - O WCAG AA pede 4,5:1, e o axe acusa esses dois pares (e só eles).
-    - No tema escuro os mesmos pares passam: 7,0:1 e 5,94:1.
-    - *Por quê:* a spec pede os valores exatos e proíbe aproximar. Ajustar (ex.: escurecer o accent do tema claro para ~#C4502F, ou usar `ink` no texto do botão) é decisão do design system.
+21. **O `accent` do tema claro foi escurecido de #F1704E para #B54A2B** (mesmo tom coral do #C4502F sugerido, só mais escuro), e o design system publicado recebeu o mesmo valor. Os pares medidos no tema claro:
+    - Texto branco do botão primário sobre `accent`: **5,28:1**.
+    - Contador "0/16" em `accent` sobre `surface-soft`: **4,52:1**.
+    - O #C4502F passaria no botão (4,63:1), mas não no contador (3,96:1).
+    - O tema escuro continua com #FF8B65 (7,0:1 e 5,94:1).
+    - O axe dá 0 violações nos dois temas. A folga no contador é pequena: se `surface-soft` ou o `accent` do tema claro mudarem, meça de novo.
 22. **Pontos em que a spec não tinha valor e foi preciso escolher um token existente:**
     - **Palavra/frase em destaque nos exercícios:** usa o estilo `title` (22/28 Bricolage). A spec reserva a display para o nome e os títulos de tela, e não tem tamanho maior de Inter.
     - **Ícones utilitários** (tocar áudio, fechar, setas, cenas): desenhados seguindo a regra de "ícone novo" (24×24, traço 1,75, sem preenchimento).
