@@ -1,5 +1,8 @@
-import '@fontsource-variable/inter';
-import '@fontsource-variable/fraunces';
+// Fontes do design system, embutidas no build para funcionar offline.
+import '@fontsource/bricolage-grotesque/700.css';
+import '@fontsource/inter/400.css';
+import '@fontsource/inter/500.css';
+import '@fontsource/inter/600.css';
 import './styles/main.css';
 
 import { registerSW } from 'virtual:pwa-register';

@@ -172,7 +172,7 @@ export const settingsView: View = async () => {
             'button',
             {
               class: 'btn btn--primary btn--sm', type: 'button', 'data-testid': 'export',
-              onclick: async () => downloadJson(await exportProgress(), `cedilha-progresso-${dayKey(new Date())}.json`),
+              onclick: async () => downloadJson(await exportProgress(), `poliglotas-progresso-${dayKey(new Date())}.json`),
             },
             icon('download', 16), 'Exportar progresso',
           ),

@@ -7,10 +7,10 @@ import { stopSpeaking } from '../lib/tts';
 import { getClockOffsetDays } from '../lib/clock';
 
 const TABS: { id: TabId; label: string; icon: string; href: string }[] = [
-  { id: 'home', label: 'Hoje', icon: 'tabToday', href: '/' },
-  { id: 'review', label: 'Revisar', icon: 'tabReview', href: '/revisao' },
-  { id: 'learn', label: 'Aprender', icon: 'tabLearn', href: '/aprender' },
-  { id: 'settings', label: 'Ajustes', icon: 'tabSettings', href: '/ajustes' },
+  { id: 'home', label: 'Hoje', icon: 'sun', href: '/' },
+  { id: 'review', label: 'Revisar', icon: 'cycle', href: '/revisao' },
+  { id: 'learn', label: 'Aprender', icon: 'book', href: '/aprender' },
+  { id: 'settings', label: 'Ajustes', icon: 'sliders', href: '/ajustes' },
 ];
 
 let root: HTMLElement;
@@ -53,7 +53,7 @@ async function renderRoute(): Promise<void> {
     return; // outra navegação começou enquanto esta carregava
   }
   current = result;
-  document.title = result.title === 'Hoje' ? 'Cedilha' : `${result.title} · Cedilha`;
+  document.title = result.title === 'Hoje' ? 'Poliglotas' : `${result.title} · Poliglotas`;
 
   if (result.bare) {
     render(root, h('main', { class: 'page page--bare', id: 'main' }, result.content));
@@ -90,7 +90,7 @@ function tabbar(active?: TabId): HTMLElement {
       h(
         'a',
         { class: 'tabbar__item', href: `#${t.href}`, 'aria-label': t.label, 'aria-current': t.id === active ? 'page' : undefined, dataset: { tab: t.id } },
-        h('span', { class: 'tabbar__icon' }, icon(t.icon, 22), t.id === 'review' && h('span', { class: 'badge', hidden: true, 'data-badge': 'review' })),
+        h('span', { class: 'tabbar__icon' }, icon(t.icon, 24), t.id === 'review' && h('span', { class: 'badge', hidden: true, 'data-badge': 'review' })),
         h('span', { class: 'tabbar__label' }, t.label),
       ),
     ),

@@ -39,7 +39,7 @@ export const listeningView: View = () => {
     h(
       'div',
       { class: 'hero-lite' },
-      h('div', { class: 'intro__icon' }, icon('ear', 30)),
+      h('div', { class: 'intro__icon' }, icon('headphones', 24)),
       h('h2', null, 'Sons parecidos, vozes diferentes'),
       h('p', { class: 'muted' }, 'Use fones. Responda sem pensar muito.'),
       h('button', { class: 'btn btn--primary btn--block btn--lg', type: 'button', onclick: next, 'data-testid': 'listen-start' }, 'Começar', icon('play', 18)),

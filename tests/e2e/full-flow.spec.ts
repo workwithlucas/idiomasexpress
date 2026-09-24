@@ -75,7 +75,9 @@ test('módulos: descoberta, vozes variadas, ligação, fala com melodia, situaç
   await expect(page.getByTestId('feedback')).toBeVisible();
   await page.getByTestId('continue').last().click(); // resultado do 1º exemplo → próximo
   for (let i = 0; i < 3; i++) {
-    await expect(page.getByTestId('dont-know').or(page.getByTestId('discover-next'))).toBeVisible();
+    // Espera um exemplo NOVO (campo habilitado) ou o fim; depois de "Concluir" o
+    // passo respondido ainda fica na tela até a lista recarregar do banco.
+    await expect(page.locator('[data-testid=apply-input]:enabled').or(page.getByTestId('discover-next'))).toBeVisible();
     if (await page.getByTestId('discover-next').isVisible()) break;
     await page.getByTestId('dont-know').click();
     await page.getByTestId('continue').last().click();
@@ -280,6 +282,6 @@ test('offline: app, sessão e melodia funcionam sem rede', async ({ page, contex
   await expect(page.getByTestId('prosody-tips')).toBeVisible();
   expect(await page.getByTestId('contour-user').count()).toBeGreaterThan(0);
   await expect(page.getByTestId('azure-status')).toContainText('Sem internet');
-  expect(failed).toEqual([]);
+  expect(failed, `pedidos que falharam offline: ${failed.join(', ')}`).toEqual([]);
   await context.setOffline(false);
 });

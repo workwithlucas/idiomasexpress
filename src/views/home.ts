@@ -5,7 +5,6 @@ import { currentUser } from '../ui/session';
 import { getReviewStats } from '../db/repo';
 import { loadPlan, SESSION_SIZE } from '../lib/session';
 import { MODULES } from './modules';
-import { ring } from './session';
 
 export const homeView: View = async () => {
   const user = currentUser();
@@ -17,7 +16,7 @@ export const homeView: View = async () => {
 
   const cta = finished
     ? h('a', { class: 'btn btn--ghost btn--block', href: '#/sessao?nova=1', 'data-testid': 'session-more' }, 'Mais uma rodada')
-    : h('a', { class: 'btn btn--primary btn--block btn--lg', href: '#/sessao', 'data-testid': 'session-start' }, done ? 'Continuar' : 'Começar', icon('arrowRight', 18));
+    : h('a', { class: 'btn btn--primary btn--block', href: '#/sessao', 'data-testid': 'session-start' }, done ? 'Continuar' : 'Começar', icon('arrowRight', 18));
 
   return {
     title: 'Hoje',
@@ -27,21 +26,26 @@ export const homeView: View = async () => {
       { class: 'stack stack--lg' },
       h(
         'section',
-        { class: 'today' },
-        ring(finished ? 1 : done / total, finished ? undefined : `${done}/${total}`),
+        { class: 'today progress-card', 'aria-labelledby': 'today-label' },
         h(
           'div',
-          { class: 'today__text' },
-          h('h2', null, finished ? 'Sessão de hoje feita' : done ? 'Continue a sessão de hoje' : 'Sessão de hoje'),
-          h('p', null, finished ? 'Amanhã tem outra. Se quiser, siga um pouco mais.' : `${total} passos curtos · uns 10 minutos`),
+          { class: 'progress-card__head' },
+          h('h2', { class: 'progress-card__label', id: 'today-label' }, finished ? 'Sessão de hoje feita' : 'Sessão de hoje'),
+          h('span', { class: 'progress-card__count' }, `${finished ? total : done}/${total}`),
         ),
+        h(
+          'div',
+          { class: 'progress-card__bar', role: 'progressbar', 'aria-label': 'Progresso da sessão de hoje', 'aria-valuemin': '0', 'aria-valuemax': String(total), 'aria-valuenow': String(finished ? total : done) },
+          h('div', { class: 'progress-card__fill', style: `width: ${Math.round((finished ? 1 : done / total) * 100)}%` }),
+        ),
+        h('p', { class: 'today__text' }, finished ? 'Amanhã tem outra. Se quiser, siga um pouco mais.' : done ? `Faltam ${total - done} passos curtos.` : `${total} passos curtos · uns 10 minutos`),
         cta,
       ),
       stats.dueNow > 0 &&
         h(
           'a',
           { class: 'nudge', href: '#/revisao', 'data-testid': 'due-nudge' },
-          icon('review', 18),
+          icon('cycle', 24),
           h('span', null, `${stats.dueNow} ${stats.dueNow === 1 ? 'palavra quer' : 'palavras querem'} ser lembrada${stats.dueNow === 1 ? '' : 's'}`),
           h('span', { hidden: true, 'data-testid': 'due-count' }, String(stats.dueNow)),
           icon('chevronRight', 16),
@@ -58,7 +62,7 @@ export const homeView: View = async () => {
             h(
               'a',
               { class: 'module-card', href: `#${m.route}`, dataset: { module: m.id } },
-              h('span', { class: 'module-card__icon' }, icon(m.icon, 22)),
+              h('span', { class: 'module-card__icon' }, icon(m.icon, 24)),
               h('strong', null, m.title),
               h('span', null, m.subtitle),
             ),

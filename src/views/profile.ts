@@ -19,8 +19,8 @@ export const profileView: View = async () => {
       h(
         'div',
         { class: 'profile__hero' },
-        h('div', { class: 'profile__brand' }, h('span', { class: 'profile__mark', 'aria-hidden': 'true' }, brandMark(56)), h('span', { class: 'profile__name' }, 'Cedilha')),
-        h('p', { class: 'profile__tagline' }, 'francês a partir do português'),
+        h('div', { class: 'profile__brand' }, h('span', { class: 'profile__mark', 'aria-hidden': 'true' }, brandMark(60)), h('span', { class: 'profile__name' }, 'Poliglotas')),
+        h('p', { class: 'profile__tagline' }, 'O francês que já é seu vizinho.'),
         h('h1', { class: 'profile__title' }, 'Bonjour ! Quem é você?'),
       ),
       h(

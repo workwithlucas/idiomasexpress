@@ -58,16 +58,16 @@ export default defineConfig(({ mode }) => {
         includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
         manifest: {
           id: '/',
-          name: 'Cedilha — francês a partir do português',
-          short_name: 'Cedilha',
-          description: 'Francês para brasileiros, rumo a Luxemburgo: cognatos, pronúncia, frases por situação e revisão espaçada.',
+          name: 'Poliglotas',
+          short_name: 'Poliglotas',
+          description: 'O francês que já é seu vizinho. Francês para brasileiros, rumo a Luxemburgo: cognatos, pronúncia, frases por situação e revisão espaçada.',
           lang: 'pt-BR',
           start_url: '/',
           scope: '/',
           display: 'standalone',
           orientation: 'portrait',
-          background_color: '#F7F6F2',
-          theme_color: '#F7F6F2',
+          background_color: '#F4F5F8',
+          theme_color: '#F4F5F8',
           categories: ['education'],
           icons: [
             { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
@@ -82,7 +82,7 @@ export default defineConfig(({ mode }) => {
           // navegador só os baixaria por unicode-range, então não pré-cacheamos.
           // (O subconjunto "vietnamese" FICA: ele contém o til combinante U+0303
           // das vogais nasais no IPA, como /ɛ̃/, e seria pedido offline.)
-          globIgnores: ['**/*-{cyrillic,cyrillic-ext,greek,greek-ext}-wght-*.woff2'],
+          globIgnores: ['**/*-{cyrillic,greek}-*-normal-*.woff2'],
           navigateFallback: '/index.html',
           navigateFallbackDenylist: [/^\/api\//],
           cleanupOutdatedCaches: true,
