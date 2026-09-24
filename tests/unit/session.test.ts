@@ -54,6 +54,20 @@ describe('plano da sessão diária', () => {
     // Descobre as regras em ordem: a primeira de cada tipo.
     expect(plan.items.find((i) => i.type === 'cognate')!.ref).toBe('cr_cao_tion');
     expect(plan.items.find((i) => i.type === 'reading')!.ref).toBe('rr_eau');
+    // Primeira sessão: passo 2 = descobrir, passo 4 = frase (com "Fale você").
+    expect(plan.items.slice(0, 4).map((i) => i.type)).toEqual(['review', 'cognate', 'review', 'frame']);
+  });
+
+  it('com "lead", continua sem repetir tipo em sequência', () => {
+    const items: SessionItem[] = [
+      ...Array.from({ length: 8 }, (_, i) => ({ type: 'review' as const, ref: `r${i}` })),
+      ...(['cognate', 'reading', 'frame', 'pair'] as const).flatMap((t) => [{ type: t, ref: `${t}1` }, { type: t, ref: `${t}2` }]),
+    ];
+    for (let run = 0; run < 30; run++) {
+      const out = interleave(items, ['cognate', 'frame']);
+      expect(noAdjacent(out)).toBe(true);
+      expect(out.slice(0, 4).map((i) => i.type)).toEqual(['review', 'cognate', 'review', 'frame']);
+    }
   });
 
   it('palavras vencidas entram primeiro na metade de revisão', async () => {

@@ -37,7 +37,8 @@ const MAX_LESSONS_PER_KIND = 2; // descobertas são mais longas: no máximo 2 de
  * tem prioridade) e depois sorteio. Dentro de cada tipo, a ordem original
  * é mantida (vencidas antes das novas).
  */
-export function interleave(items: SessionItem[]): SessionItem[] {
+export function interleave(items: SessionItem[], lead: SessionItemType[] = []): SessionItem[] {
+  const leads = [...lead];
   const buckets = new Map<SessionItemType, SessionItem[]>();
   for (const it of items) buckets.set(it.type, [...(buckets.get(it.type) ?? []), it]);
   const out: SessionItem[] = [];
@@ -52,7 +53,10 @@ export function interleave(items: SessionItem[]): SessionItem[] {
     }
     const max = Math.max(...candidates.map(([, l]) => l.length));
     const top = candidates.filter(([, l]) => l.length === max);
-    const pick = top.find(([t]) => t === 'review') ?? top[Math.floor(Math.random() * top.length)];
+    // "lead": na primeira sessão, os primeiros conteúdos seguem uma ordem fixa.
+    const leadPick: [SessionItemType, SessionItem[]] | undefined = last === 'review' && leads.length ? candidates.find(([t]) => t === leads[0]) : undefined;
+    if (leadPick) leads.shift();
+    const pick: [SessionItemType, SessionItem[]] = leadPick ?? top.find(([t]) => t === 'review') ?? top[Math.floor(Math.random() * top.length)];
     out.push(pick[1].shift()!);
     last = pick[0];
   }
@@ -93,13 +97,16 @@ export async function buildPlan(userId: string): Promise<SessionPlan> {
   const frames = [liaisonFrames[0], ...shuffle([...liaisonFrames.slice(1), ...otherFrames])].filter(Boolean).slice(0, frameCount);
   const pairs = shuffle(c.minimalPairs).slice(0, remaining - frames.length);
 
+  // Primeira sessão da vida: logo no começo, uma descoberta ("eu mesmo achei")
+  // e uma frase para repetir e ver a própria melodia. Depois, tudo sorteado.
+  const firstEver = discovered.size === 0;
   const items = interleave([
     ...review,
     ...cog.map((r) => ({ type: 'cognate' as const, ref: r.id })),
     ...read.map((r) => ({ type: 'reading' as const, ref: r.id })),
     ...frames.map((f) => ({ type: 'frame' as const, ref: f.id })),
     ...pairs.map((p) => ({ type: 'pair' as const, ref: p.id })),
-  ]);
+  ], firstEver ? ['cognate', 'frame'] : []);
   return { day: dayKey(now()), userId, items, index: 0, right: 0 };
 }
 

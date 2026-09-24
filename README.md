@@ -12,6 +12,7 @@ PWA para acelerar o francês de dois falantes de português brasileiro (perfis *
 Cada dia começa com uma sessão de **16 passos intercalados**: tipos de exercício misturados, **nunca dois do mesmo tipo seguidos**, porque intercalar dá retenção melhor a longo prazo do que estudar em blocos.
 - **Metade é lembrar palavras:** primeiro as que **venceram** na revisão espaçada (prioridade), depois palavras novas do dia.
 - **Metade é conteúdo novo:** descobrir padrões de palavras-irmãs e de leitura, completar frases (sempre uma com ligação) e treinar o ouvido.
+- Na **primeira sessão da vida**, o passo 2 é uma descoberta (Palavras-irmãs) e o passo 4 é uma frase com "Fale você", para os dois momentos-chave acontecerem nos primeiros minutos. Depois disso, a ordem é sempre sorteada.
 - A sessão fica salva neste aparelho: dá para pausar (✕) e continuar depois. O tamanho está em `SESSION_SIZE` (`src/lib/session.ts`).
 
 ### Os 8 módulos (também acessíveis sozinhos, em "Por conta própria")
@@ -207,7 +208,7 @@ O TTS é a Web Speech API do próprio aparelho. Ela não entrega o áudio gerado
 | Acessibilidade | axe-core em todas as telas e estados, claro e escuro | 0 violações |
 | Lighthouse 13.5 (mobile) | Primeira visita e tela "Hoje" com perfil | 100 em Performance, Acessibilidade, Boas práticas e SEO |
 | Lighthouse 11.7.1 (último com PWA) | Primeira visita | PWA 100 · 0 erros de instalabilidade |
-| Estabilidade dos testes | 46 unitários; 15 E2E × 3 repetições | 46/46 · 45/45 |
+| Estabilidade dos testes | 47 unitários; 15 E2E × 3 repetições (e × 2 após o último ajuste) | 47/47 · 45/45 · 30/30 |
 
 ## Known issues
 
