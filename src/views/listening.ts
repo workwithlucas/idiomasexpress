@@ -127,7 +127,7 @@ export const listeningView: View = () => {
         'div',
         { class: 'card intro' },
         h('div', { class: 'intro__icon' }, icon('ear', 30)),
-        h('h3', null, `${c.minimalPairs.length} pares que confundem brasileiros`),
+        h('h2', null, `${c.minimalPairs.length} pares que confundem brasileiros`),
         h('p', null, 'Vogais nasais, o "u" francês, "eu" × "ô", s × z… Use fones de ouvido e responda sem pensar demais: o ouvido aprende com repetição.'),
         h('button', { class: 'btn btn--primary btn--block', type: 'button', onclick: () => start(), 'data-testid': 'listen-start' }, 'Começar', icon('play', 18)),
       ),

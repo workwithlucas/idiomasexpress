@@ -6,6 +6,14 @@
 export const recordingSupported =
   typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia && typeof MediaRecorder !== 'undefined';
 
+/** getUserMedia só existe em HTTPS ou localhost; fora disso a causa é essa, não o navegador. */
+export function recordingUnavailableReason(): string {
+  if (typeof window !== 'undefined' && !window.isSecureContext) {
+    return 'A gravação só funciona em conexão segura (HTTPS). Abra o app pelo endereço da Netlify ou por localhost.';
+  }
+  return 'Este navegador não permite gravar áudio. Use Chrome, Edge, Firefox ou Safari atualizados.';
+}
+
 const MIME_CANDIDATES = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus'];
 
 export class VoiceRecorder {
@@ -18,6 +26,7 @@ export class VoiceRecorder {
   }
 
   async start(): Promise<void> {
+    this.release(); // nunca deixa um microfone anterior aberto
     this.stream = await navigator.mediaDevices.getUserMedia({
       audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true },
     });
@@ -60,6 +69,6 @@ export function describeMicError(e: unknown): string {
   if (name === 'NotAllowedError' || name === 'SecurityError')
     return 'Permissão de microfone negada. Libere o microfone para este site nas configurações do navegador.';
   if (name === 'NotFoundError') return 'Nenhum microfone encontrado neste aparelho.';
-  if (name === 'NotReadableError') return 'O microfone está em uso por outro app.';
-  return `Não foi possível gravar: ${(e as Error)?.message ?? e}`;
+  if (name === 'NotReadableError' || name === 'AbortError') return 'O microfone está em uso por outro app. Feche-o e tente de novo.';
+  return `Não foi possível acessar o microfone (${name || 'erro desconhecido'}). Verifique a permissão de microfone deste site e tente de novo.`;
 }

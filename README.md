@@ -38,7 +38,7 @@ Outros comandos:
 npm run build        # gera o seed, checa os tipos e cria dist/ (com service worker)
 npm run preview      # serve o build de produção em http://localhost:4173
 npm test             # testes unitários (seed, FSRS, IndexedDB, import/export, proxy Azure)
-npm run test:e2e     # teste ponta a ponta no Chromium (rode `npm run build` antes)
+npm run test:e2e     # ponta a ponta no Chromium: fluxo completo, FSRS, offline e falhas (rode `npm run build` antes)
 npm run seed         # regenera public/seed/seed.json a partir de scripts/seed/
 npm run icons        # regenera os ícones PNG a partir de public/favicon.svg
 ```
@@ -116,7 +116,7 @@ Tudo fica no **IndexedDB** do navegador, sem servidor de dados. Cada `ReviewStat
 
 Para levar o progresso para outro aparelho: **Ajustes → Exportar progresso** (baixa um JSON com os dois perfis) e, no outro aparelho, **Importar**. A importação **mescla**: se a mesma palavra do mesmo perfil existir nos dois lados, vence a revisada mais recentemente. Dá para ir e voltar sem perder nada.
 
-> O progresso fica ligado ao navegador. Limpar os dados do site apaga o progresso: exporte de vez em quando como backup.
+> O progresso fica ligado ao navegador. Limpar os dados do site apaga o progresso: exporte de vez em quando como backup. O app pede ao navegador armazenamento persistente (`navigator.storage.persist()`), mas no iPhone a proteção de verdade é **instalar na tela inicial** (veja "Known issues").
 
 ---
 
@@ -167,6 +167,44 @@ O TTS é a Web Speech API do próprio aparelho. Ela não entrega o áudio gerado
     ├── unit/                     # vitest
     └── e2e/                      # playwright: fluxo completo + offline
 ```
+
+## Verificação de qualidade (QA)
+
+Última passada completa: build de produção (`vite preview`) no Chromium 141, emulando celulares.
+
+| Verificação | Como foi feita | Resultado |
+|---|---|---|
+| Fluxo completo do zero | IndexedDB limpo → seed → perfil → 8 módulos → revisão → dia seguinte simulado (`tests/e2e/full-flow.spec.ts`) | ✔ |
+| Erros no console | Todas as telas e interações, tema claro e escuro, online e offline | 0 erros, 0 avisos |
+| IndexedDB vazio/corrompido | Tabelas de conteúdo apagadas, perfis apagados, `ReviewState` inválido/órfão, `localStorage` corrompido, banco apagado com o app aberto (`tests/e2e/robustness.spec.ts`) | Recupera sozinho (repopula conteúdo, reinicia só o estado corrompido) |
+| 100% offline | Rede desligada: recarregar, abrir link direto a frio, todos os módulos, avaliar cartões | ✔, nenhum recurso faltando |
+| Cache do service worker | Inspeção do Cache Storage: `index.html`, JS, CSS, fontes, ícones, manifest e `seed/seed.json` (22 entradas) | ✔; atualização de versão testada sem perda de progresso |
+| TTS em francês | Listas de vozes simuladas: fr+en, só en/pt, vazia, carregamento tardio, preferência salva inválida | Sempre voz francesa; sem voz francesa **não fala** e avisa |
+| Microfone | Permitido, negado (`NotAllowedError`), sem microfone, contexto HTTP inseguro, toque múltiplo, sair da tela gravando | Mensagem clara em cada caso; microfone sempre liberado; 1 só stream |
+| Azure sem chave / chave inválida / API fora do ar | Servidor sem variáveis, com chave falsa, e respondendo HTML | Avisa, grava e deixa comparar sem nota; nunca trava |
+| FSRS | Unitário + E2E com avanço de data: "Fácil" (~10 d, com fuzz) × "Errei" (volta no mesmo dia) | ✔ |
+| Responsividade | 280 px (Galaxy Fold), 360, 375 (iPhone SE), 412, 430, paisagem e iPad: medição automática de overflow horizontal em todas as telas | 0 overflow |
+| Acessibilidade | axe-core em todas as telas, claro e escuro | 0 violações |
+| Lighthouse 13.5 (mobile) | Primeira visita e tela "Hoje" com perfil | Performance 99 / 100 · Acessibilidade 100 · Boas práticas 100 · SEO 100 |
+| Lighthouse 11.7.1 (último com a categoria PWA) | Primeira visita | PWA 100 · instalável (0 erros de instalabilidade no Chrome) |
+
+## Known issues
+
+Limitações conhecidas que **não** foram corrigidas nesta versão, com o motivo:
+
+1. **Não testado em celular físico.** O ambiente de QA só tinha Chromium; iPhone/Safari (WebKit) e Android real foram emulados (tamanho de tela, toque, DPR), não executados. *Por quê:* não havia aparelho nem WebKit disponível. **Conferir manualmente no primeiro uso:** voz francesa no iPhone e no Android, pedido de permissão do microfone, gravação + avaliação do Azure no Safari (que grava em MP4/AAC, convertido para WAV pela Web Audio API) e instalação na tela inicial.
+2. **iPhone: o áudio automático da Revisão pode não tocar no primeiro cartão.** O Safari só libera a síntese de voz depois de um toque do usuário. Tocar no botão de áudio uma vez resolve para o resto da sessão. *Por quê:* é uma política do iOS e não dá para contornar.
+3. **A qualidade da voz depende do aparelho.** A Web Speech API usa as vozes instaladas no sistema. Se não houver voz francesa, o app **desativa o áudio e avisa** (em vez de ler francês com sotaque de outra língua); Ajustes explica como instalar a voz. Em navegadores que não informam lista de vozes (alguns WebViews), o app pede `fr-FR` pelo atributo `lang`, e é o sistema que escolhe. *Por quê:* não há TTS embutido offline na v1 (seria um novo recurso, com Azure TTS ou arquivos de áudio).
+4. **`audio_generated` não guarda áudio.** A Web Speech API não entrega o áudio sintetizado. O campo marca só que a palavra já foi falada com sucesso naquele aparelho. *Por quê:* limitação da API (veja "Sobre o áudio").
+5. **A primeira abertura precisa de internet.** O app e o seed (~110 KB) só ficam disponíveis offline depois de baixados uma vez. Sem rede na primeira visita, o navegador mostra a própria página de erro. *Por quê:* é o funcionamento normal de um PWA; não há como servir algo antes de o service worker existir.
+6. **A avaliação de pronúncia precisa de internet e de chave.** Offline ou sem chave, o módulo 6 continua servindo para ouvir, gravar e comparar, mas sem nota. A chamada real ao Azure **não foi executada nesta passada** (não havia chave): os testes usam uma resposta simulada com o formato documentado pela Microsoft, e o proxy foi testado com chave inválida (erro tratado). *Por quê:* a chave é pessoal. Confira com a sua na primeira gravação.
+7. **iPhone sem instalar: o progresso pode ser apagado depois de 7 dias sem uso.** O Safari limpa o armazenamento de sites que não são abertos por 7 dias, a menos que o app esteja **na tela inicial**. O app pede armazenamento persistente, mas o Safari não garante. *Por quê:* é uma política do WebKit. **Instale na tela inicial e exporte o progresso de vez em quando.**
+8. **Os intervalos longos do FSRS variam um pouco.** Intervalos a partir de ~2,5 dias recebem um "fuzz" aleatório (ex.: "Fácil" numa palavra nova = 8–12 dias). *Por quê:* é intencional no FSRS, para as revisões não se acumularem no mesmo dia.
+9. **O limite de "palavras novas por dia" inclui as adicionadas manualmente** (botão de marcador nos módulos). *Por quê:* comportamento definido na v1 (o limite vale para o total de palavras que entram no dia); mudar seria mudança de regra, não correção.
+10. **Duas abas abertas ao mesmo tempo** compartilham o progresso, mas os contadores (badge de revisão, tela Hoje) de uma aba só se atualizam ao navegar nela. *Por quê:* sincronização entre abas seria funcionalidade nova. O uso previsto é o app instalado, com uma janela só.
+11. **Paisagem:** no navegador a tela fica compacta mas utilizável. O app instalado abre travado em retrato (`orientation: portrait` no manifest), que é o uso principal.
+12. **Um só pacote de JavaScript (~90 KB, 31 KB gzip).** O Lighthouse aponta ~22 KB não usados na primeira tela. *Por quê:* dividir o código por módulo traria complexidade para ganho desprezível (Performance já em 99–100, e tudo vem do cache depois da primeira visita).
+13. **O Lighthouse atual (12+) não tem mais a categoria "PWA".** A nota de PWA acima usa o Lighthouse 11.7.1, a última versão que a mede. A instalabilidade também foi confirmada direto no Chrome.
 
 ## Fora do escopo da v1 (de propósito)
 Nenhuma IA generalista, nenhuma conversa livre, nenhuma sincronização automática e nenhum login. A escolha de perfil é local.

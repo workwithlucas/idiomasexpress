@@ -209,6 +209,46 @@ test('primeiro uso até a revisão do dia seguinte', async ({ page }) => {
   expect(file.review_states.filter((r: { user_id: string }) => r.user_id === 'u_lucas')).toHaveLength(10);
 });
 
+test('FSRS: palavra "Fácil" some da fila por muito mais tempo que "Errei"', async ({ page }) => {
+  await stubSpeech(page);
+  await page.goto('/');
+  await page.click('[data-user="u_eduarda"]');
+  await page.goto('/#/revisao');
+
+  const rate = async (button: string) => {
+    const fr = await page.getByTestId('flash-fr').innerText();
+    await page.getByTestId('reveal').click();
+    await page.locator(button).click();
+    await expect(page.getByTestId('flash-fr')).not.toHaveText(fr); // próximo cartão já na tela
+    return fr;
+  };
+  const easyWord = await rate('.rate__btn--easy');
+  const againWord = await rate('.rate__btn--again');
+  expect(easyWord).not.toBe(againWord);
+
+  const advance = async (days: number) => {
+    await page.goto('/#/ajustes');
+    for (let i = 0; i < days; i++) await page.getByTestId('clock-plus-1').click();
+  };
+
+  // +1 dia: só a "Errei" está vencida (a "Fácil" foi para ~10 dias).
+  await advance(1);
+  await page.goto('/#/');
+  await expect(page.getByTestId('due-count')).toHaveText('1');
+  await page.goto('/#/revisao');
+  await expect(page.getByTestId('flash-fr')).toHaveText(againWord);
+
+  // +5 dias no total: a "Fácil" ainda não voltou.
+  await advance(4);
+  await page.goto('/#/');
+  await expect(page.getByTestId('due-count')).toHaveText('1');
+
+  // +15 dias: agora as duas estão vencidas.
+  await advance(10);
+  await page.goto('/#/');
+  await expect(page.getByTestId('due-count')).toHaveText('2');
+});
+
 test('funciona offline depois da primeira visita (service worker)', async ({ page, context }) => {
   await stubSpeech(page);
   await page.goto('/');
@@ -218,10 +258,34 @@ test('funciona offline depois da primeira visita (service worker)', async ({ pag
   });
   await page.reload(); // página passa a ser controlada pelo SW
   await expect(page.locator('.profile-card')).toHaveCount(2);
+  expect(await page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
+
+  // O precache contém o app shell e o seed.
+  const cached = await page.evaluate(async () => {
+    const urls: string[] = [];
+    for (const name of await caches.keys()) {
+      for (const req of await (await caches.open(name)).keys()) urls.push(new URL(req.url).pathname);
+    }
+    return urls;
+  });
+  expect(cached).toEqual(expect.arrayContaining(['/index.html', '/seed/seed.json', '/manifest.webmanifest']));
+  expect(cached.some((u) => /\/assets\/index-.*\.js$/.test(u))).toBe(true);
+  expect(cached.some((u) => /\/assets\/index-.*\.css$/.test(u))).toBe(true);
+
+  const failed: string[] = [];
+  page.on('requestfailed', (r) => !r.url().includes('/api/') && failed.push(r.url()));
   await context.setOffline(true);
   await page.reload();
   await page.click('[data-user="u_lucas"]');
+  for (const route of ['cognatos', 'leitura', 'escuta', 'frases', 'memoria', 'fala', 'revisao', 'situacoes/sc_medico']) {
+    await page.goto(`/#/${route}`);
+    await expect(page.locator('main')).not.toBeEmpty();
+  }
+  await expect(page.locator('.rule')).toHaveCount(0); // está em situacoes agora
   await page.goto('/#/cognatos');
   await expect(page.locator('.rule')).not.toHaveCount(0);
+  await page.goto('/#/fala');
+  await expect(page.getByTestId('azure-status')).toContainText('Sem internet');
+  expect(failed).toEqual([]); // nenhum recurso (fonte, script, seed) faltando offline
   await context.setOffline(false);
 });

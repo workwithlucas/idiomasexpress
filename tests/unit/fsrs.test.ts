@@ -44,6 +44,22 @@ describe('FSRS', () => {
     expect(p.good.getTime()).toBeLessThan(p.easy.getTime());
   });
 
+  it('palavra consolidada: easy > good > hard > again, e again volta no mesmo dia', () => {
+    let t = new Date('2026-01-10T09:00:00Z');
+    let s = newReviewState('u', 'w', t);
+    for (let i = 0; i < 3; i++) {
+      s = review(s, 'good', t);
+      t = new Date(s.due_at);
+    }
+    const p = previewIntervals(s, t);
+    const d = (x: Date) => x.getTime() - t.getTime();
+    expect(d(p.easy)).toBeGreaterThan(d(p.good));
+    expect(d(p.good)).toBeGreaterThan(d(p.hard));
+    expect(d(p.hard)).toBeGreaterThan(d(p.again));
+    expect(d(p.again)).toBeLessThan(DAY);
+    expect(d(p.easy)).toBeGreaterThan(30 * DAY);
+  });
+
   it('formata intervalos', () => {
     const t = new Date(0);
     expect(formatInterval(t, new Date(10 * 60_000))).toBe('10 min');

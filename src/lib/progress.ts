@@ -1,5 +1,6 @@
 import { getDB } from '../db/database';
 import type { Activity, ReviewState, User } from '../db/schema';
+import { isValidReviewState } from './fsrs';
 
 /**
  * Exportação/importação manual de progresso (sincronização entre aparelhos
@@ -50,10 +51,6 @@ function isProgressFile(x: unknown): x is ProgressFile {
   );
 }
 
-function isReviewState(r: ReviewState): boolean {
-  return typeof r?.user_id === 'string' && typeof r.word_id === 'string' && typeof r.due_at === 'string' &&
-    !Number.isNaN(Date.parse(r.due_at)) && typeof r.stability === 'number' && typeof r.difficulty === 'number';
-}
 
 /**
  * Mescla um arquivo exportado com o banco local. Conflito numa mesma palavra
@@ -75,7 +72,7 @@ export async function importProgress(raw: unknown): Promise<ImportSummary> {
 
   const rank = (r: ReviewState) => [r.last_review ?? '', r.reps ?? 0] as const;
   for (const incoming of raw.review_states) {
-    if (!isReviewState(incoming) || !validWords.has(incoming.word_id)) continue;
+    if (!isValidReviewState(incoming) || !validWords.has(incoming.word_id)) continue;
     const store = tx.objectStore('review_states');
     const local = await store.get([incoming.user_id, incoming.word_id]);
     if (!local) {

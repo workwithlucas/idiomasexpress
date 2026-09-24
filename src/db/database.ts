@@ -111,6 +111,17 @@ export async function applySeed(seed: SeedData): Promise<void> {
     minimal_pairs: seed.minimal_pairs.map((r) => r.id),
   };
   puts.push(tx.objectStore('meta').put({ key: 'content_order', value: order }));
+  const counts: ContentCounts = {
+    words: seed.words.length,
+    cognate_rules: seed.cognate_rules.length,
+    false_cognates: seed.false_cognates.length,
+    reading_rules: seed.reading_rules.length,
+    minimal_pairs: seed.minimal_pairs.length,
+    frames: seed.frames.length,
+    scenes: seed.scenes.length,
+  };
+  puts.push(tx.objectStore('meta').put({ key: 'content_counts', value: counts }));
+  puts.push(tx.objectStore('meta').put({ key: 'seed_user_ids', value: seed.users.map((u) => u.id) }));
   puts.push(tx.objectStore('meta').put({ key: 'seed_version', value: seed.version }));
   puts.push(tx.objectStore('meta').put({ key: 'seeded_at', value: new Date().toISOString() }));
 
@@ -128,10 +139,42 @@ export async function ensureSeeded(
   fetchSeed: () => Promise<SeedData> = defaultFetchSeed,
 ): Promise<boolean> {
   const current = await getMeta<number>('seed_version');
-  if (current !== undefined && current >= expectedVersion) return false;
+  const upToDate = typeof current === 'number' && current >= expectedVersion;
+  if (upToDate && (await contentIntact())) return false;
   const seed = await fetchSeed();
+  if (!isSeedData(seed)) throw new Error('O arquivo de conteúdo (seed.json) está corrompido.');
   await applySeed(seed);
   return true;
+}
+
+export type ContentCounts = Record<(typeof CONTENT_STORES)[number], number>;
+
+/**
+ * Confere se as tabelas de conteúdo e os perfis ainda batem com o último seed
+ * aplicado. Pega bancos parcialmente apagados (limpeza do navegador, extensão,
+ * DevTools, quota) que manteriam seed_version mas deixariam telas vazias.
+ */
+export async function contentIntact(): Promise<boolean> {
+  const db = await getDB();
+  const expected = await getMeta<ContentCounts>('content_counts');
+  const userIds = await getMeta<string[]>('seed_user_ids');
+  if (!expected || !Array.isArray(userIds)) return false;
+  for (const store of CONTENT_STORES) {
+    if ((await db.count(store)) !== expected[store]) return false;
+  }
+  for (const id of userIds) {
+    if (!(await db.getKey('users', id))) return false;
+  }
+  return true;
+}
+
+function isSeedData(x: unknown): x is SeedData {
+  const s = x as SeedData;
+  return (
+    !!s && typeof s.version === 'number' &&
+    [s.words, s.cognate_rules, s.false_cognates, s.reading_rules, s.minimal_pairs, s.frames, s.scenes, s.users].every(Array.isArray) &&
+    s.words.length > 0 && s.users.length > 0
+  );
 }
 
 async function defaultFetchSeed(): Promise<SeedData> {

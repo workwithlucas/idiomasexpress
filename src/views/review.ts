@@ -11,6 +11,7 @@ import { formatInterval, newReviewState, previewIntervals } from '../lib/fsrs';
 import { now } from '../lib/clock';
 import { prefs } from '../lib/prefs';
 import { withArticle } from '../lib/text';
+import { toast } from '../ui/toast';
 import type { ReviewResult } from '../db/schema';
 
 interface QueueItem {
@@ -56,7 +57,7 @@ export const reviewView: View = async () => {
     counter.textContent = `${queue.length} restante${queue.length === 1 ? '' : 's'}`;
   };
 
-  const showCard = async () => {
+  const showCard = async (): Promise<void> => {
     updateProgress();
     const item = queue[0];
     if (!item) return showFinished();
@@ -64,7 +65,7 @@ export const reviewView: View = async () => {
     const word = c.wordById.get(item.wordId);
     if (!word) {
       queue.shift();
-      return showCard();
+      return safeShowCard();
     }
     const state = (await getReviewState(user.id, word.id)) ?? newReviewState(user.id, word.id, now());
     const t = now();
@@ -105,16 +106,23 @@ export const reviewView: View = async () => {
     const rate = async (result: ReviewResult) => {
       if (!revealed || rating) return;
       rating = true;
-      const next = await rateWord(user.id, word.id, result);
-      queue.shift();
-      done.total++;
-      if (result === 'again') done.again++;
-      if (new Date(next.due_at).getTime() - now().getTime() <= REQUEUE_WITHIN_MS) {
-        queue.push({ wordId: word.id, isNew: false });
+      try {
+        const next = await rateWord(user.id, word.id, result);
+        queue.shift();
+        done.total++;
+        if (result === 'again') done.again++;
+        if (new Date(next.due_at).getTime() - now().getTime() <= REQUEUE_WITHIN_MS) {
+          queue.push({ wordId: word.id, isNew: false });
+        }
+        notifyProgressChanged();
+      } catch (e) {
+        console.error(e);
+        toast('Não foi possível salvar esta avaliação. Tente de novo.', 'error');
+        return;
+      } finally {
+        rating = false;
       }
-      notifyProgressChanged();
-      rating = false;
-      void showCard();
+      void safeShowCard();
     };
 
     render(
@@ -143,6 +151,13 @@ export const reviewView: View = async () => {
     if (prefs().autoplay) void speak(word.fr);
   };
 
+  /** Um erro inesperado vira mensagem na tela em vez de deixar a sessão travada. */
+  const safeShowCard = (): Promise<void> =>
+    showCard().catch((e: unknown) => {
+      console.error(e);
+      render(stage, h('div', { class: 'callout callout--error' }, icon('alert', 20), h('p', null, 'Não foi possível carregar o próximo cartão. Volte ao início e tente de novo.')));
+    });
+
   const showFinished = async () => {
     keyHandler = null;
     const stats = await getReviewStats(user.id);
@@ -153,7 +168,7 @@ export const reviewView: View = async () => {
         'div',
         { class: 'card finished', 'data-testid': 'review-finished' },
         h('div', { class: 'finished__icon' }, icon(done.total ? 'check' : 'sparkles', 30)),
-        h('h3', null, done.total ? 'Sessão concluída!' : 'Nada para revisar agora'),
+        h('h2', null, done.total ? 'Sessão concluída!' : 'Nada para revisar agora'),
         h(
           'p',
           null,
@@ -175,7 +190,7 @@ export const reviewView: View = async () => {
               onclick: async () => {
                 queue = await buildQueue(user.id, 5);
                 done = { total: 0, again: 0 };
-                void showCard();
+                void safeShowCard();
               },
             },
             icon('plus', 18),
@@ -191,7 +206,7 @@ export const reviewView: View = async () => {
   const onKey = (e: KeyboardEvent) => keyHandler?.(e);
   window.addEventListener('keydown', onKey);
 
-  void showCard();
+  void safeShowCard();
 
   return {
     title: 'Revisão',

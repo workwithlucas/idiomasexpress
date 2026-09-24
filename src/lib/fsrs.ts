@@ -59,6 +59,21 @@ function fromCard(card: Card, userId: string, wordId: string, result: ReviewResu
   };
 }
 
+const finite = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n);
+const validDate = (d: unknown): boolean => typeof d === 'string' && !Number.isNaN(Date.parse(d));
+
+/** Confere se um estado salvo (ou importado) tem todos os campos que o FSRS precisa. */
+export function isValidReviewState(rs: ReviewState): boolean {
+  return (
+    !!rs && typeof rs.user_id === 'string' && typeof rs.word_id === 'string' &&
+    validDate(rs.due_at) && validDate(rs.created_at) &&
+    (rs.last_review === null || validDate(rs.last_review)) &&
+    finite(rs.stability) && rs.stability >= 0 && finite(rs.difficulty) &&
+    finite(rs.reps) && finite(rs.lapses) && finite(rs.scheduled_days) && finite(rs.elapsed_days) &&
+    finite(rs.learning_steps) && [0, 1, 2, 3].includes(rs.state)
+  );
+}
+
 /** Aplica uma avaliação e devolve o novo estado (não persiste). */
 export function review(rs: ReviewState, result: ReviewResult, at: Date): ReviewState {
   const { card } = scheduler.next(toCard(rs), at, RESULT_TO_RATING[result]);

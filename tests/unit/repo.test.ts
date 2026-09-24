@@ -46,6 +46,27 @@ describe('banco local (IndexedDB)', () => {
     setClockOffsetDays(0);
   });
 
+  it('"easy" sai da fila por muito mais tempo que "again" (com avanço de data)', async () => {
+    setClockOffsetDays(0);
+    const [easyWord, againWord] = await getNewWords('u_eduarda', 2);
+    await rateWord('u_eduarda', easyWord.id, 'easy');
+    await rateWord('u_eduarda', againWord.id, 'again');
+    const dueIds = async (days: number) => {
+      setClockOffsetDays(days);
+      return new Set((await getDueStates('u_eduarda')).map((s) => s.word_id));
+    };
+    // "again" volta em minutos; "easy" não aparece por dias.
+    expect((await dueIds(1)).has(againWord.id)).toBe(true);
+    expect((await dueIds(1)).has(easyWord.id)).toBe(false);
+    // "easy" em palavra nova = ~10 dias, com fuzz do FSRS (±~20%)
+    expect((await dueIds(5)).has(easyWord.id)).toBe(false);
+    expect((await dueIds(15)).has(easyWord.id)).toBe(true);
+    setClockOffsetDays(0);
+    const easy = await getReviewState('u_eduarda', easyWord.id);
+    const again = await getReviewState('u_eduarda', againWord.id);
+    expect(Date.parse(easy!.due_at) - Date.parse(again!.due_at)).toBeGreaterThan(5 * 86_400_000);
+  });
+
   it('addToReview não duplica', async () => {
     expect(await addToReview('u_eduarda', 'w_banque')).toBe(true);
     expect(await addToReview('u_eduarda', 'w_banque')).toBe(false);
@@ -60,11 +81,12 @@ describe('banco local (IndexedDB)', () => {
 
   it('exporta e importa progresso, mantendo o estado mais recente', async () => {
     const file = await exportProgress();
-    expect(file.review_states.length).toBe(4);
+    const total = file.review_states.length;
+    expect(total).toBeGreaterThan(0);
     const stale = structuredClone(file);
     stale.review_states = stale.review_states.map((r) => ({ ...r, last_review: null, reps: 0 }));
     const r1 = await importProgress(stale);
-    expect(r1.statesKept).toBe(4);
+    expect(r1.statesKept).toBe(total);
     expect(r1.statesUpdated).toBe(0);
 
     const newer = structuredClone(file);

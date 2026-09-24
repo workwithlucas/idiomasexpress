@@ -80,7 +80,9 @@ export default defineConfig(({ mode }) => {
           globPatterns: ['**/*.{js,css,html,svg,png,woff2,json}'],
           // Subconjuntos de fonte que o conteúdo (pt/fr/IPA) nunca usa: o
           // navegador só os baixaria por unicode-range, então não pré-cacheamos.
-          globIgnores: ['**/*-{cyrillic,cyrillic-ext,greek,greek-ext,vietnamese}-wght-*.woff2'],
+          // (O subconjunto "vietnamese" FICA: ele contém o til combinante U+0303
+          // das vogais nasais no IPA, como /ɛ̃/, e seria pedido offline.)
+          globIgnores: ['**/*-{cyrillic,cyrillic-ext,greek,greek-ext}-wght-*.woff2'],
           navigateFallback: '/index.html',
           navigateFallbackDenylist: [/^\/api\//],
           cleanupOutdatedCaches: true,

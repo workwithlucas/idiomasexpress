@@ -5,7 +5,7 @@ import { navigate } from '../ui/router';
 import { content, loadContent } from '../db/repo';
 import { getMeta } from '../db/database';
 import { currentUser, notifyProgressChanged } from '../ui/session';
-import { frenchVoices, onVoicesChanged, pickVoice, speak, ttsSupported } from '../lib/tts';
+import { allVoicesCount, frenchVoices, onVoicesChanged, pickVoice, speak, ttsSupported } from '../lib/tts';
 import { prefs, setPrefs } from '../lib/prefs';
 import { downloadJson, exportProgress, importProgress } from '../lib/progress';
 import { azureStatus } from '../lib/pronunciation';
@@ -14,7 +14,7 @@ import { toast } from '../ui/toast';
 import { dayKey } from '../lib/clock';
 
 function section(title: string, ...children: (Node | false | null | undefined)[]): HTMLElement {
-  return h('section', { class: 'settings-section' }, h('h3', null, title), h('div', { class: 'card settings-card' }, children));
+  return h('section', { class: 'settings-section' }, h('h2', null, title), h('div', { class: 'card settings-card' }, children));
 }
 
 function field(label: string, control: Node, hint?: string): HTMLElement {
@@ -32,8 +32,13 @@ export const settingsView: View = async () => {
     'aria-label': 'Voz francesa',
     onchange: () => setPrefs({ voiceURI: voiceSelect.value || null }),
   });
+  const voiceWarning = h('p', { class: 'form-error', hidden: true, 'data-testid': 'no-french-voice' },
+    'Nenhuma voz francesa neste aparelho: o áudio fica desativado para não tocar em outro idioma. ',
+    'Android: Configurações → Texto para fala → Google → instalar dados de voz "Français". ',
+    'iPhone: Ajustes → Acessibilidade → Conteúdo Falado → Vozes → Français.');
   const fillVoices = () => {
     const voices = frenchVoices();
+    voiceWarning.hidden = !(voices.length === 0 && allVoicesCount() > 0);
     const active = pickVoice();
     render(
       voiceSelect,
@@ -44,12 +49,12 @@ export const settingsView: View = async () => {
   fillVoices();
   const unsubscribeVoices = onVoicesChanged(fillVoices);
 
-  const rateValue = h('output', { class: 'range-value' }, `${prefs().speechRate.toFixed(2)}×`);
+  const rateValue = h('output', { class: 'range-value' }, `${prefs().speechRate.toFixed(2).replace(".", ",")}×`);
   const rateInput = h('input', {
     type: 'range', min: '0.5', max: '1.2', step: '0.05', value: String(prefs().speechRate), 'aria-label': 'Velocidade da fala',
     oninput: () => {
       setPrefs({ speechRate: Number(rateInput.value) });
-      rateValue.textContent = `${Number(rateInput.value).toFixed(2)}×`;
+      rateValue.textContent = `${Number(rateInput.value).toFixed(2).replace(".", ",")}×`;
     },
   });
 
@@ -82,7 +87,8 @@ export const settingsView: View = async () => {
   const azureBox = h('span', { class: 'status status--checking' }, 'verificando…');
   void azureStatus().then((s) => {
     azureBox.className = `status status--${s}`;
-    azureBox.textContent = s === 'configured' ? 'configurado' : s === 'not_configured' ? 'sem chave' : 'indisponível';
+    azureBox.textContent = s === 'configured' ? 'configurado' : s === 'not_configured' ? 'sem chave' : s === 'offline' ? 'sem internet' : 'indisponível';
+    if (s === 'offline') azureBox.className = 'status status--unreachable';
   });
 
   // --- Data simulada (testes) ----------------------------------------------
@@ -120,6 +126,7 @@ export const settingsView: View = async () => {
         'Voz em francês',
         !ttsSupported && h('p', { class: 'form-error' }, 'Este navegador não tem síntese de voz.'),
         field('Voz', voiceSelect, 'Vozes marcadas "online" precisam de internet.'),
+        voiceWarning,
         field('Velocidade', h('div', { class: 'range' }, rateInput, rateValue)),
         h('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => void speak("Bonjour ! On va apprendre le français ensemble.") }, icon('play', 16), 'Testar voz'),
       ),

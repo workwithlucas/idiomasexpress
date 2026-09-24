@@ -1,6 +1,6 @@
 import { h, type Child } from './dom';
 import { icon } from './icons';
-import { speak, ttsSupported } from '../lib/tts';
+import { speak } from '../lib/tts';
 import { addToReview, markAudioGenerated } from '../db/repo';
 import type { Word } from '../db/schema';
 import { withArticle } from '../lib/text';
@@ -19,10 +19,6 @@ export function playButton(text: string, opts: { wordId?: string; label?: string
       title: 'Ouvir',
       onclick: async (e: Event) => {
         e.stopPropagation();
-        if (!ttsSupported) {
-          toast('Este navegador não tem síntese de voz. Tente Chrome, Edge ou Safari.', 'error');
-          return;
-        }
         document.querySelectorAll('.play--active').forEach((b) => b.classList.remove('play--active'));
         btn.classList.add('play--active');
         const ok = await speak(text, { rate: opts.rate });
@@ -84,10 +80,6 @@ export function wordRow(word: Word, extra?: Child, opts: { review?: boolean } = 
 
 export function sectionTitle(title: string, subtitle?: string): HTMLElement {
   return h('header', { class: 'section-title' }, h('h2', null, title), subtitle && h('p', null, subtitle));
-}
-
-export function emptyState(title: string, text: string, action?: Child): HTMLElement {
-  return h('div', { class: 'empty' }, h('div', { class: 'empty__icon' }, icon('sparkles', 28)), h('h3', null, title), h('p', null, text), action);
 }
 
 export function segmented<T extends string>(

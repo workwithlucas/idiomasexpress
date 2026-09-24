@@ -26,6 +26,10 @@ export function onVoicesChanged(fn: () => void): () => void {
   return () => listeners.delete(fn);
 }
 
+export function allVoicesCount(): number {
+  return voices.length;
+}
+
 export function frenchVoices(): SpeechSynthesisVoice[] {
   return voices.filter((v) => v.lang.toLowerCase().replace('_', '-').startsWith('fr'));
 }
@@ -42,27 +46,70 @@ export function pickVoice(): SpeechSynthesisVoice | null {
   return fr.sort((a, b) => score(b) - score(a))[0] ?? null;
 }
 
+/** Idioma BCP 47 normalizado (Android às vezes informa "fr_FR"). */
+const normLang = (lang: string) => lang.replace('_', '-');
+
+export type TtsProblem = 'unsupported' | 'no-french-voice';
+
+/** Avisa a interface (ver main.ts) quando não há como falar em francês. */
+function reportProblem(problem: TtsProblem): void {
+  window.dispatchEvent(new CustomEvent<TtsProblem>('tts-problem', { detail: problem }));
+}
+
+/** Chrome carrega as vozes de forma assíncrona: espera até 1,5 s pela lista. */
+function voicesReady(): Promise<void> {
+  if (voices.length) return Promise.resolve();
+  return new Promise((resolve) => {
+    const done = () => {
+      clearTimeout(t);
+      off();
+      resolve();
+    };
+    const t = setTimeout(done, 1500);
+    const off = onVoicesChanged(() => voices.length && done());
+  });
+}
+
 let speaking: { resolve: (ok: boolean) => void } | null = null;
+let callId = 0;
 
 /**
  * Fala o texto em francês. Resolve true ao terminar, false se interrompido/erro.
  * Cancela a fala anterior (clicar rápido em vários botões não enfileira áudio).
+ *
+ * Nunca cai para uma voz de outro idioma: se o aparelho lista vozes mas nenhuma
+ * é francesa, não fala e avisa. Se o navegador não expõe lista nenhuma (alguns
+ * WebViews), pede fr-FR pelo atributo lang, que é o melhor possível ali.
  */
-export function speak(text: string, opts: { rate?: number } = {}): Promise<boolean> {
-  if (!ttsSupported) return Promise.resolve(false);
+export async function speak(text: string, opts: { rate?: number } = {}): Promise<boolean> {
+  if (!ttsSupported) {
+    reportProblem('unsupported');
+    return false;
+  }
   if (speaking) {
     speaking.resolve(false);
     speaking = null;
   }
   speechSynthesis.cancel();
+  const myCall = ++callId;
+  // Com a lista já carregada (Safari/iOS sempre), fala na mesma pilha do toque,
+  // o que o iOS exige; só espera quando a lista ainda não chegou.
+  if (!voices.length) {
+    await voicesReady();
+    if (myCall !== callId) return false; // outro áudio foi pedido enquanto esperávamos
+  }
+  const voice = pickVoice();
+  if (!voice && voices.length) {
+    reportProblem('no-french-voice');
+    return false;
+  }
   return new Promise((resolve) => {
     const u = new SpeechSynthesisUtterance(text);
-    const voice = pickVoice();
     if (voice) u.voice = voice;
-    u.lang = voice?.lang ?? 'fr-FR';
+    u.lang = voice ? normLang(voice.lang) : 'fr-FR';
     u.rate = opts.rate ?? prefs().speechRate;
-    // Salvaguarda: alguns ambientes nunca disparam onend (ex.: sem voz instalada).
-    const timeout = setTimeout(() => finish(false), 4000 + text.length * 180);
+    // Salvaguarda: alguns ambientes nunca disparam onend.
+    const timeout = setTimeout(() => finish(false), 4000 + (text.length * 180) / Math.min(1, u.rate));
     const finish = (ok: boolean) => {
       clearTimeout(timeout);
       if (speaking?.resolve === finish) speaking = null;
@@ -79,6 +126,7 @@ export function speak(text: string, opts: { rate?: number } = {}): Promise<boole
 
 export function stopSpeaking(): void {
   if (!ttsSupported) return;
+  callId++; // cancela também uma fala que ainda esperava a lista de vozes
   speaking?.resolve(false);
   speaking = null;
   speechSynthesis.cancel();

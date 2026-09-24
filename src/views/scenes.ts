@@ -56,7 +56,7 @@ export const sceneDetailView: View = ({ params }) => {
       'div',
       { class: 'stack' },
       h('div', { class: 'scene-hero' }, h('span', { class: 'scene-card__icon' }, icon(scene.icon, 26)), h('p', null, scene.description)),
-      h('h3', { class: 'list-heading' }, 'Frases prontas'),
+      h('h2', { class: 'list-heading' }, 'Frases prontas'),
       h(
         'ul',
         { class: 'frame-list' },
@@ -89,7 +89,7 @@ export const sceneDetailView: View = ({ params }) => {
           ),
         ),
       ),
-      h('h3', { class: 'list-heading' }, `Vocabulário (${words.length})`),
+      h('h2', { class: 'list-heading' }, `Vocabulário (${words.length})`),
       h('ul', { class: 'word-list card' }, words.map((w) => wordRow(w))),
     ),
   };

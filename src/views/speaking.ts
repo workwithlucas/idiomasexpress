@@ -5,9 +5,9 @@ import { content, logActivity } from '../db/repo';
 import { currentUser } from '../ui/session';
 import { ipa, playButton } from '../ui/components';
 import { speak, stopSpeaking } from '../lib/tts';
-import { describeMicError, recordingSupported, VoiceRecorder } from '../lib/recorder';
+import { describeMicError, recordingSupported, recordingUnavailableReason, VoiceRecorder } from '../lib/recorder';
 import { toWav16kMono } from '../lib/wav';
-import { assessPronunciation, azureStatus, PronunciationError, type PronunciationResult, type WordScore } from '../lib/pronunciation';
+import { assessPronunciation, azureStatus, PronunciationError, type AzureStatus, type PronunciationResult, type WordScore } from '../lib/pronunciation';
 import { fillFrame, pickRandom, primaryPt } from '../lib/text';
 
 interface Target {
@@ -52,7 +52,7 @@ export const speakingView: View = ({ query }) => {
   let recordingUrl: string | null = null;
   let recordedBlob: Blob | null = null;
   let timer: number | undefined;
-  let azure: 'configured' | 'not_configured' | 'unreachable' | 'checking' = 'checking';
+  let azure: AzureStatus | 'checking' = 'checking';
 
   const targetBox = h('div', { class: 'stack stack--sm' });
   const recorderBox = h('div');
@@ -98,15 +98,15 @@ export const speakingView: View = ({ query }) => {
       ),
     );
 
-  const renderRecorder = (state: 'idle' | 'recording' | 'recorded' | 'busy', seconds = 0) => {
+  const renderRecorder = (state: 'idle' | 'starting' | 'recording' | 'recorded' | 'busy', seconds = 0) => {
     if (!recordingSupported) {
-      render(recorderBox, h('div', { class: 'callout callout--warn' }, icon('alert', 20), h('p', null, 'Este navegador não permite gravar áudio. Use Chrome, Edge, Firefox ou Safari atualizados.')));
+      render(recorderBox, h('div', { class: 'callout callout--warn', 'data-testid': 'rec-unavailable' }, icon('alert', 20), h('p', null, recordingUnavailableReason())));
       return;
     }
     const mainBtn =
       state === 'recording'
         ? h('button', { class: 'rec rec--on', type: 'button', onclick: stopRecording, 'aria-label': 'Parar gravação', 'data-testid': 'rec-stop' }, icon('stop', 30))
-        : h('button', { class: 'rec', type: 'button', onclick: startRecording, disabled: state === 'busy', 'aria-label': 'Gravar', 'data-testid': 'rec-start' }, icon('mic', 30));
+        : h('button', { class: 'rec', type: 'button', onclick: startRecording, disabled: state === 'busy' || state === 'starting', 'aria-label': 'Gravar', 'data-testid': 'rec-start' }, icon('mic', 30));
 
     render(
       recorderBox,
@@ -121,7 +121,7 @@ export const speakingView: View = ({ query }) => {
           h(
             'p',
             { class: 'recorder__status' },
-            state === 'recording' ? h('span', { class: 'rec-dot' }, `Gravando… ${seconds}s`) : state === 'recorded' ? 'Gravado. Ouça e compare com o modelo.' : state === 'busy' ? 'Processando…' : 'Toque para gravar e fale a frase.',
+            state === 'recording' ? h('span', { class: 'rec-dot' }, `Gravando… ${seconds}s`) : state === 'recorded' ? 'Gravado. Ouça e compare com o modelo.' : state === 'busy' ? 'Processando…' : state === 'starting' ? 'Aguardando o microfone… (permita o acesso se o navegador pedir)' : 'Toque para gravar e fale a frase.',
           ),
         ),
         recordingUrl && state !== 'recording' && h('audio', { class: 'recorder__audio', controls: true, src: recordingUrl, 'data-testid': 'own-recording' }),
@@ -141,13 +141,26 @@ export const speakingView: View = ({ query }) => {
     );
   };
 
+  let starting = false;
+  let left = false; // usuário saiu da tela enquanto o pedido de permissão estava aberto
+
   const startRecording = async () => {
+    if (starting || recorder.recording) return; // toque duplo não abre dois microfones
+    starting = true;
     resetRecording();
     stopSpeaking();
+    renderRecorder('starting');
     try {
       await recorder.start();
     } catch (e) {
-      render(resultBox, h('div', { class: 'callout callout--error' }, icon('alert', 20), h('p', null, describeMicError(e))));
+      renderRecorder('idle');
+      render(resultBox, h('div', { class: 'callout callout--error', 'data-testid': 'mic-error' }, icon('alert', 20), h('p', null, describeMicError(e))));
+      return;
+    } finally {
+      starting = false;
+    }
+    if (left) {
+      recorder.release();
       return;
     }
     let seconds = 0;
@@ -248,7 +261,9 @@ export const speakingView: View = ({ query }) => {
           null,
           azure === 'not_configured'
             ? 'A nota automática usa o Azure Speech, que ainda não foi configurado (veja o README). Você pode gravar e comparar com o modelo normalmente.'
-            : 'Sem conexão com o serviço de avaliação agora. Grave e compare com o modelo; a nota volta quando houver internet.',
+            : azure === 'offline'
+              ? 'Sem internet: a nota do Azure volta quando houver conexão. Enquanto isso, grave e compare com o modelo.'
+              : 'O serviço de avaliação está indisponível agora. Grave e compare com o modelo; tente a nota mais tarde.',
         ),
       ),
     );
@@ -269,6 +284,7 @@ export const speakingView: View = ({ query }) => {
     back: fromQuery ? '/frases' : '/aprender',
     tab: 'learn',
     cleanup: () => {
+      left = true;
       window.clearInterval(timer);
       recorder.release();
       if (recordingUrl) URL.revokeObjectURL(recordingUrl);

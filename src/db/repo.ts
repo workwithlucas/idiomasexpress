@@ -3,7 +3,7 @@ import type {
   Activity, CognateRule, FalseCognate, Frame, MinimalPair, ModuleId, ReadingRule, ReviewResult, ReviewState, Scene, User, Word,
 } from './schema';
 import { dayKey, endOfLocalDay, now, startOfLocalDay } from '../lib/clock';
-import { newReviewState, review as fsrsReview, MATURE_STABILITY_DAYS } from '../lib/fsrs';
+import { isValidReviewState, newReviewState, review as fsrsReview, MATURE_STABILITY_DAYS } from '../lib/fsrs';
 
 /** Conteúdo é pequeno (~500 palavras) e só muda com um seed novo:
  *  carregamos tudo em memória uma vez para as telas ficarem instantâneas. */
@@ -86,18 +86,52 @@ export async function listUsers(): Promise<User[]> {
 
 // ---- Revisão espaçada ------------------------------------------------------
 
+/**
+ * Estado utilizável: campos válidos para o FSRS e palavra existente no conteúdo
+ * atual. Estados órfãos (palavra removida de um seed) ficam guardados, mas não
+ * entram em filas nem contadores.
+ */
+function usable(rs: ReviewState | undefined): rs is ReviewState {
+  return !!rs && isValidReviewState(rs) && !!contentCache?.wordById.has(rs.word_id);
+}
+
 export async function getReviewState(userId: string, wordId: string): Promise<ReviewState | undefined> {
-  return (await getDB()).get('review_states', [userId, wordId]);
+  const rs = await (await getDB()).get('review_states', [userId, wordId]);
+  return usable(rs) ? rs : undefined;
 }
 
 export async function getUserReviewStates(userId: string): Promise<ReviewState[]> {
-  return (await getDB()).getAllFromIndex('review_states', 'by_user', userId);
+  return (await (await getDB()).getAllFromIndex('review_states', 'by_user', userId)).filter(usable);
 }
 
 /** Estados com due_at <= instante (padrão: agora). */
 export async function getDueStates(userId: string, until: Date = now()): Promise<ReviewState[]> {
   const range = IDBKeyRange.bound([userId, ''], [userId, until.toISOString()]);
-  return (await getDB()).getAllFromIndex('review_states', 'by_user_due', range);
+  return (await (await getDB()).getAllFromIndex('review_states', 'by_user_due', range)).filter(usable);
+}
+
+/**
+ * Recupera estados de revisão corrompidos (campos ausentes/NaN, datas inválidas):
+ * a palavra volta a ser "nova" em vez de travar a tela de revisão.
+ * Retorna quantos foram reparados.
+ */
+export async function repairReviewStates(): Promise<number> {
+  const db = await getDB();
+  const tx = db.transaction('review_states', 'readwrite');
+  let repaired = 0;
+  let cursor = await tx.store.openCursor();
+  while (cursor) {
+    const rs = cursor.value;
+    if (!isValidReviewState(rs) && typeof rs?.user_id === 'string' && typeof rs.word_id === 'string') {
+      const fresh = newReviewState(rs.user_id, rs.word_id, now());
+      if (typeof rs.created_at === 'string' && !Number.isNaN(Date.parse(rs.created_at))) fresh.created_at = rs.created_at;
+      await cursor.update(fresh);
+      repaired++;
+    }
+    cursor = await cursor.continue();
+  }
+  await tx.done;
+  return repaired;
 }
 
 /** Próximas palavras novas (sem ReviewState), em ordem de frequência. */
@@ -126,7 +160,8 @@ export async function addToReview(userId: string, wordId: string): Promise<boole
 export async function rateWord(userId: string, wordId: string, result: ReviewResult): Promise<ReviewState> {
   const db = await getDB();
   const at = now();
-  const current = (await db.get('review_states', [userId, wordId])) ?? newReviewState(userId, wordId, at);
+  const stored = await db.get('review_states', [userId, wordId]);
+  const current = stored && isValidReviewState(stored) ? stored : newReviewState(userId, wordId, at);
   const next = fsrsReview(current, result, at);
   await db.put('review_states', next);
   await logActivity(userId, 'review', 'rate', { word_id: wordId, correct: result !== 'again' });

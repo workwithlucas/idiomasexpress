@@ -104,8 +104,10 @@ export async function handlePronunciation(req: Request, cfg: AzureConfig): Promi
         Accept: 'application/json',
       },
       body: audio,
+      signal: AbortSignal.timeout(25_000),
     });
   } catch (e) {
+    if ((e as DOMException)?.name === 'TimeoutError') return err('upstream', 'O Azure demorou demais para responder. Tente de novo.', 504);
     return err('upstream', `Falha de rede ao contatar o Azure: ${(e as Error).message}`, 502);
   }
 
