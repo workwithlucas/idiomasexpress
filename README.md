@@ -152,17 +152,48 @@ Cada nota fica salva **por palavra** no IndexedDB, na store `pronunciation_histo
 
 ## Deploy na Netlify
 
-O repositório já tem o `netlify.toml` (build, pasta publicada, funções e cabeçalhos).
+**Produção:** _(link entra aqui depois do primeiro deploy)_
 
-1. Na Netlify: **Add new site → Import an existing project** e escolha este repositório do GitHub.
-2. As configurações vêm do `netlify.toml`: comando `npm run build`, pasta `dist`, funções em `netlify/functions`. Não é preciso mudar nada.
-3. Em **Site configuration → Environment variables**, adicione:
-   - `AZURE_SPEECH_KEY` = sua KEY 1
-   - `AZURE_SPEECH_REGION` = a região (ex.: `westeurope`)
-4. Faça o deploy (ou **Deploys → Trigger deploy** se o site já existia antes das variáveis).
-5. Abra o site no celular:
-   - **Android (Chrome):** menu ⋮ → *Instalar app* / *Adicionar à tela inicial*.
-   - **iPhone (Safari):** botão Compartilhar → *Adicionar à Tela de Início*.
+O deploy sai **da branch `main`**. O `netlify.toml` já traz tudo:
+- build `npm run build`, pasta `dist`, funções em `netlify/functions`, Node 22;
+- **cache:**
+  - `sw.js`, página, manifest e seed são revalidados a cada visita (versões novas chegam logo);
+  - `/assets/*` (nomes com hash) fica em cache por 1 ano, imutável;
+  - ícones ficam em cache por 1 semana;
+- **segurança:** CSP só com o próprio site (fontes embutidas, sem CDN), microfone liberado só para o próprio site, HSTS e `nosniff`;
+- **rotas:** o app navega por hash (`#/aprender`), então não precisa de redirect de SPA. `/api/pronunciation` é a Function do Azure.
+
+### 1. Criar o site (uma vez)
+1. Em <https://app.netlify.com>: **Add new site → Import an existing project → GitHub**. Autorize o app da Netlify e escolha `workwithlucas/idiomasexpress`.
+2. **Branch to deploy:** `main`. Os campos de build vêm preenchidos pelo `netlify.toml`: não mude nada.
+3. **Deploy.** Opcional: em **Site configuration → Site details → Change site name**, troque o nome, ex.: `poliglotas` → `poliglotas.netlify.app`.
+
+### 2. Chave do Azure no painel da Netlify (sem expor no código)
+A chave fica **só** no painel. O navegador nunca a recebe: quem chama o Azure é a Function.
+
+1. No site: **Site configuration → Environment variables → Add a variable → Add a single variable**.
+2. Crie as duas:
+
+   | Key | Value | Scopes |
+   |---|---|---|
+   | `AZURE_SPEECH_KEY` | a KEY 1 do recurso Speech | **Functions** (pode marcar só esta) |
+   | `AZURE_SPEECH_REGION` | o código da região, ex.: `francecentral` | **Functions** |
+
+   Em "Values", use **Same value for all deploy contexts**.
+3. **Deploys → Trigger deploy → Deploy site.** As Functions só leem variáveis novas num deploy novo.
+4. Confira no app publicado: **Ajustes → Serviço de nota** deve mostrar **configurado**. "Chave recusada" = chave ou região erradas; "sem chave" = faltou o novo deploy.
+
+> Nunca coloque a chave no `netlify.toml`, em arquivos do repositório ou em variáveis `VITE_*`: tudo isso vira público. Se a chave vazar, gere outra no Azure (**Keys and Endpoint → Regenerate Key 1**), troque aqui e dispare um novo deploy.
+
+### 3. Instalar no celular ("adicionar à tela inicial")
+- **Android (Chrome):** abra o link → aparece **Instalar app** (ou menu ⋮ → *Instalar app*). O ícone é o Logomark sobre fundo claro, recortado pelo formato do aparelho.
+- **iPhone (Safari):** abra o link **no Safari** (não no Chrome do iPhone) → botão **Compartilhar** → **Adicionar à Tela de Início** → *Adicionar*. Abra pelo ícone: o app ocupa a tela toda, sem a barra do Safari.
+
+### 4. Roteiro de teste no celular (5 minutos)
+1. **Online:** abra pelo ícone → escolha o perfil → faça 3 passos da sessão de hoje → **Fale e compare**: grave uma frase → a melodia aparece → **Ver nota da pronúncia** → nota geral.
+2. **Offline:** ative o modo avião → feche e reabra o app pelo ícone. Ele abre, a sessão continua e a melodia funciona. A nota avisa "Sem internet agora…".
+3. **Volta da rede:** desative o modo avião → a nota volta a funcionar.
+4. **iPhone:** o primeiro áudio de cada sessão precisa de um toque (regra do iOS; veja Known issues).
 
 Deploy por linha de comando (opcional): `npx netlify-cli deploy --build --prod`.
 

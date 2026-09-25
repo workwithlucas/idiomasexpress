@@ -6,20 +6,80 @@
 [build.environment]
   NODE_VERSION = "22"
 
-# O service worker precisa sempre ser revalidado para que novas versões cheguem.
+# ---- Cache ----------------------------------------------------------------
+# Regra geral: o que tem hash no nome é imutável; o resto é revalidado a cada
+# visita (o service worker cuida do offline, então não há custo para o usuário).
+
+# Service worker e registro: sempre revalidar, senão versões novas não chegam.
 [[headers]]
   for = "/sw.js"
   [headers.values]
     Cache-Control = "no-cache"
 
 [[headers]]
+  for = "/workbox-*.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+# Página e manifest: revalidar (nomes fixos, conteúdo muda a cada deploy).
+# A regra casa com o caminho PEDIDO: quem abre o site pede "/", não "/index.html".
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Cache-Control = "no-cache"
+    Content-Type = "application/manifest+json"
+
+# Conteúdo (seed): revalidar; o app só repopula o banco quando a versão muda.
+[[headers]]
+  for = "/seed/*"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+# JS, CSS e fontes com hash no nome: 1 ano, imutáveis.
+[[headers]]
   for = "/assets/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
+# Ícones e favicon (nome fixo): 1 semana.
+[[headers]]
+  for = "/icons/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/apple-touch-icon.png"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/favicon.svg"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+# ---- Segurança ------------------------------------------------------------
+# Tudo é servido pelo próprio site (fontes embutidas, sem CDN); a chave do
+# Azure fica na Function. 'unsafe-inline' em estilos: a interface usa
+# style="…" em alguns elementos (barras de progresso).
 [[headers]]
   for = "/*"
   [headers.values]
-    Permissions-Policy = "microphone=(self)"
+    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+    Permissions-Policy = "microphone=(self), camera=(), geolocation=()"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
+    Strict-Transport-Security = "max-age=31536000"
+
+# Rotas: o app navega por hash (#/aprender, #/fala…), então todo acesso chega
+# em "/" e não é preciso redirect de SPA. /api/pronunciation é a Function
+# (netlify/functions/pronunciation.mts, config.path).
