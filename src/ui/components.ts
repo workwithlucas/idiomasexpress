@@ -107,3 +107,8 @@ export function segmented<T extends string>(
   wrap.append(...buttons);
   return wrap;
 }
+
+/** Envolve um <select> para desenhar a seta com a cor do token (claro e escuro). */
+export function selectWrap(select: HTMLSelectElement, full = true): HTMLElement {
+  return h('span', { class: `select-wrap${full ? ' select-wrap--full' : ''}` }, select);
+}

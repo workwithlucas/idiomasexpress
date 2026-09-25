@@ -1,5 +1,5 @@
+import { selectWrap } from '../ui/components';
 import { h, render } from '../ui/dom';
-import { icon } from '../ui/icons';
 import type { View } from '../ui/router';
 import { navigate } from '../ui/router';
 import { content, loadContent } from '../db/repo';
@@ -61,13 +61,13 @@ export const settingsView: View = async () => {
     render(
       voiceInfo,
       status === 'ok'
-        ? h('p', { class: 'muted', dataset: { status } }, voices.length === 1 ? '1 voz francesa neste aparelho. Com duas ou mais, o treino de ouvido alterna entre elas.' : `${voices.length} vozes francesas neste aparelho — o treino de ouvido alterna entre elas.`)
+        ? h('p', { class: 'muted', dataset: { status } }, voices.length === 1 ? '1 voz francesa neste aparelho. Com duas ou mais, o treino de ouvido alterna entre elas.' : `${voices.length} vozes francesas neste aparelho. O treino de ouvido alterna entre elas.`)
         : status === 'loading'
           ? h('p', { class: 'muted', dataset: { status } }, 'Procurando as vozes do aparelho…')
           : status === 'no-french'
             ? note('Este aparelho tem vozes, mas nenhuma em francês. Para não ler francês com sotaque de outra língua, o áudio fica desligado até você instalar uma:', INSTALL)
             : status === 'none-listed'
-              ? note('Este navegador não mostra a lista de vozes. O app pede francês ao sistema mesmo assim — toque em "Testar voz" para conferir. Se não ouvir nada ou ouvir outro idioma, instale uma voz francesa:', INSTALL)
+              ? note('Este navegador não mostra a lista de vozes. O app pede francês ao sistema mesmo assim. Toque em "Testar voz" para conferir. Se não ouvir nada ou ouvir outro idioma, instale uma voz francesa:', INSTALL)
               : note('Este navegador não tem síntese de voz. Use Chrome, Edge ou Safari atualizados.'),
     );
   };
@@ -147,19 +147,19 @@ export const settingsView: View = async () => {
           'div',
           { class: 'field' },
           h('div', { class: 'field__label' }, h('span', null, user.name), h('small', null, 'Perfil ativo neste aparelho')),
-          h('a', { class: 'btn btn--ghost btn--sm', href: '#/perfil' }, icon('user', 16), 'Trocar'),
+          h('a', { class: 'btn btn--ghost btn--sm', href: '#/perfil' }, 'Trocar'),
         ),
       ),
       section(
         'Voz em francês',
-        field('Voz', voiceSelect),
+        field('Voz', selectWrap(voiceSelect)),
         voiceInfo,
         field('Velocidade', h('div', { class: 'range' }, rateInput, rateValue)),
-        h('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => void speak("Bonjour ! On va apprendre le français ensemble.") }, icon('play', 16), 'Testar voz'),
+        h('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => void speak("Bonjour ! On va apprendre le français ensemble.") }, 'Testar voz'),
       ),
       section(
         'Estudo',
-        field('Palavras novas por dia', newPerDay),
+        field('Palavras novas por dia', selectWrap(newPerDay, false)),
         field('Tocar o áudio sozinho', autoplay),
         field('Sons de acerto', soundsToggle),
       ),
@@ -175,9 +175,9 @@ export const settingsView: View = async () => {
               class: 'btn btn--primary btn--sm', type: 'button', 'data-testid': 'export',
               onclick: async () => downloadJson(await exportProgress(), `poliglotas-progresso-${dayKey(new Date())}.json`),
             },
-            icon('download', 16), 'Exportar progresso',
+            'Exportar progresso',
           ),
-          h('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => fileInput.click() }, icon('upload', 16), 'Importar'),
+          h('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => fileInput.click() }, 'Importar'),
           fileInput,
         ),
       ),
@@ -202,7 +202,7 @@ export const settingsView: View = async () => {
         h(
           'p',
           { class: 'muted' },
-          `${c.words.length} palavras, ${c.cognateRules.length} padrões de palavras-irmãs, ${c.readingRules.length} jeitos de ler, ${c.minimalPairs.length} pares de sons, ${c.frames.length} frases e ${c.scenes.length} situações. Versão do conteúdo: ${seedVersion ?? '?'}.`,
+          `${c.words.length} palavras e ${c.frames.length} frases. Conteúdo v${seedVersion ?? '?'}.`,
         ),
         h(
           'button',
@@ -210,7 +210,7 @@ export const settingsView: View = async () => {
             class: 'btn btn--ghost btn--sm', type: 'button',
             onclick: async () => { await loadContent(true); toast('Conteúdo recarregado.', 'success'); },
           },
-          icon('refresh', 16), 'Recarregar conteúdo',
+          'Recarregar conteúdo',
         ),
       ),
     ),

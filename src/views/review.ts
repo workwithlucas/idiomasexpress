@@ -1,5 +1,4 @@
 import { h } from '../ui/dom';
-import { icon } from '../ui/icons';
 import type { View } from '../ui/router';
 import { countIntroducedToday, getDueStates, getNewWords, getReviewStats } from '../db/repo';
 import { currentUser, notifyProgressChanged } from '../ui/session';
@@ -61,7 +60,7 @@ export const reviewView: View = async () => {
         'div',
         { class: 'session-done', 'data-testid': 'review-finished' },
         ring(1),
-        h('h2', null, done ? 'Tudo revisado!' : 'Nada pra revisar agora'),
+        h('h2', null, done ? 'Nada mais pra revisar hoje.' : 'Nada pra revisar agora'),
         stats.nextDue && h('p', { class: 'muted' }, `A próxima volta ${friendlyWhen(now(), stats.nextDue)}.`),
         h(
           'button',
@@ -75,7 +74,6 @@ export const reviewView: View = async () => {
               showCard();
             },
           },
-          icon('plus', 18),
           'Mais 5 palavras novas',
         ),
         h('a', { class: 'btn btn--primary btn--block', href: '#/' }, 'Voltar ao início'),

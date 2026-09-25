@@ -28,9 +28,9 @@ export const readingView: View = async () => {
         'section',
         { class: 'hero-lite' },
         progressDots(known.length, rules.length),
-        h('h2', null, next ? 'Descubra como se lê' : 'Você já descobriu todas!'),
+        h('h2', null, next ? 'Descubra como se lê' : 'Você já viu todas as regras.'),
         h('p', { class: 'muted' }, `${known.length} de ${rules.length}`),
-        h('button', { class: 'btn btn--primary btn--block btn--lg', type: 'button', 'data-testid': 'discover-next', onclick: () => start(next ?? rules[Math.floor(Math.random() * rules.length)]) }, next ? 'Descobrir' : 'Praticar uma', icon('arrowRight', 18)),
+        h('button', { class: 'btn btn--primary btn--block btn--lg', type: 'button', 'data-testid': 'discover-next', onclick: () => start(next ?? rules[Math.floor(Math.random() * rules.length)]) }, next ? 'Descobrir' : 'Praticar uma'),
       ),
       known.length > 0 &&
         h(

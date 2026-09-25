@@ -16,7 +16,7 @@ export const homeView: View = async () => {
 
   const cta = finished
     ? h('a', { class: 'btn btn--ghost btn--block', href: '#/sessao?nova=1', 'data-testid': 'session-more' }, 'Mais uma rodada')
-    : h('a', { class: 'btn btn--primary btn--block', href: '#/sessao', 'data-testid': 'session-start' }, done ? 'Continuar' : 'Começar', icon('arrowRight', 18));
+    : h('a', { class: 'btn btn--primary btn--block', href: '#/sessao', 'data-testid': 'session-start' }, done ? 'Continuar' : 'Começar');
 
   return {
     title: 'Hoje',
@@ -38,7 +38,7 @@ export const homeView: View = async () => {
           { class: 'progress-card__bar', role: 'progressbar', 'aria-label': 'Progresso da sessão de hoje', 'aria-valuemin': '0', 'aria-valuemax': String(total), 'aria-valuenow': String(finished ? total : done) },
           h('div', { class: 'progress-card__fill', style: `width: ${Math.round((finished ? 1 : done / total) * 100)}%` }),
         ),
-        h('p', { class: 'today__text' }, finished ? 'Amanhã tem outra. Se quiser, siga um pouco mais.' : done ? `Faltam ${total - done} passos curtos.` : `${total} passos curtos · uns 10 minutos`),
+        h('p', { class: 'today__text' }, finished ? 'Amanhã tem outra. Se quiser, siga um pouco mais.' : done ? `Faltam ${total - done} passos curtos.` : `${total} passos curtos, uns 10 minutos.`),
         cta,
       ),
       stats.dueNow > 0 &&

@@ -78,22 +78,22 @@ export function describePronunciationError(code: PronunciationErrorCode): { text
     case 'no_speech':
       return { text: 'Não deu pra entender a frase. Grave de novo, com calma e mais perto do microfone.', retry: false, regravar: true };
     case 'timeout':
-      return { text: 'A nota demorou demais pra chegar. A melodia acima continua valendo.', retry: true };
+      return { text: 'A nota demorou demais pra chegar.', retry: true };
     case 'offline':
-      return { text: 'Sem internet agora: a nota volta quando conectar. A melodia acima continua valendo.', retry: false };
+      return { text: 'Sem internet agora: a nota volta quando conectar.', retry: false };
     case 'network':
-      return { text: 'A conexão caiu no meio do caminho. A melodia acima continua valendo.', retry: true };
+      return { text: 'A conexão caiu no meio do caminho.', retry: true };
     case 'busy':
-      return { text: 'Muitas notas seguidas: espere alguns segundos. A melodia acima continua valendo.', retry: true };
+      return { text: 'Muitas notas seguidas: espere alguns segundos.', retry: true };
     case 'quota':
-      return { text: 'O limite gratuito do Azure deste mês acabou. A nota volta no próximo ciclo; a melodia acima continua valendo.', retry: false };
+      return { text: 'O limite gratuito do Azure deste mês acabou. A nota volta no próximo ciclo.', retry: false };
     case 'auth':
-      return { text: 'A nota por som está desligada: a chave do Azure não foi aceita (veja o README). A melodia acima continua valendo.', retry: false };
+      return { text: 'A nota por som está desligada neste app: a chave do Azure não foi aceita.', retry: false };
     case 'forbidden':
-      return { text: 'Não deu pra calcular a nota por aqui. Abra o app pelo endereço oficial. A melodia acima continua valendo.', retry: false };
+      return { text: 'Não deu pra calcular a nota por aqui. Abra o app pelo endereço oficial.', retry: false };
     case 'not_configured':
-      return { text: 'A nota por som ainda não foi ligada neste app (veja o README). A melodia acima funciona sem ela.', retry: false };
+      return { text: 'A nota por som ainda não está ligada neste app.', retry: false };
     default:
-      return { text: 'Não deu pra calcular a nota agora. A melodia acima continua valendo.', retry: true };
+      return { text: 'Não deu pra calcular a nota agora.', retry: true };
   }
 }

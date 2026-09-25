@@ -41,7 +41,7 @@ const FOCUS_BELOW = 80;
 const needsWork = (w: WordScore) => w.errorType !== 'None' || w.accuracy < FOCUS_BELOW;
 
 function verdict(score: number): string {
-  return score >= 85 ? 'Muito bom!' : score >= 70 ? 'Bom — dá pra lapidar' : score >= 50 ? 'Já dá pra entender' : 'Vamos treinar mais';
+  return score >= 85 ? 'Dá pra entender bem' : score >= 60 ? 'Dá pra entender' : 'Ainda difícil de entender';
 }
 
 function randomWord(): Target {
@@ -119,8 +119,8 @@ export const speakingView: View = ({ query }) => {
       h(
         'div',
         { class: 'row row--wrap' },
-        h('button', { class: 'chip-btn', type: 'button', onclick: () => setTarget(randomSentence()), 'data-testid': 'another-sentence' }, icon('shuffle', 14), 'Outra frase'),
-        h('button', { class: 'chip-btn', type: 'button', onclick: () => setTarget(randomWord()), 'data-testid': 'another-word' }, icon('shuffle', 14), 'Uma palavra'),
+        h('button', { class: 'chip-btn', type: 'button', onclick: () => setTarget(randomSentence()), 'data-testid': 'another-sentence' }, 'Outra frase'),
+        h('button', { class: 'chip-btn', type: 'button', onclick: () => setTarget(randomWord()), 'data-testid': 'another-word' }, 'Uma palavra'),
       ),
     );
 
@@ -151,7 +151,7 @@ export const speakingView: View = ({ query }) => {
                 ? 'Liberando o microfone…'
                 : state === 'recorded'
                   ? 'Toque para gravar de novo.'
-                  : 'Agora você: toque e fale.',
+                  : 'Toque e fale.',
           ),
         ),
         recordingUrl && state !== 'recording' && h('audio', { class: 'recorder__audio', controls: true, src: recordingUrl, 'data-testid': 'own-recording' }),
@@ -225,7 +225,7 @@ export const speakingView: View = ({ query }) => {
 
   const renderResultShell = () => {
     render(resultBox, prosodyBox, azureBox);
-    render(prosodyBox, h('div', { class: 'card loading' }, h('span', { class: 'spinner' }), 'Desenhando sua melodia…'));
+    render(prosodyBox, h('div', { class: 'card loading' }, 'Desenhando sua melodia…'));
     renderAzurePanel();
   };
 
@@ -272,7 +272,7 @@ export const speakingView: View = ({ query }) => {
       { class: 'soft-note', 'data-testid': testid, dataset: { code } },
       icon('info', 16),
       h('span', null, d.text),
-      d.retry && h('button', { class: 'chip-btn', type: 'button', onclick: evaluate, 'data-testid': 'assess-retry' }, icon('refresh', 14), 'Tentar de novo'),
+      d.retry && h('button', { class: 'chip-btn', type: 'button', onclick: evaluate, 'data-testid': 'assess-retry' }, 'Tentar de novo'),
     );
   };
 
@@ -287,7 +287,7 @@ export const speakingView: View = ({ query }) => {
     if (azure === 'configured') {
       render(
         azureBox,
-        h('button', { class: 'btn btn--ghost btn--block', type: 'button', onclick: evaluate, 'data-testid': 'evaluate' }, icon('sparkles', 18), 'Ver nota da pronúncia'),
+        h('button', { class: 'btn btn--ghost btn--block', type: 'button', onclick: evaluate, 'data-testid': 'evaluate' }, 'Ver nota da pronúncia'),
       );
       return;
     }
@@ -304,7 +304,7 @@ export const speakingView: View = ({ query }) => {
   const evaluate = async () => {
     if (!recordedBlob) return;
     const myAttempt = attempt;
-    render(azureBox, h('div', { class: 'card loading', 'data-testid': 'assess-loading' }, h('span', { class: 'spinner' }), 'Calculando a nota…'));
+    render(azureBox, h('div', { class: 'card loading', 'data-testid': 'assess-loading' }, 'Calculando a nota…'));
     try {
       const samples = recordedSamples ?? (await decodeMono16k(recordedBlob));
       const wav = new Blob([encodePcm16Wav(samples, WAV_RATE)], { type: 'audio/wav' });
@@ -361,10 +361,10 @@ export const speakingView: View = ({ query }) => {
             'div',
             { class: 'score-main__text' },
             h('strong', { 'data-testid': 'overall-verdict' }, verdict(r.pronunciation)),
-            h('span', null, `Sons ${r.accuracy} · Fluidez ${r.fluency} · Frase completa ${r.completeness}`),
+            h('span', null, `Sons ${r.accuracy}. Fluidez ${r.fluency}. Frase completa ${r.completeness}.`),
           ),
         ),
-        focus.length > 0 && h('p', { class: 'focus-legend' }, h('span', { class: 'focus-legend__mark', 'aria-hidden': 'true' }), 'Em destaque: o que vale treinar. Toque numa palavra para ver as sílabas.'),
+        focus.length > 0 && h('p', { class: 'focus-legend' }, h('span', { class: 'focus-legend__mark', 'aria-hidden': 'true' }), 'As palavras marcadas foram as mais difíceis. Toque numa para ver as sílabas.'),
         h(
           'div',
           { class: 'word-scores' },

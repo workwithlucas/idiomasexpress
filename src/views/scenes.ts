@@ -63,10 +63,9 @@ export const sceneDetailView: View = ({ params }) => {
       h(
         'section',
         { class: 'hero-lite' },
-        h('span', { class: 'scene-card__icon' }, icon(scene.icon, 24)),
         h('h2', null, scene.name),
         h('p', { class: 'muted' }, scene.description),
-        h('button', { class: 'btn btn--primary btn--block btn--lg', type: 'button', 'data-testid': 'scene-start', onclick: practice }, 'Praticar', icon('arrowRight', 18)),
+        h('button', { class: 'btn btn--primary btn--block btn--lg', type: 'button', 'data-testid': 'scene-start', onclick: practice }, 'Praticar'),
       ),
       h(
         'details',
@@ -108,7 +107,7 @@ export const sceneDetailView: View = ({ params }) => {
             'div',
             { class: 'session-done', 'data-testid': 'scene-done' },
             ring(1),
-            h('h2', null, 'Boa!'),
+            h('h2', null, 'Boa.'),
             h('p', { class: 'muted' }, `${right} de ${Math.ceil(lines.length / 2)} frases saíram de primeira.`),
             h('button', { class: 'btn btn--primary btn--block', type: 'button', onclick: practice }, 'Outra rodada'),
             h('a', { class: 'btn btn--ghost btn--block', href: '#/situacoes' }, 'Outras situações'),

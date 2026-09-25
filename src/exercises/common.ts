@@ -18,6 +18,17 @@ export type Done = (r: ExerciseResult) => void;
  * Frase em francês com os pontos de ligação marcados: um arco sutil liga as
  * duas palavras e a letra que "acorda" fica em destaque.
  */
+/** Arco da ligação sob as duas palavras: mesmo traço (1,75) e pontas redondas dos ícones do DS. */
+function liaisonArc(): SVGSVGElement {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'lia__arc');
+  svg.setAttribute('viewBox', '0 0 24 10');
+  svg.setAttribute('preserveAspectRatio', 'none');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.innerHTML = '<path d="M2 2 Q12 12 22 2" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" vector-effect="non-scaling-stroke"/>';
+  return svg;
+}
+
 export function frenchSentence(sentence: string, cls = ''): HTMLElement {
   const tokens = analyzeLiaisons(sentence);
   const el = h('p', { class: `fr-sentence ${cls}`.trim(), lang: 'fr' });
@@ -30,7 +41,7 @@ export function frenchSentence(sentence: string, cls = ''): HTMLElement {
           { class: 'lia', title: `Aqui liga: o "${t.liaison.letter}" soa "${t.liaison.sound}"` },
           bare,
           h('span', { class: 'lia__letter' }, t.text.slice(-1)),
-          h('span', { class: 'lia__arc', 'aria-hidden': 'true' }),
+          liaisonArc(),
         ),
       );
     } else {
@@ -65,13 +76,13 @@ export function feedback(kind: 'right' | 'almost', title: string, text?: Child):
   return h(
     'div',
     { class: `fb fb--${kind}`, role: 'status', 'data-testid': 'feedback' },
-    h('span', { class: 'fb__icon' }, icon(kind === 'right' ? 'check' : 'sparkles', 18)),
+    kind === 'right' && h('span', { class: 'fb__icon' }, icon('check', 18)),
     h('div', null, h('strong', null, title), text && h('p', null, text)),
   );
 }
 
 export function primaryButton(label: string, onclick: () => void, testid = 'continue'): HTMLButtonElement {
-  return h('button', { class: 'btn btn--primary btn--block btn--lg', type: 'button', onclick, 'data-testid': testid }, label, icon('arrowRight', 18));
+  return h('button', { class: 'btn btn--primary btn--block btn--lg', type: 'button', onclick, 'data-testid': testid }, label);
 }
 
 /** "Quando volta" em linguagem de gente, para os botões da revisão. */

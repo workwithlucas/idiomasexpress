@@ -289,10 +289,10 @@ export const SCENES = [
   { id: 'sc_lu_mercado', name: 'Supermercado', icon: 'cart', description: 'Para achar as coisas, perguntar preço e devolver garrafas.',
     words: ['supermarché', 'caisse', 'caddie', 'sac', 'sachet', 'rayon', 'promotion', 'prix', 'kilo', 'paquet', 'bouteille', 'consigne', 'pain', 'lait', 'fromage', 'yaourt', 'beurre', 'œuf', 'poulet', 'viande', 'jambon', 'poisson', 'légumes', 'fruit', 'pomme', 'tomate', 'pomme de terre', 'riz', 'pâtes', 'farine', 'huile', 'sucre', 'payer', 'monnaie'],
     frames: ['f_mer_avez', 'f_mer_kilo', 'f_mer_paquet', 'f_mer_promo', 'f_mer_cherche', 'f_voudrais_du', 'f_combien_coute', 'f_voudrais_une', 'f_ou_la'] },
-  { id: 'sc_lu_transporte', name: 'Transporte público', icon: 'pin', description: 'Ônibus, trem e tram são de graça no país; aqui entram horário, atraso e baldeação.',
+  { id: 'sc_lu_transporte', name: 'Transporte público', icon: 'bus', description: 'Ônibus, trem e tram são de graça no país; aqui entram horário, atraso e baldeação.',
     words: ['bus', 'tram', 'train', 'gare', 'station', 'arrêt', 'quai', 'ligne', 'direction', 'correspondance', 'horaire', 'retard', 'billet', 'ticket', 'gratuit', 'vélo', 'voiture', 'parking', 'route', 'feu', 'droite', 'gauche', 'monter', 'descendre', 'changer', 'attendre', 'loin', 'près'],
     frames: ['f_tra_va', 'f_tra_prochain', 'f_tra_retard', 'f_tra_cote', 'f_tra_gratuit', 'f_ou_le', 'f_ou_la'] },
-  { id: 'sc_lu_vizinhanca', name: 'Vizinhança e condomínio', icon: 'user', description: 'Para se apresentar aos vizinhos e combinar lixo, barulho e porão.',
+  { id: 'sc_lu_vizinhanca', name: 'Vizinhança e condomínio', icon: 'apartment', description: 'Para se apresentar aos vizinhos e combinar lixo, barulho e porão.',
     words: ['voisin', 'voisine', 'immeuble', 'appartement', 'étage', 'escalier', 'ascenseur', 'porte', 'clé', 'sonnette', 'boîte aux lettres', 'cave', 'garage', 'parking', 'bruit', 'poubelle', 'déchets', 'verre', 'papier', 'plastique', 'carton', 'syndic', 'charges', 'loyer', 'locataire', 'propriétaire', 'fête', 'bonjour', 'désolé', 'gentil'],
     frames: ['f_viz_nouveau', 'f_viz_trop', 'f_viz_poubelles', 'f_viz_fermer', 'f_viz_etage'] },
 ];

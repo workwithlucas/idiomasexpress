@@ -9,7 +9,7 @@ export const recordingSupported =
 /** getUserMedia só existe em HTTPS ou localhost; fora disso a causa é essa, não o navegador. */
 export function recordingUnavailableReason(): string {
   if (typeof window !== 'undefined' && !window.isSecureContext) {
-    return 'A gravação só funciona em conexão segura (HTTPS). Abra o app pelo endereço da Netlify ou por localhost.';
+    return 'A gravação só funciona pelo endereço seguro: poliglotas.netlify.app.';
   }
   return 'Este navegador não permite gravar áudio. Use Chrome, Edge, Firefox ou Safari atualizados.';
 }
@@ -75,5 +75,5 @@ export function describeMicError(e: unknown): string {
     return 'Permissão de microfone negada. Libere o microfone para este site nas configurações do navegador.';
   if (name === 'NotFoundError') return 'Nenhum microfone encontrado neste aparelho.';
   if (name === 'NotReadableError' || name === 'AbortError') return 'O microfone está em uso por outro app. Feche-o e tente de novo.';
-  return `Não foi possível acessar o microfone (${name || 'erro desconhecido'}). Verifique a permissão de microfone deste site e tente de novo.`;
+  return 'Não foi possível acessar o microfone. Verifique a permissão de microfone deste site e tente de novo.';
 }

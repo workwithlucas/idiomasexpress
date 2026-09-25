@@ -3,7 +3,7 @@ import { icon } from '../ui/icons';
 import type { View } from '../ui/router';
 import { content, logActivity } from '../db/repo';
 import { currentUser } from '../ui/session';
-import { addReviewButton, playButton } from '../ui/components';
+import { addReviewButton, playButton, selectWrap } from '../ui/components';
 import { normalize, THEME_LABELS, withArticle } from '../lib/text';
 
 export const memoryView: View = () => {
@@ -33,7 +33,7 @@ export const memoryView: View = () => {
             h('div', { class: 'hook-card__words' }, h('strong', { lang: 'fr' }, withArticle(w)), h('span', null, w.pt)),
             addReviewButton(w),
           ),
-          h('p', { class: 'hook-card__hook' }, icon('sparkles', 16), h('span', null, w.memory_hook_pt)),
+          h('p', { class: 'hook-card__hook' }, icon('bulb', 16), h('span', null, w.memory_hook_pt)),
         ),
       ),
       filtered.length > limit && h('li', null, h('button', { class: 'btn btn--ghost btn--block', type: 'button', onclick: () => { limit += 30; update(); } }, 'Mostrar mais')),
@@ -53,11 +53,13 @@ export const memoryView: View = () => {
         'div',
         { class: 'filters' },
         h('label', { class: 'search' }, icon('search', 18), h('input', { type: 'search', placeholder: 'Buscar', 'aria-label': 'Buscar', oninput: (e: Event) => { term = (e.target as HTMLInputElement).value; limit = 30; update(); } })),
-        h(
-          'select',
-          { class: 'select', 'aria-label': 'Tema', onchange: (e: Event) => { theme = (e.target as HTMLSelectElement).value; limit = 30; update(); } },
-          h('option', { value: '' }, 'Todos os temas'),
-          themes.map((t) => h('option', { value: t }, THEME_LABELS[t] ?? t)),
+        selectWrap(
+          h(
+            'select',
+            { class: 'select', 'aria-label': 'Tema', onchange: (e: Event) => { theme = (e.target as HTMLSelectElement).value; limit = 30; update(); } },
+            h('option', { value: '' }, 'Todos os temas'),
+            themes.map((t) => h('option', { value: t }, THEME_LABELS[t] ?? t)),
+          ),
         ),
       ),
       list,

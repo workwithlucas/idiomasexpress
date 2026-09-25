@@ -60,7 +60,7 @@ export default defineConfig(({ mode }) => {
           id: '/',
           name: 'Poliglotas',
           short_name: 'Poliglotas',
-          description: 'O francês que já é seu vizinho. Francês para brasileiros, rumo a Luxemburgo: cognatos, pronúncia, frases por situação e revisão espaçada.',
+          description: 'O francês que já é seu vizinho. Francês para brasileiros que vão morar em Luxemburgo.',
           lang: 'pt-BR',
           start_url: '/',
           scope: '/',

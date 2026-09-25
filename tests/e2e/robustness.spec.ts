@@ -210,7 +210,7 @@ test('Azure sem chave: avisa, e a melodia aparece mesmo assim', async ({ page, c
   await expect(page.getByTestId('own-recording')).toBeVisible();
   await expect(page.getByTestId('prosody-tips')).toBeVisible();
   expect(await page.getByTestId('contour-user').count()).toBeGreaterThan(0);
-  await expect(page.getByTestId('azure-status')).toContainText('ainda não foi ligada');
+  await expect(page.getByTestId('azure-status')).toContainText('ainda não está ligada');
   await expect(page.getByTestId('evaluate')).toHaveCount(0);
   await page.getByTestId('another-sentence').click();
   await expect(page.getByTestId('rec-start')).toBeEnabled();
@@ -231,7 +231,7 @@ test('Azure falhando (erro 500): nota avisa com calma, melodia continua', async 
   await page.getByTestId('rec-stop').click();
   await expect(page.getByTestId('prosody-tips')).toBeVisible();
   await page.getByTestId('evaluate').click();
-  await expect(page.getByTestId('assess-error')).toContainText('A melodia acima continua valendo');
+  await expect(page.getByTestId('assess-error')).toContainText('Não deu pra calcular a nota agora');
   await expect(page.getByTestId('assess-error')).not.toContainText('500'); // sem jargão técnico
   await expect(page.getByTestId('prosody')).toBeVisible();
   // O 500 aparece como falha de rede no console (esperado); nada além disso.

@@ -30,7 +30,7 @@ export function frameExercise(frame: Frame, userId: string, onDone: Done, opts: 
     echo?.cleanup();
     echo = echoPanel(sentence, userId, () => {
       next.className = 'btn btn--primary btn--block btn--lg';
-      next.replaceChildren(opts.doneLabel ?? 'Continuar', icon('arrowRight', 18));
+      next.replaceChildren(opts.doneLabel ?? 'Continuar');
     });
     return echo.el;
   };
@@ -54,7 +54,7 @@ export function frameExercise(frame: Frame, userId: string, onDone: Done, opts: 
       frame.note_pt && h('p', { class: 'note' }, icon('info', 16), frame.note_pt),
       h('span', { hidden: true, 'data-testid': 'built-sentence' }, sentence),
       echoEl(sentence),
-      opts.practiceLink && h('a', { class: 'btn btn--ghost btn--block', href: `#/fala?texto=${encodeURIComponent(sentence)}` }, icon('sparkles', 18), 'Nota de pronúncia'),
+      opts.practiceLink && h('a', { class: 'btn btn--ghost btn--block', href: `#/fala?texto=${encodeURIComponent(sentence)}` }, 'Nota de pronúncia'),
       next,
     );
     void speak(sentence);
@@ -79,7 +79,7 @@ export function frameExercise(frame: Frame, userId: string, onDone: Done, opts: 
     else {
       cue('almost');
       error.hidden = false;
-      error.textContent = 'Essa não encaixa aqui — tente uma das opções.';
+      error.textContent = 'Essa não encaixa aqui. Escolha uma das opções.';
     }
   };
 

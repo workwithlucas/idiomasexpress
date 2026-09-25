@@ -142,8 +142,8 @@ Sem a chave, ou com qualquer falha do Azure, o módulo **Fale e compare** contin
 | Rede lenta / Azure demorou (> 15 s no servidor, 20 s no app) | "A nota demorou demais…"; a tela continua livre | Botão **Tentar de novo** (mesma gravação) |
 | Muitas notas seguidas (HTTP 429 sem cota) | "Espere alguns segundos…" | Botão **Tentar de novo** |
 | Cota do F0 esgotada (5 h/mês) | "O limite gratuito do Azure deste mês acabou…" | Não: a nota fica desligada até sair da tela |
-| Chave inválida ou de outra região | "A chave do Azure não foi aceita (veja o README)", avisado **antes** de gravar | Não |
-| Sem chave no servidor | "A nota por som ainda não foi ligada neste app" | Não |
+| Chave inválida ou de outra região | "A nota por som está desligada neste app: a chave do Azure não foi aceita", avisado **antes** de gravar | Não |
+| Sem chave no servidor | "A nota por som ainda não está ligada neste app" | Não |
 | Offline | "Sem internet agora…" | Quando voltar a conexão |
 
 O resultado mostra a **nota geral** (0–100) em destaque, as notas de sons, fluidez e frase completa, e cada palavra. As palavras que valem treinar (nota < 80 ou erro apontado pelo Azure) ficam destacadas com o token `accent`. Dentro da palavra, a **sílaba** mais fraca também fica em destaque. Em fr-FR o Azure devolve as sílabas com as letras ("ca", "fé"), mas não o nome dos fonemas.
@@ -349,6 +349,7 @@ Limitações conhecidas que **não** foram corrigidas nesta versão, com o motiv
 26. **O selo da Netlify é bloqueado de propósito.** A Netlify injeta no site publicado um selo/barra próprio (`/.netlify/scripts/hud`), fora do Design System e bloqueado pela CSP. O `index.html` traz um marcador (`#nl-badge-frame`) que faz esse script desistir, e o CSS esconde o selo como reserva. Para desligá-lo na origem: no painel da Netlify, nas opções de colaboração/toolbar do site.
 27. **O branch de produção da Netlify ainda é `claude/pensive-keller-1e2l48`.** Trocar para `main` pela API exige alterar a configuração do site, o que não foi feito daqui. Enquanto isso, cada commit da `main` é enviado também para esse branch, e a produção reflete a `main`. Para trocar: *Site configuration → Build & deploy → Branches and deploy contexts → Production branch = `main`*.
 28. **Limite por IP da API é de melhor esforço.** Cada instância da Function guarda a própria contagem. Contra abuso sério, o teto real é a cota do F0, que não gera cobrança.
+29. **Dicas de memória: origem só quando é real.** Nas 533 dicas, "vem de…" só aparece quando a origem foi conferida (latim ou francês antigo em comum com o português). Associação sem origem verificável virou dica de som ou de uso. Casos corrigidos: *très*, *vite*, *heureux* (vem de *heur*, sorte, não de *heure*), *tomber*, *petit* e *après* (que não vem de "após").
 
 ## Fora do escopo da v1 (de propósito)
 Nenhuma IA generalista, nenhuma conversa livre, nenhuma sincronização automática e nenhum login. A escolha de perfil é local.

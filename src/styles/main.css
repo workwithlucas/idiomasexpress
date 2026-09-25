@@ -215,10 +215,6 @@ ol {
   color: var(--ink-soft);
 }
 
-.boot__mark {
-  animation: pulse 1.4s ease-in-out infinite;
-}
-
 .boot--error .boot__mark {
   width: 56px;
   height: 56px;
@@ -229,13 +225,6 @@ ol {
   color: var(--ink-soft);
   font: var(--type-title);
   animation: none;
-}
-
-@keyframes pulse {
-  50% {
-    transform: scale(0.94);
-    opacity: 0.8;
-  }
 }
 
 /* ---- Estrutura: topbar, página, tabbar ----------------------------------- */
@@ -334,7 +323,6 @@ ol {
 
 .tabbar__item[aria-current='page'] {
   color: var(--primary);
-  font-weight: 600;
 }
 
 .tabbar__icon {
@@ -356,9 +344,7 @@ ol {
   background: var(--primary);
   color: var(--surface-raised);
   font: var(--type-body-sm);
-  line-height: 18px;
   text-align: center;
-  border: 2px solid var(--surface-raised);
   box-sizing: content-box;
 }
 
@@ -523,7 +509,7 @@ ol {
 }
 
 .callout .icon {
-  margin-top: 1px;
+
 }
 
 .callout--warn,
@@ -588,9 +574,32 @@ ol {
 .select {
   appearance: none;
   padding-right: calc(var(--space-8) + var(--space-1));
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%235B6178' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right var(--space-3) center;
+}
+
+/* Seta do select desenhada com máscara: a cor vem de --ink-soft (claro e escuro). */
+.select-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.select-wrap--full {
+  display: block;
+  flex: 1;
+  min-width: 0;
+}
+
+.select-wrap::after {
+  content: '';
+  position: absolute;
+  right: var(--space-3);
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  margin-top: -8px;
+  pointer-events: none;
+  background-color: var(--ink-soft);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23000' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E") center / 16px no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23000' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E") center / 16px no-repeat;
 }
 
 .select--sm {
@@ -695,9 +704,9 @@ ol {
 
 .range-value {
   font-variant-numeric: tabular-nums;
-  font-weight: 600;
   min-width: 48px;
   text-align: right;
+  font: var(--type-button);
 }
 
 /* ---- Toasts -------------------------------------------------------------- */
@@ -993,10 +1002,11 @@ ol {
 
 .false-card__warn {
   margin-top: var(--space-2);
-  padding-left: var(--space-3);
-  border-left: 3px solid var(--accent);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+  color: var(--ink);
   font: var(--type-body);
-  color: var(--ink-soft);
 }
 
 .hook-card__hook {
@@ -1026,12 +1036,6 @@ ol {
   gap: var(--space-3);
   text-align: center;
   padding: var(--space-6) var(--space-4);
-}
-
-.intro__icon {
-  display: grid;
-  place-items: center;
-  color: var(--primary);
 }
 
 .intro h2,
@@ -1148,10 +1152,10 @@ ol {
 .slot {
   display: inline-block;
   min-width: 3.2em;
-  padding: 0 0.25em;
   border-bottom: 2px dashed var(--primary);
   color: var(--primary);
   white-space: pre;
+  padding: 0 var(--space-1);
 }
 
 .frame__pt {
@@ -1169,13 +1173,13 @@ ol {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 1px;
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--surface-raised);
   text-align: left;
   transition: border-color var(--motion-fast), transform var(--motion-fast);
+  gap: 0;
 }
 
 .slot-option:active {
@@ -1240,16 +1244,6 @@ ol {
   opacity: 0.5;
 }
 
-.rec--on {
-  animation: rec-pulse 1.3s ease-out infinite;
-}
-
-@keyframes rec-pulse {
-  50% {
-    opacity: 0.8;
-  }
-}
-
 .recorder__status {
   color: var(--ink-soft);
   font: var(--type-body);
@@ -1263,7 +1257,6 @@ ol {
   margin-right: var(--space-2);
   border-radius: var(--radius-full);
   background: var(--accent);
-  animation: pulse 1s infinite;
 }
 
 .recorder__audio {
@@ -1276,21 +1269,6 @@ ol {
   align-items: center;
   gap: var(--space-3);
   color: var(--ink-soft);
-}
-
-.spinner {
-  width: 22px;
-  height: 22px;
-  border-radius: var(--radius-full);
-  border: 2px solid var(--border);
-  border-top-color: var(--primary);
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 .result {
@@ -1485,20 +1463,8 @@ ol {
   color: var(--on-accent);
 }
 
-.soft-note {
-  flex-wrap: wrap;
-}
-
-.soft-note > span {
-  flex: 1 1 60%;
-  min-width: 0;
-}
 
 /* "Tentar de novo" alinha com o texto (depois do ícone de 16px). */
-.soft-note .chip-btn {
-  margin-left: calc(16px + var(--space-2));
-}
-
 /* ---- Revisão ------------------------------------------------------------- */
 
 /* Barra de progresso (componente Card · progresso): 6px, preenchimento accent. */
@@ -1727,7 +1693,7 @@ ol {
   font: var(--type-body-sm);
 }
 
-.field .select:not(.select--sm) {
+.field .select-wrap--full {
   flex: 1 1 100%;
 }
 
@@ -2039,8 +2005,8 @@ ol {
 
 .marked mark {
   border-radius: var(--radius-full);
-  padding: 0 1px;
   animation: mark-in var(--motion) ease-out both;
+  padding: 0;
 }
 
 .marked--pt mark {
@@ -2083,15 +2049,8 @@ ol {
 }
 
 .tile--miss {
-  animation: shake var(--motion);
   background: var(--surface-soft);
   color: var(--ink-soft);
-}
-
-@keyframes shake {
-  50% {
-    transform: translateX(calc(-1 * var(--space-1)));
-  }
 }
 
 .rule-card {
@@ -2189,7 +2148,6 @@ ol {
 
 .choice--right {
   border-color: var(--accent);
-  box-shadow: inset 0 0 0 1px var(--accent);
 }
 
 .choice--almost {
@@ -2329,12 +2287,11 @@ ol {
 .lia__arc {
   position: absolute;
   right: -0.45em;
-  bottom: -0.12em;
+  bottom: -0.3em;
   width: 0.9em;
   height: 0.35em;
-  border: 2px solid var(--primary);
-  border-top: 0;
-  border-radius: 0 0 1em 1em;
+  color: var(--primary);
+  overflow: visible;
 }
 
 .lia__gap {
@@ -2354,7 +2311,8 @@ ol {
 }
 
 .lia-note__mark {
-  font-weight: 600;
+
+  font: var(--type-button);
 }
 
 .lia-note {
@@ -2450,20 +2408,26 @@ ol {
   gap: var(--space-2);
   min-height: 36px;
   padding: 0 var(--space-3);
-  border-radius: var(--radius-full);
   border: 1.5px solid var(--border);
   background: transparent;
   color: var(--primary);
   font: var(--type-body-sm);
-  font-weight: 600;
+  border-radius: var(--radius-sm);
 }
 
 .soft-note {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr;
   gap: var(--space-2);
-  align-items: flex-start;
+  align-items: start;
   color: var(--ink-soft);
   font: var(--type-body);
+}
+
+/* Ícone | texto; "Tentar de novo" na linha de baixo, alinhado com o texto. */
+.soft-note > .chip-btn {
+  grid-column: 2;
+  justify-self: start;
 }
 
 .soft-note .icon {
@@ -2599,11 +2563,11 @@ ol {
   gap: var(--space-3);
   min-height: 58px;
   border-radius: var(--radius-md);
-  border: 1.5px dashed var(--border);
   background: var(--surface-raised);
   color: var(--ink);
   font: var(--type-subtitle);
   transition: transform var(--motion-fast);
+  border: 1.5px solid var(--border);
 }
 
 .echo__btn:active {
@@ -2622,10 +2586,6 @@ ol {
 
 .echo__btn--on {
   border-style: solid;
-}
-
-.echo__btn--on .echo__mic {
-  animation: rec-pulse 1.3s ease-out infinite;
 }
 
 .voice-note {

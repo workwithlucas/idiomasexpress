@@ -1,3 +1,4 @@
+import { selectWrap } from '../ui/components';
 import { h } from '../ui/dom';
 import { icon } from '../ui/icons';
 import type { View } from '../ui/router';
@@ -43,7 +44,7 @@ export const builderView: View = ({ query }) => {
     content: h(
       'div',
       { class: 'stack' },
-      h('div', { class: 'toolbar' }, select, h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Outra frase', title: 'Outra frase', onclick: () => show(pickRandom(c.frames, frame)) }, icon('shuffle', 18))),
+      h('div', { class: 'toolbar' }, selectWrap(select), h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Outra frase', title: 'Outra frase', onclick: () => show(pickRandom(c.frames, frame)) }, icon('shuffle', 18))),
       stage,
     ),
   };

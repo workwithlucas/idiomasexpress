@@ -58,7 +58,7 @@ export function reviewCard(wordId: string, userId: string, onRated: (next: Revie
     function aids() {
       return [
         rule && h('p', { class: 'flash__aid' }, icon('link', 16), h('span', null, rule.pattern)),
-        word.memory_hook_pt && h('p', { class: 'flash__aid' }, icon('sparkles', 16), h('span', null, word.memory_hook_pt)),
+        word.memory_hook_pt && h('p', { class: 'flash__aid' }, icon('bulb', 16), h('span', null, word.memory_hook_pt)),
       ];
     }
 

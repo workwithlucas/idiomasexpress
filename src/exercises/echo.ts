@@ -111,7 +111,7 @@ export function echoPanel(sentence: string, userId: string, onRecorded?: () => v
         h('p', { class: 'eyebrow' }, 'Sua melodia'),
         prosodyChart(target, user),
         h('ul', { class: 'prosody__tips', 'data-testid': 'prosody-tips' }, fb.lines.map((l, i) => h('li', { class: (i === 0 ? fb.melodyOk : fb.rhythmOk) ? 'tip tip--ok' : 'tip' }, l))),
-        h('button', { class: 'chip-btn', type: 'button', onclick: start }, icon('mic', 14), 'De novo'),
+        h('button', { class: 'chip-btn', type: 'button', onclick: start }, 'De novo'),
       ),
     );
     onRecorded?.();

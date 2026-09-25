@@ -84,7 +84,7 @@ test('módulos: descoberta, vozes variadas, ligação, fala com melodia, situaç
   }
   await expect(page.locator('.dots__dot--on')).toHaveCount(1);
   await page.getByRole('tab', { name: 'Falsos amigos' }).click();
-  await expect(page.locator('.false-card').filter({ hasText: 'attendre' })).toContainText('ESPERAR');
+  await expect(page.locator('.false-card').filter({ hasText: 'attendre' })).toContainText('esperar');
 
   // Como se lê: ouvir 3 → deduzir o som → confirmação → reconhecer palavras novas.
   await page.goto('/#/leitura');

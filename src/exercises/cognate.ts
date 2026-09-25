@@ -40,7 +40,7 @@ function pairRow(w: Word, highlight: boolean): HTMLElement {
     'li',
     { class: 'pair-row' },
     h('span', { class: 'pair-row__pt' }, highlight ? marked(pt, d.pt, 'marked--pt') : pt),
-    h('span', { class: 'pair-row__arrow', 'aria-hidden': 'true' }, icon('arrowRight', 16)),
+    h('span', { class: 'pair-row__arrow', 'aria-hidden': 'true' }, icon('chevronRight', 16)),
     h('span', { class: 'pair-row__fr', lang: 'fr' }, highlight ? marked(w.fr, d.fr, 'marked--fr') : w.fr),
     playButton(w.fr, { wordId: w.id, size: 'sm' }),
   );
@@ -77,7 +77,7 @@ export function cognateLesson(rule: CognateRule, userId: string, onDone: Done): 
           tile.classList.add('tile--miss');
           setTimeout(() => tile.classList.remove('tile--miss'), 450);
           if (misses >= 2) reveal(false);
-          else hint.textContent = 'Quase! Compare com o português de novo.';
+          else hint.textContent = 'Quase. Compare com o português de novo.';
         }
       });
       tiles.append(tile);
@@ -98,10 +98,10 @@ export function cognateLesson(rule: CognateRule, userId: string, onDone: Done): 
     void logActivity(userId, 'cognates', `discover:${rule.id}`, { correct: found });
     swap(
       stage,
-      feedback(found ? 'right' : 'almost', found ? 'Isso mesmo!' : 'Quase — a mudança está aqui:'),
+      feedback(found ? 'right' : 'almost', found ? 'Isso.' : 'Quase. A mudança está aqui:'),
       h('div', { class: 'rule-card' }, h('p', { class: 'rule-card__pattern', 'data-testid': 'rule-pattern' }, rule.pattern)),
       h('ul', { class: 'pair-list' }, discover.map((w) => pairRow(w, true))),
-      primaryButton('Agora você', () => stepApply(0)),
+      primaryButton('Minha vez', () => stepApply(0)),
     );
   };
 
@@ -131,7 +131,7 @@ export function cognateLesson(rule: CognateRule, userId: string, onDone: Done): 
       cue(exact || near ? 'right' : 'almost');
       input.disabled = true;
       void addToReview(userId, w.id);
-      swapResult(result, exact ? feedback('right', 'Isso!') : near ? feedback('right', 'Quase perfeito!', `É "${w.fr}".`) : feedback('almost', giveUp ? 'É assim:' : 'Quase!', `É "${w.fr}".`), w, () => stepApply(i + 1), i === apply.length - 1);
+      swapResult(result, exact ? feedback('right', 'Isso.') : near ? feedback('right', 'Quase perfeito.', `É "${w.fr}".`) : feedback('almost', giveUp ? 'É assim:' : 'Quase.', `É "${w.fr}".`), w, () => stepApply(i + 1), i === apply.length - 1);
       void speak(w.fr);
     };
     swap(

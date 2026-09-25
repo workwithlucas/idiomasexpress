@@ -70,7 +70,7 @@ export function pairRound(pair: MinimalPair, mode: PairMode, userId: string, onD
             h(
               'div',
               { class: 'step-in stack stack--sm' },
-              feedback(right ? 'right' : 'almost', right ? 'Isso!' : 'Quase.', mode === 'which' ? `Era "${target.fr}".` : `Foi "${target.fr}", depois "${other.fr}".`),
+              feedback(right ? 'right' : 'almost', right ? 'Isso.' : 'Quase.', mode === 'which' ? `Era "${target.fr}".` : `Foi "${target.fr}", depois "${other.fr}".`),
               h(
                 'div',
                 { class: 'compare' },

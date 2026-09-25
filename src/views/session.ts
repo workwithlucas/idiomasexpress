@@ -88,15 +88,14 @@ export const sessionView: View = async ({ query }) => {
   const finish = () => {
     cue('done');
     void logActivity(user.id, 'review', 'session-complete', { score: plan.right });
-    const pct = plan.items.length ? plan.right / plan.items.length : 0;
     swap(
       stage,
       h(
         'div',
         { class: 'session-done', 'data-testid': 'session-done' },
         ring(1),
-        h('h2', null, 'Pronto por hoje!'),
-        h('p', { class: 'muted' }, pct >= 0.7 ? 'Mandou bem. Amanhã tem mais.' : 'Cada tentativa conta. Amanhã tem mais.'),
+        h('h2', null, 'Pronto por hoje.'),
+        h('p', { class: 'muted' }, 'Amanhã tem outra.'),
         h('a', { class: 'btn btn--primary btn--block btn--lg', href: '#/' }, 'Voltar ao início'),
       ),
     );

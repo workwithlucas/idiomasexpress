@@ -1,5 +1,4 @@
 import { h } from '../ui/dom';
-import { icon } from '../ui/icons';
 import type { View } from '../ui/router';
 import { content } from '../db/repo';
 import { currentUser } from '../ui/session';
@@ -39,10 +38,9 @@ export const listeningView: View = () => {
     h(
       'div',
       { class: 'hero-lite' },
-      h('div', { class: 'intro__icon' }, icon('headphones', 24)),
       h('h2', null, 'Sons parecidos, vozes diferentes'),
       h('p', { class: 'muted' }, 'Use fones. Responda sem pensar muito.'),
-      h('button', { class: 'btn btn--primary btn--block btn--lg', type: 'button', onclick: next, 'data-testid': 'listen-start' }, 'Começar', icon('play', 18)),
+      h('button', { class: 'btn btn--primary btn--block btn--lg', type: 'button', onclick: next, 'data-testid': 'listen-start' }, 'Começar'),
     ),
   );
 

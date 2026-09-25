@@ -61,7 +61,7 @@ export function readingLesson(rule: ReadingRule, userId: string, onDone: Done): 
         'div',
         { class: 'row row--between' },
         h('p', { class: 'eyebrow' }, 'Ouça os três'),
-        h('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => void speakSequence(discover.map((e) => e.fr), 450) }, icon('play', 16), 'Ouvir'),
+        h('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => void speakSequence(discover.map((e) => e.fr), 450) }, 'Ouvir'),
       ),
       h('ul', { class: 'ex-list' }, discover.map(exampleCard)),
       h('h2', { class: 'ask' }, h('span', { class: 'grapheme', lang: 'fr' }, rule.grapheme), ' soa como…'),
@@ -89,7 +89,7 @@ export function readingLesson(rule: ReadingRule, userId: string, onDone: Done): 
   const reveal = (right: boolean) => {
     swap(
       stage,
-      feedback(right ? 'right' : 'almost', right ? 'Isso mesmo!' : `Quase — soa ${rule.sound}.`),
+      feedback(right ? 'right' : 'almost', right ? 'Isso.' : `Quase. Soa ${rule.sound}.`),
       h(
         'div',
         { class: 'rule-card' },
@@ -97,7 +97,7 @@ export function readingLesson(rule: ReadingRule, userId: string, onDone: Done): 
         h('p', { class: 'rule-card__tip' }, rule.tip_pt),
       ),
       h('ul', { class: 'ex-list' }, discover.map(exampleCard)),
-      primaryButton('Agora você', () => stepApply(0)),
+      primaryButton('Minha vez', () => stepApply(0)),
     );
   };
 
@@ -131,7 +131,7 @@ export function readingLesson(rule: ReadingRule, userId: string, onDone: Done): 
               h(
                 'div',
                 { class: 'step-in stack stack--sm' },
-                feedback(right ? 'right' : 'almost', right ? 'Isso!' : `Quase — era "${target.fr}".`, target.pt),
+                feedback(right ? 'right' : 'almost', right ? 'Isso.' : `Quase. Era "${target.fr}".`, target.pt),
                 primaryButton(i === apply.length - 1 ? 'Concluir' : 'Próxima', () => stepApply(i + 1)),
               ),
             );

@@ -280,7 +280,7 @@ export function compareProsody(target: TargetContour, user: UserContour): Prosod
   } else {
     lines.push(melodyOk ? 'Sua voz desceu no fim, bem como o francês faz.' : 'No fim, deixe a voz cair um pouco.');
   }
-  if (pace > 1.6) lines.push('Você falou mais devagar que o nativo — normal no começo.');
+  if (pace > 1.6) lines.push('Você falou mais devagar que o nativo. Normal no começo.');
   else if (pace < 0.75) lines.push('Você falou mais rápido que o nativo. Pode ir com calma.');
   else lines.push('Seu ritmo ficou parecido com o do nativo.');
   return { melodyOk, rhythmOk, lines, pace };
