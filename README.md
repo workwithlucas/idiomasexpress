@@ -154,9 +154,21 @@ Para levar o progresso para outro aparelho: **Ajustes → Exportar progresso** (
 
 O conteúdo é escrito em `scripts/seed/` e compilado por `scripts/build-seed.mjs` em `public/seed/seed.json`. O app carrega esse JSON no primeiro uso e popula o IndexedDB. O build **falha** se houver referência quebrada, palavra duplicada, número errado de palavras no núcleo, gancho de memória em palavra cognata etc.
 
-- `words-core.mjs`: as **300 palavras mais frequentes do francês falado**, em ordem aproximada de frequência (curadoria baseada em listas de corpora de fala e legendas, como Lexique 3/OpenSubtitles, agrupando conjugações no infinitivo). Cada palavra tem tradução, IPA, tema e, quando se aplica, regra de cognato **ou** gancho de memória.
-- `words-extra.mjs`: 216 palavras complementares, necessárias para exemplos de cognatos, pares mínimos, falsos cognatos e cenas (ranks 301+, na ordem de utilidade, não do corpus).
-- `content.mjs`: regras de cognatos, falsos cognatos, pares mínimos, regras de leitura, moldes de frase (incluindo os 10 de ligação, `f_lia_*`), cenas e perfis. Cada regra tem pelo menos 5 exemplos: 3 para descobrir e 2 ou mais para aplicar (o build confere). O campo `sound` das regras de leitura é uma descrição em português simples ("\"ô\"", "\"i\" com biquinho"), já que a interface não mostra transcrição fonética. O IPA continua nos dados das palavras.
+- `words-core.mjs` e `words-core-2.mjs`: as **800 palavras mais frequentes do francês falado** (1–300 e 301–800), em ordem aproximada de frequência. A curadoria se baseia em listas de corpora de fala e legendas, como Lexique 3/OpenSubtitles, com as conjugações agrupadas no infinitivo. Cada palavra tem tradução, IPA, tema e, quando se aplica, regra de cognato **ou** gancho de memória. Palavras que já existiam no complemento e caem na faixa 301–800 foram movidas para o núcleo sem mudança: o id vem do francês, então o progresso de revisão delas continua valendo.
+- `words-extra.mjs`: 356 palavras complementares (ranks 801+, na ordem de utilidade, não do corpus). Servem de exemplo para cognatos, pares mínimos e falsos cognatos, e cobrem o vocabulário das cenas de Luxemburgo (CSA, matricule, domiciliation, CDI, consigne, syndic…).
+- `content.mjs`: o resto do conteúdo, com o build conferindo os mínimos.
+  - **35 regras de cognatos:** cada uma com pelo menos 5 exemplos, 3 para descobrir e 2 ou mais para aplicar.
+  - **16 falsos cognatos.**
+  - **34 pares mínimos:** vogais, vogais nasais e consoante final muda em palavra isolada. Liaison fica só nos moldes.
+  - **35 regras de leitura.** O campo `sound` é uma descrição em português simples ("\"ô\"", "\"i\" com biquinho"), porque a interface não mostra transcrição fonética. O IPA continua nos dados das palavras.
+  - **80 moldes de frase**, incluindo os 10 de ligação (`f_lia_*`).
+  - **9 cenas:** "Dia a dia" + 8 da vida em Luxemburgo (`sc_lu_*`), cada uma com pelo menos 15 palavras e 5 moldes próprios.
+  - **Os 2 perfis.**
+
+Os testes do seed (`tests/unit/seed.test.ts`) conferem ainda que:
+- o 1º exemplo de cada regra de cognato tem uma mudança para o usuário tocar;
+- nenhum molde preenchido quebra a elisão (ex.: "ce antibiotique");
+- nenhum par mínimo se repete.
 
 Para mudar o conteúdo: edite esses arquivos, aumente `SEED_VERSION` em `build-seed.mjs` e rode `npm run seed`. Na próxima abertura, o app atualiza as tabelas de conteúdo **sem apagar o progresso**.
 
@@ -215,6 +227,7 @@ O TTS é a Web Speech API do próprio aparelho. Ela não entrega o áudio gerado
 | Acessibilidade | axe-core em todas as telas e estados, claro e escuro | 0 violações (com o `accent` claro #B54A2B, item 21) |
 | Lighthouse 13.5 (mobile) | Primeira visita e tela "Hoje" com perfil | 100 em Performance, Acessibilidade, Boas práticas e SEO |
 | Lighthouse 11.7.1 (último com PWA) | Primeira visita | PWA 100 · 0 erros de instalabilidade |
+| Seed v3 (800 palavras) | Build v2 com progresso real (sessão completa) → mesma origem com o build v3 | Progresso idêntico (reps por palavra), 8 cenas novas, nova sessão intercalada completa, 0 erros |
 | Estabilidade dos testes | 47 unitários; 15 E2E × 3 repetições (e × 2 após o último ajuste) | 47/47 · 45/45 · 30/30 |
 
 ## Known issues
@@ -226,7 +239,7 @@ Limitações conhecidas que **não** foram corrigidas nesta versão, com o motiv
 3. **A qualidade e a lista de vozes dependem do aparelho.** Ajustes mostra as vozes francesas do aparelho e explica cada situação: procurando, nenhuma voz listada pelo navegador, vozes sem francês ou lista pronta. A lista é relida por alguns segundos, porque o Safari/iOS às vezes não avisa quando as vozes carregam. Nos testes deste repositório o Chromium de automação não expõe **nenhuma** voz (mesmo com espeak-ng/speech-dispatcher instalados), por isso as vozes são simuladas. Em celular e desktop reais a lista vem do sistema.
     A Web Speech API usa as vozes instaladas no sistema. Se não houver voz francesa, o app **desativa o áudio e avisa** (em vez de ler francês com sotaque de outra língua); Ajustes explica como instalar a voz. Em navegadores que não informam lista de vozes (alguns WebViews), o app pede `fr-FR` pelo atributo `lang`, e é o sistema que escolhe. *Por quê:* não há TTS embutido offline na v1 (seria um novo recurso, com Azure TTS ou arquivos de áudio).
 4. **`audio_generated` não guarda áudio.** A Web Speech API não entrega o áudio sintetizado. O campo marca só que a palavra já foi falada com sucesso naquele aparelho. *Por quê:* limitação da API (veja "Sobre o áudio").
-5. **A primeira abertura precisa de internet.** O app e o seed (~110 KB) só ficam disponíveis offline depois de baixados uma vez. Sem rede na primeira visita, o navegador mostra a própria página de erro. *Por quê:* é o funcionamento normal de um PWA; não há como servir algo antes de o service worker existir.
+5. **A primeira abertura precisa de internet.** O app e o seed (~230 KB, ~52 KB comprimido) só ficam disponíveis offline depois de baixados uma vez. Sem rede na primeira visita, o navegador mostra a própria página de erro. *Por quê:* é o funcionamento normal de um PWA; não há como servir algo antes de o service worker existir.
 6. **A avaliação de pronúncia precisa de internet e de chave.** Offline ou sem chave, o módulo 6 continua servindo para ouvir, gravar e comparar, mas sem nota. A chamada real ao Azure **não foi executada nesta passada** (não havia chave): os testes usam uma resposta simulada com o formato documentado pela Microsoft, e o proxy foi testado com chave inválida (erro tratado). *Por quê:* a chave é pessoal. Confira com a sua na primeira gravação.
 7. **iPhone sem instalar: o progresso pode ser apagado depois de 7 dias sem uso.** O Safari limpa o armazenamento de sites que não são abertos por 7 dias, a menos que o app esteja **na tela inicial**. O app pede armazenamento persistente, mas o Safari não garante. *Por quê:* é uma política do WebKit. **Instale na tela inicial e exporte o progresso de vez em quando.**
 8. **Os intervalos longos do FSRS variam um pouco.** Intervalos a partir de ~2,5 dias recebem um "fuzz" aleatório (ex.: "Fácil" numa palavra nova = 8–12 dias). *Por quê:* é intencional no FSRS, para as revisões não se acumularem no mesmo dia.
@@ -254,6 +267,11 @@ Limitações conhecidas que **não** foram corrigidas nesta versão, com o motiv
     - **Gráfico de melodia:** meta em `ink-soft` tracejado, sua voz em `primary`.
     - **Resultados "quase" e "tente de novo":** `ink-soft` sobre `surface-soft`, sem vermelho nem verde.
     - **Botão de gravar:** fundo `accent`.
+23. **Conteúdo v3: o que foi escolhido na curadoria.**
+    - **Ordem das palavras 301–800:** é aproximada, como a das 300 primeiras. A lista foi montada de memória a partir das listas de frequência de fala, sem acesso a um corpus neste ambiente.
+    - **Pronúncia (IPA):** revisada à mão, sem um falante nativo.
+    - **Cenas antigas:** as 6 genéricas (creche, banco, entrevista, médico, mercado, commune) foram substituídas pelas versões de Luxemburgo, que reaproveitam todas as palavras e moldes delas. Manter as duas versões deixaria dois cards "Banco" na tela. Um link salvo para uma cena antiga (ex.: `#/situacoes/sc_creche`) mostra "Situação não encontrada".
+    - **Ícones das cenas Transporte e Vizinhança:** usam o pino e a pessoa, já existentes. Desenhar ícones novos seria mudança de interface, fora do escopo desta etapa.
 
 ## Fora do escopo da v1 (de propósito)
 Nenhuma IA generalista, nenhuma conversa livre, nenhuma sincronização automática e nenhum login. A escolha de perfil é local.

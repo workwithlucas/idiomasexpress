@@ -1,53 +1,32 @@
-// Vocabulário complementar (além das 300 mais frequentes), necessário para:
+// Vocabulário complementar (além das 800 mais frequentes), necessário para:
 //  - ilustrar as regras de cognatos,
 //  - formar os pares mínimos e os falsos cognatos,
-//  - cobrir as cenas práticas (creche, banco, entrevista, médico, mercado, commune).
-// Recebem freq_rank a partir de 301, na ordem em que aparecem aqui
+//  - cobrir as cenas práticas da vida em Luxemburgo (creche/CSA, commune,
+//    banco, entrevista, pediatra, supermercado, transporte, vizinhança).
+// Recebem freq_rank a partir de 801, na ordem em que aparecem aqui
 // (ordem de utilidade dentro do complemento, NÃO posição real no corpus).
 // Mesmo formato de words-core.mjs.
 export const EXTRA_WORDS = `
-contre | contra | kɔ̃tʁ | | | |
-chien | cachorro | ʃjɛ̃ | cotidiano | m | | Chien → "canino".
-chat | gato | ʃa | cotidiano | m | | Soa "xá": o gato tomando chá.
-gentil | gentil, simpático | ʒɑ̃ti | descricao | | |
-long | longo, comprido | lɔ̃ | descricao | | |
-surtout | sobretudo | syʁtu | | | | sur (sobre) + tout (tudo).
 nation | nação | nasjɔ̃ | cotidiano | f | cr_cao_tion |
-situation | situação | sitɥasjɔ̃ | cotidiano | f | cr_cao_tion |
-information | informação | ɛ̃fɔʁmasjɔ̃ | administracao | f | cr_cao_tion |
-attention | atenção | atɑ̃sjɔ̃ | cotidiano | f | cr_cao_tion |
 solution | solução | sɔlysjɔ̃ | trabalho | f | cr_cao_tion |
 déclaration | declaração | deklaʁasjɔ̃ | administracao | f | cr_cao_tion |
 attestation | atestado, declaração | atɛstasjɔ̃ | administracao | f | cr_cao_tion |
-liberté | liberdade | libɛʁte | cotidiano | f | cr_dade_te |
 université | universidade | ynivɛʁsite | trabalho | f | cr_dade_te |
-qualité | qualidade | kalite | descricao | f | cr_dade_te |
 réalité | realidade | ʁealite | cotidiano | f | cr_dade_te |
 possibilité | possibilidade | pɔsibilite | cotidiano | f | cr_dade_te |
-société | sociedade; empresa | sɔsjete | trabalho | f | cr_dade_te |
-vérité | verdade | veʁite | cotidiano | f | cr_dade_te |
 délicieux | delicioso | delisjø | compras | | cr_oso_eux |
 curieux | curioso | kyʁjø | descricao | | cr_oso_eux |
 nerveux | nervoso | nɛʁvø | sentimentos | | cr_oso_eux |
 généreux | generoso | ʒeneʁø | descricao | | cr_oso_eux |
 courageux | corajoso | kuʁaʒø | descricao | | cr_oso_eux |
 précieux | precioso | pʁesjø | descricao | | cr_oso_eux |
-exactement | exatamente | ɛɡzaktəmɑ̃ | | | cr_mente_ment |
-simplement | simplesmente | sɛ̃pləmɑ̃ | | | cr_mente_ment |
-finalement | finalmente | finalmɑ̃ | | | cr_mente_ment |
-normalement | normalmente | nɔʁmalmɑ̃ | | | cr_mente_ment |
-absolument | absolutamente | apsɔlymɑ̃ | | | cr_mente_ment |
 rapidement | rapidamente | ʁapidmɑ̃ | | | cr_mente_ment |
-salaire | salário | salɛʁ | banco | m | cr_ario_aire |
-dictionnaire | dicionário | diksjɔnɛʁ | cotidiano | m | cr_ario_aire |
 nécessaire | necessário | nesesɛʁ | descricao | | cr_ario_aire |
+dictionnaire | dicionário | diksjɔnɛʁ | cotidiano | m | cr_ario_aire |
 anniversaire | aniversário | anivɛʁsɛʁ | cotidiano | m | cr_ario_aire |
 vocabulaire | vocabulário | vɔkabylɛʁ | cotidiano | m | cr_ario_aire |
 horaire | horário | ɔʁɛʁ | trabalho | m | cr_ario_aire |
 formulaire | formulário | fɔʁmylɛʁ | administracao | m | cr_ario_aire |
-terrible | terrível | tɛʁibl | descricao | | cr_vel_ble |
-impossible | impossível | ɛ̃pɔsibl | descricao | | cr_vel_ble |
-responsable | responsável | ʁɛspɔ̃sabl | trabalho | | cr_vel_ble |
 agréable | agradável | aɡʁeabl | descricao | | cr_vel_ble |
 disponible | disponível | dispɔnibl | trabalho | | cr_vel_ble |
 incroyable | incrível | ɛ̃kʁwajabl | descricao | | cr_vel_ble |
@@ -55,18 +34,14 @@ dentiste | dentista | dɑ̃tist | saude | m | cr_ista_iste |
 touriste | turista | tuʁist | cotidiano | m | cr_ista_iste |
 artiste | artista | aʁtist | cotidiano | m | cr_ista_iste |
 journaliste | jornalista | ʒuʁnalist | trabalho | m | cr_ista_iste |
-musique | música | myzik | cotidiano | f | cr_ico_ique |
 politique | política | pɔlitik | cotidiano | f | cr_ico_ique |
-pratique | prático | pʁatik | descricao | | cr_ico_ique |
 magnifique | magnífico | maɲifik | descricao | | cr_ico_ique |
 fantastique | fantástico | fɑ̃tastik | descricao | | cr_ico_ique |
 électrique | elétrico | elɛktʁik | casa | | cr_ico_ique |
-pharmacie | farmácia | faʁmasi | saude | f | cr_ia_ie |
 économie | economia | ekɔnɔmi | banco | f | cr_ia_ie |
 énergie | energia | enɛʁʒi | casa | f | cr_ia_ie |
 photographie | fotografia | fɔtɔɡʁafi | cotidiano | f | cr_ia_ie |
 catégorie | categoria | kateɡɔʁi | cotidiano | f | cr_ia_ie |
-professeur | professor | pʁɔfesœʁ | trabalho | m | cr_or_eur |
 directeur | diretor | diʁɛktœʁ | trabalho | m | cr_or_eur |
 acteur | ator | aktœʁ | cotidiano | m | cr_or_eur |
 valeur | valor | valœʁ | banco | f | cr_or_eur |
@@ -88,21 +63,12 @@ personnel | pessoal | pɛʁsɔnɛl | descricao | | cr_al_el |
 professionnel | profissional | pʁɔfesjɔnɛl | trabalho | | cr_al_el |
 officiel | oficial | ɔfisjɛl | administracao | | cr_al_el |
 réel | real | ʁeɛl | descricao | | cr_al_el |
-voyage | viagem | vwajaʒ | transporte | m | cr_agem_age |
-message | mensagem | mesaʒ | cotidiano | m | cr_agem_age |
-courage | coragem | kuʁaʒ | sentimentos | m | cr_agem_age |
 image | imagem | imaʒ | cotidiano | f | cr_agem_age |
 garage | garagem | ɡaʁaʒ | casa | m | cr_agem_age |
 organiser | organizar | ɔʁɡanize | trabalho | | cr_izar_iser |
 utiliser | utilizar, usar | ytilize | verbos | | cr_izar_iser |
 réaliser | realizar | ʁealize | trabalho | | cr_izar_iser |
 finaliser | finalizar | finalize | trabalho | | cr_izar_iser |
-accepter | aceitar | aksɛpte | verbos | | cr_ar_er |
-adorer | adorar | adɔʁe | verbos | | cr_ar_er |
-continuer | continuar | kɔ̃tinɥe | verbos | | cr_ar_er |
-préparer | preparar | pʁepaʁe | casa | | cr_ar_er |
-imaginer | imaginar | imaʒine | verbos | | cr_ar_er |
-visiter | visitar | vizite | verbos | | cr_ar_er |
 signer | assinar | siɲe | administracao | | cr_ar_er |
 retirer | sacar, retirar | ʁətiʁe | banco | | cr_ar_er |
 déposer | depositar | depoze | banco | | cr_ar_er |
@@ -112,37 +78,25 @@ température | temperatura | tɑ̃peʁatyʁ | saude | f | cr_ura_ure |
 facture | fatura, conta | faktyʁ | banco | f | cr_ura_ure |
 signature | assinatura | siɲatyʁ | administracao | f | cr_ura_ure |
 peinture | pintura | pɛ̃tyʁ | casa | f | cr_ura_ure |
-janvier | janeiro | ʒɑ̃vje | tempo | m | cr_eiro_ier |
-février | fevereiro | fevʁije | tempo | m | cr_eiro_ier |
 banquier | bancário, banqueiro | bɑ̃kje | banco | m | cr_eiro_ier |
 infirmier | enfermeiro | ɛ̃fiʁmje | saude | m | cr_eiro_ier |
 cuisinier | cozinheiro | kɥizinje | trabalho | m | cr_eiro_ier |
-étudiant | estudante | etydjɑ̃ | trabalho | m | cr_es_e |
-étranger | estrangeiro | etʁɑ̃ʒe | administracao | m | cr_es_e |
 épouse | esposa | epuz | pessoas | f | cr_es_e |
 état | estado | eta | administracao | m | cr_es_e |
-hôpital | hospital | ɔpital | saude | m | cr_circ_s |
-fête | festa | fɛt | cotidiano | f | cr_circ_s |
-goût | gosto, sabor | ɡu | compras | m | cr_circ_s |
+vêtements | roupas | vɛtmɑ̃ | creche | mpl | cr_circ_s |
 coût | custo | ku | banco | m | cr_circ_s |
 forêt | floresta | fɔʁɛ | lugares | f | cr_circ_s |
 intérêt | interesse; juros | ɛ̃teʁɛ | banco | m | cr_circ_s |
-vêtements | roupas | vɛtmɑ̃ | creche | mpl | cr_circ_s |
-jaune | amarelo | ʒon | descricao | | | Jaune soa "jôn", com O fechado. Jeune (jovem) tem o som "œ".
-vin | vinho | vɛ̃ | compras | m | | Vin → vinho: nasal aberto, quase "vẽ".
 vent | vento | vɑ̃ | cotidiano | m | | Vent → vento: nasal "vã", boca bem aberta.
 vont | (eles) vão | vɔ̃ | verbos | | | Ils vont = eles vão: nasal "võ", lábios arredondados.
 roue | roda | ʁu | transporte | f | | Roue → roda: é o nosso "u" normal.
 dessus | em cima | dəsy | lugares | | | Dessus = em cima: "u" com bico (língua no "i").
 dessous | embaixo | dəsu | lugares | | | Dessous = embaixo: "u" normal do português.
 vu | visto | vy | verbos | | | Vu = visto (déjà vu!).
-poisson | peixe | pwasɔ̃ | compras | m | | SS = som de S: poisson → "piscicultura" (peixe).
 poison | veneno | pwazɔ̃ | cotidiano | m | | Um S entre vogais = Z: poison → "poção" venenosa.
 dessert | sobremesa | desɛʁ | compras | m | | SS = S: dessert, a sobremesa.
 désert | deserto | dezɛʁ | lugares | m | | S entre vogais = Z: désert, o deserto.
-cheveux | cabelo | ʃəvø | saude | mpl | | Soa "xevê": os cabelos.
 chevaux | cavalos | ʃəvo | cotidiano | mpl | | Soa "xevô": cheval, chevaux = cavalo(s).
-peur | medo | pœʁ | sentimentos | f | | Peur → "pavor": medo.
 crèche | creche | kʁɛʃ | creche | f | |
 couche | fralda | kuʃ | creche | f | | Couche = camada: a fralda é a "camada" do bebê.
 biberon | mamadeira | bibʁɔ̃ | creche | m | | Bi-be-ron: o bebê bebe na mamadeira.
@@ -152,14 +106,10 @@ goûter | lanche da tarde | ɡute | creche | m | | Goûter = provar ("gosto"): o
 jouet | brinquedo | ʒwɛ | creche | m | | Jouet ← jouer (brincar): brinquedo.
 éducatrice | educadora | edykatʁis | creche | f | |
 fièvre | febre | fjɛvʁ | saude | f | |
-banque | banco (instituição) | bɑ̃k | banco | f | | Feminino em francês: LA banque.
-compte | conta (bancária) | kɔ̃t | banco | m | | Compte ← compter (contar): a conta.
-carte | cartão | kaʁt | banco | f | | Carte bancaire = cartão do banco.
 virement | transferência | viʁmɑ̃ | banco | m | | Virement ← virer (virar): o dinheiro "vira" de conta.
 crédit | crédito | kʁedi | banco | m | |
 frais | taxas, tarifas | fʁɛ | banco | mpl | | Frais bancaires = tarifas bancárias. (Frais também = fresco.)
 code | senha (PIN), código | kɔd | banco | m | |
-clé | chave | kle | casa | f | | Clé → "clave" (chave musical).
 distributeur | caixa eletrônico | distʁibytœʁ | banco | m | | O "distribuidor" de notas: caixa eletrônico.
 guichet | guichê | ɡiʃɛ | administracao | m | |
 entretien | entrevista (de emprego) | ɑ̃tʁətjɛ̃ | trabalho | m | | Entretien d'embauche = entrevista de emprego.
@@ -170,15 +120,11 @@ entreprise | empresa | ɑ̃tʁəpʁiz | trabalho | f | | Entreprise → "empreen
 contrat | contrato | kɔ̃tʁa | trabalho | m | |
 ingénieur | engenheiro | ɛ̃ʒenjœʁ | trabalho | m | |
 motivé | motivado | mɔtive | trabalho | | |
-français | francês | fʁɑ̃sɛ | trabalho | m | |
-anglais | inglês | ɑ̃ɡlɛ | trabalho | m | |
-allemand | alemão | almɑ̃ | trabalho | m | |
-portugais | português | pɔʁtyɡɛ | trabalho | m | |
+portugais | português | pɔʁtyɡɛ | trabalho | m | cr_es_ais |
 luxembourgeois | luxemburguês | lyksɑ̃buʁʒwa | trabalho | m | |
 gorge | garganta | ɡɔʁʒ | saude | f | | Gorge → "gorjeio", o canto que sai da garganta.
 ventre | barriga | vɑ̃tʁ | saude | m | | Ventre → "ventre": barriga.
 dos | costas | do | saude | m | | Dos → "dorso": costas. O S é mudo.
-bras | braço | bʁa | saude | m | | Soa "brá": o S é mudo.
 jambe | perna | ʒɑ̃b | saude | f | | Jambe → "jambon" (presunto, a perna do porco).
 ordonnance | receita médica | ɔʁdɔnɑ̃s | saude | f | | A "ordem" do médico: a receita.
 médicament | remédio | medikamɑ̃ | saude | m | |
@@ -192,8 +138,6 @@ légumes | legumes | leɡym | compras | mpl | |
 fruit | fruta | fʁɥi | compras | m | |
 pomme | maçã | pɔm | compras | f | | Pomme → "pomar": maçã. Pomme de terre = batata.
 caisse | caixa (do mercado) | kɛs | compras | f | |
-sac | sacola | sak | compras | m | |
-prix | preço | pʁi | compras | m | | Prix → "preço" (e prêmio: Grand Prix).
 kilo | quilo | kilo | compras | m | |
 bouteille | garrafa | butɛj | compras | f | | Bouteille → "botelha": garrafa.
 œuf | ovo | œf | compras | m | | O F é pronunciado: "éuf".
@@ -201,7 +145,6 @@ beurre | manteiga | bœʁ | compras | m | | Beurre → "butter": manteiga.
 sortie | saída | sɔʁti | lugares | f | | Sortie ← sortir (sair): a saída.
 boulangerie | padaria | bulɑ̃ʒʁi | compras | f | | Boulanger = padeiro; boulangerie = padaria.
 commune | prefeitura (comuna) | kɔmyn | administracao | f | | Em Luxemburgo, é na commune que se faz o registro de residência.
-document | documento | dɔkymɑ̃ | administracao | m | |
 certificat | certificado | sɛʁtifika | administracao | m | |
 passeport | passaporte | paspɔʁ | administracao | m | |
 logement | moradia | lɔʒmɑ̃ | casa | m | | Logement → "alojamento": moradia.
@@ -213,7 +156,6 @@ salir | sujar | saliʁ | casa | | | Falso amigo: salir = SUJAR. "Sair" é sortir
 sale | sujo | sal | casa | | | Falso amigo: sale = SUJO. "Sala" é salle.
 tirer | puxar; atirar | tiʁe | cotidiano | | | Falso amigo: na porta, "tirez" = PUXE.
 pousser | empurrar | puse | cotidiano | | | Falso amigo: na porta, "poussez" = EMPURRE.
-propre | limpo; próprio | pʁɔpʁ | casa | | | Depois do nome = limpo: une chambre propre. Antes = próprio.
 casser | quebrar | kase | cotidiano | | | Falso amigo: casser = QUEBRAR. "Casar" é se marier.
 embrasser | beijar | ɑ̃bʁase | pessoas | | | Falso amigo: embrasser = BEIJAR (não é abraçar).
 prétendre | afirmar, alegar | pʁetɑ̃dʁ | cotidiano | | | Falso amigo: prétendre = AFIRMAR. "Pretender" é avoir l'intention.
@@ -222,4 +164,203 @@ optimiste | otimista | ɔptimist | sentimentos | | cr_ista_iste |
 moderniser | modernizar | mɔdɛʁnize | trabalho | | cr_izar_iser |
 appartement | apartamento | apaʁtəmɑ̃ | casa | m | | Quase igual: apartamento → appartement (com dois P).
 occupé | ocupado | ɔkype | descricao | | | Occupé → "ocupado" (o C dobra).
+produire | produzir | pʁɔdɥiʁ | trabalho | | cr_uzir_uire |
+traduire | traduzir | tʁadɥiʁ | trabalho | | cr_uzir_uire |
+réduire | reduzir | ʁedɥiʁ | verbos | | cr_uzir_uire |
+s'inscrire | inscrever-se, matricular-se | sɛ̃skʁiʁ | administracao | | | Inscrever → inscrire: matricular-se na creche, na escola, na commune.
+guérir | sarar, curar | ɡeʁiʁ | saude | | |
+protéger | proteger | pʁɔteʒe | verbos | | |
+corriger | corrigir | kɔʁiʒe | verbos | | |
+cacher | esconder | kaʃe | verbos | | | Cache-cache = esconde-esconde.
+fumer | fumar | fyme | verbos | | cr_ar_er |
+peser | pesar | pəze | compras | | cr_ar_er |
+surprendre | surpreender | syʁpʁɑ̃dʁ | verbos | | |
+disparaître | desaparecer | dispaʁɛtʁ | verbos | | |
+accueillir | acolher, receber | akœjiʁ | verbos | | | O "ueil" soa "ëi": "akëiir".
+tenter | tentar | tɑ̃te | verbos | | cr_ar_er |
+emprunter | pegar emprestado | ɑ̃pʁœ̃te | banco | | |
+prêter | emprestar | pʁete | banco | | | Prêt = empréstimo (e também "pronto").
+dépenser | gastar | depɑ̃se | banco | | | Despesa → dépense.
+garer | estacionar | ɡaʁe | transporte | | | Garer la voiture = estacionar o carro (na "garagem").
+traverser | atravessar | tʁavɛʁse | transporte | | |
+se reposer | descansar | sə ʁəpoze | saude | | | Repousar → se reposer.
+s'habiller | vestir-se | sabije | casa | | | Habit = roupa.
+nager | nadar | naʒe | verbos | | |
+danser | dançar | dɑ̃se | verbos | | |
+cuisiner | cozinhar | kɥizine | casa | | |
+se marier | casar-se | sə maʁje | pessoas | | |
+appartenir | pertencer | apaʁtəniʁ | verbos | | |
+attraper | pegar, apanhar | atʁape | verbos | | | "Armadilha" = trappe: attraper = pegar.
+escalier | escada | ɛskalje | casa | m | |
+ascenseur | elevador | asɑ̃sœʁ | casa | m | | O "ascensor": elevador.
+assiette | prato | asjɛt | casa | f | |
+télévision | televisão | televizjɔ̃ | casa | f | cr_sao_sion |
+système | sistema | sistɛm | | m | cr_ema_eme |
+salade | salada | salad | compras | f | cr_ada_ade |
+mémoire | memória | memwaʁ | | f | cr_orio_oire |
+compagnie | companhia | kɔ̃paɲi | trabalho | f | cr_nh_gn |
+feuille | folha | fœj | | f | | "Folha" → feuille: o lh virou ill.
+porte-monnaie | carteira (de moedas) | pɔʁtmɔnɛ | compras | m | | Porta-moeda.
+monnaie | trocado; moeda | mɔnɛ | compras | f | | Vous avez de la monnaie? = tem trocado?
+bouton | botão | butɔ̃ | | m | |
+bruit | barulho | bʁɥi | casa | m | | O T é mudo: "brüí".
+poubelle | lixeira, lixo | pubɛl | casa | f | |
+cheval | cavalo | ʃəval | | m | | Plural: chevaux.
+oiseau | pássaro | wazo | | m | | Tem as 5 vogais e nenhuma soa como se escreve: "uazô".
+animal | animal | animal | | m | |
+gâteau | bolo | ɡato | compras | m | | O circunflexo esconde um S: gasteau.
+chocolat | chocolate | ʃɔkɔla | compras | m | |
+glace | sorvete; gelo; espelho | ɡlas | compras | f | | Une glace au chocolat = um sorvete de chocolate.
+orange | laranja | ɔʁɑ̃ʒ | compras | f | |
+tomate | tomate | tɔmat | compras | f | |
+pomme de terre | batata | pɔm də tɛʁ | compras | f | | "Maçã da terra": batata.
+riz | arroz | ʁi | compras | m | | O Z é mudo: "rí".
+pâtes | macarrão, massa | pɑt | compras | fpl | | A "pasta": massa.
+huile | óleo; azeite | ɥil | compras | f | | Huile d'olive = azeite.
+discussion | discussão | diskysjɔ̃ | trabalho | f | cr_sao_sion |
+version | versão | vɛʁsjɔ̃ | cotidiano | f | cr_sao_sion |
+profession | profissão | pʁɔfesjɔ̃ | trabalho | f | cr_sao_sion |
+mission | missão | misjɔ̃ | trabalho | f | cr_sao_sion |
+piscine | piscina | pisin | lugares | f | cr_ina_ine |
+vitamine | vitamina | vitamin | saude | f | cr_ina_ine |
+cantine | cantina, refeitório | kɑ̃tin | creche | f | cr_ina_ine |
+discipline | disciplina | disiplin | creche | f | cr_ina_ine |
+margarine | margarina | maʁɡaʁin | compras | f | cr_ina_ine |
+routine | rotina | ʁutin | creche | f | cr_ina_ine |
+tristesse | tristeza | tʁistɛs | sentimentos | f | cr_eza_esse |
+finesse | fineza, delicadeza | finɛs | descricao | f | cr_eza_esse |
+promesse | promessa | pʁɔmɛs | cotidiano | f | cr_eza_esse |
+richesse | riqueza | ʁiʃɛs | banco | f | cr_eza_esse |
+gentillesse | gentileza | ʒɑ̃tijɛs | sentimentos | f | cr_eza_esse |
+délicatesse | delicadeza | delikatɛs | sentimentos | f | cr_eza_esse |
+japonais | japonês | ʒapɔnɛ | pessoas | | cr_es_ais |
+polonais | polonês | pɔlɔnɛ | pessoas | | cr_es_ais |
+irlandais | irlandês | iʁlɑ̃dɛ | pessoas | | cr_es_ais |
+libanais | libanês | libanɛ | pessoas | | cr_es_ais |
+africain | africano | afʁikɛ̃ | pessoas | | cr_ano_ain |
+mexicain | mexicano | mɛksikɛ̃ | pessoas | | cr_ano_ain |
+romain | romano | ʁɔmɛ̃ | pessoas | | cr_ano_ain |
+urbain | urbano | yʁbɛ̃ | lugares | | cr_ano_ain |
+ballon | balão; bola | balɔ̃ | creche | m | cr_ao_on |
+savon | sabão, sabonete | savɔ̃ | casa | m | cr_ao_on |
+limonade | limonada | limɔnad | compras | f | cr_ada_ade |
+camarade | camarada, colega | kamaʁad | pessoas | | cr_ada_ade |
+marmelade | marmelada, geleia | maʁməlad | compras | f | cr_ada_ade |
+pommade | pomada | pɔmad | saude | f | cr_ada_ade |
+exercice | exercício | ɛɡzɛʁsis | saude | m | cr_icio_ice |
+bénéfice | benefício; lucro | benefis | banco | m | cr_icio_ice |
+sacrifice | sacrifício | sakʁifis | sentimentos | m | cr_icio_ice |
+thème | tema | tɛm | cotidiano | m | cr_ema_eme |
+poème | poema | pɔɛm | cotidiano | m | cr_ema_eme |
+emblème | emblema | ɑ̃blɛm | cotidiano | m | cr_ema_eme |
+théorème | teorema | teɔʁɛm | cotidiano | m | cr_ema_eme |
+victoire | vitória | viktwaʁ | cotidiano | f | cr_orio_oire |
+gloire | glória | ɡlwaʁ | cotidiano | f | cr_orio_oire |
+laboratoire | laboratório | labɔʁatwaʁ | saude | m | cr_orio_oire |
+obligatoire | obrigatório | ɔbliɡatwaʁ | administracao | | cr_orio_oire |
+introduire | introduzir | ɛ̃tʁɔdɥiʁ | verbos | | cr_uzir_uire |
+médaille | medalha | medaj | cotidiano | f | cr_lh_ill |
+bataille | batalha | bataj | cotidiano | f | cr_lh_ill |
+abeille | abelha | abɛj | cotidiano | f | cr_lh_ill |
+conseil | conselho | kɔ̃sɛj | trabalho | m | cr_lh_ill |
+champagne | champanhe | ʃɑ̃paɲ | compras | m | cr_nh_gn |
+vigne | vinha, videira | viɲ | lugares | f | cr_nh_gn |
+organisme | organismo | ɔʁɡanism | saude | m | cr_ismo_isme |
+capitalisme | capitalismo | kapitalism | banco | m | cr_ismo_isme |
+racisme | racismo | ʁasism | cotidiano | m | cr_ismo_isme |
+tourisme | turismo | tuʁism | cotidiano | m | cr_ismo_isme |
+journalisme | jornalismo | ʒuʁnalism | trabalho | m | cr_ismo_isme |
+optimisme | otimismo | ɔptimism | sentimentos | m | cr_ismo_isme |
+omelette | omelete | ɔmlɛt | compras | f | cr_eta_ette |
+raquette | raquete | ʁakɛt | cotidiano | f | cr_eta_ette |
+cassette | cassete, fita | kasɛt | cotidiano | f | cr_eta_ette |
+étiquette | etiqueta | etikɛt | compras | f | cr_eta_ette |
+bicyclette | bicicleta | bisiklɛt | transporte | f | cr_eta_ette |
+chant | canto | ʃɑ̃ | cotidiano | m | | O "ca" virou "cha": canto → chant. Só o nasal: o T é mudo.
+bonne | boa | bɔn | descricao | | | Bon soa "bõ" (nasal); bonne soa "bón", com N de verdade.
+fine | fina | fin | descricao | | | Fin soa "fẽ"; fine soa "fín".
+voisine | vizinha | vwazin | casa | f | | Voisin soa "vuazẽ"; voisine soa "vuazín".
+pleine | cheia | plɛn | descricao | | | Plein soa "plẽ"; pleine soa "plén".
+blond | loiro | blɔ̃ | descricao | | | "Blonde" é a loira. Blond soa "blõ".
+petite | pequena | pətit | descricao | | | Petit: "petí" (T mudo). Petite: "petít" (T soa).
+grande | grande (feminino) | ɡʁɑ̃d | descricao | | | Grand: "grã". Grande: "grãd".
+verte | verde (feminino) | vɛʁt | descricao | | | Vert: "vér". Verte: "vért".
+grise | cinza (feminino) | ɡʁiz | descricao | | | Gris: "grí". Grise: "gríz".
+chaude | quente (feminino) | ʃod | descricao | | | Chaud: "xô". Chaude: "xôd".
+toute | toda | tut | | | | Tout: "tu". Toute: "tut".
+maison relais | maison relais (acolhimento fora do horário escolar) | mɛzɔ̃ ʁəlɛ | creche | f | | "Casa de revezamento": onde a criança fica antes e depois da escola.
+chèque-service | chèque-service (CSA, auxílio do governo para a creche) | ʃɛk sɛʁvis | creche | m | | O CSA (chèque-service accueil) paga parte da creche e da maison relais.
+inscription | inscrição, matrícula | ɛ̃skʁipsjɔ̃ | creche | f | cr_cao_tion |
+activité | atividade | aktivite | creche | f | cr_dade_te |
+absent | ausente | apsɑ̃ | creche | | | Il est absent aujourd'hui = ele faltou hoje.
+arrivée | chegada | aʁive | administracao | f | | Déclaration d'arrivée = o registro de chegada na commune.
+matricule | número de identificação (matricule) | matʁikyl | administracao | m | | O número nacional de 13 dígitos, usado na saúde, no banco e no trabalho.
+copie | cópia | kɔpi | administracao | f | cr_ia_ie |
+bail | contrato de aluguel | baj | casa | m | | O "ai" com L soa "ai": "bái".
+propriétaire | proprietário, dono | pʁɔpʁijetɛʁ | casa | | cr_ario_aire |
+locataire | inquilino | lɔkatɛʁ | casa | | | Quem "loca" (aluga): o inquilino.
+nationalité | nacionalidade | nasjɔnalite | administracao | f | cr_dade_te |
+demande | pedido, solicitação | dəmɑ̃d | administracao | f | | Falso amigo: demande = PEDIDO (sem briga).
+naissance | nascimento | nɛsɑ̃s | administracao | f | | Date de naissance = data de nascimento.
+délai | prazo | delɛ | administracao | m | | Falso amigo: délai = PRAZO, não atraso.
+amende | multa | amɑ̃d | administracao | f | | Emendar o erro: pagar a multa.
+domiciliation | débito automático | dɔmisiljasjɔ̃ | banco | f | | A conta vai ao seu domicílio (banco) e é debitada sozinha.
+ordre permanent | transferência programada, ordem permanente | ɔʁdʁ pɛʁmanɑ̃ | banco | m | | Uma "ordem permanente": o aluguel sai todo mês sozinho.
+communication | referência (do pagamento); comunicação | kɔmynikasjɔ̃ | banco | f | cr_cao_tion |
+solde | saldo | sɔld | banco | m | | Soldes (no plural) = liquidação!
+relevé | extrato | ʁəlve | banco | m | | Relevé de compte = extrato bancário.
+retrait | saque | ʁətʁɛ | banco | m | | Vem de retirer: retirar dinheiro.
+dépôt | depósito | depo | banco | m | | O circunflexo esconde um S: depost → depósito.
+montant | valor, quantia | mɔ̃tɑ̃ | banco | m | | O "montante".
+taux | taxa (percentual) | to | banco | m | | Taux d'intérêt = taxa de juros. X mudo: "tô".
+épargne | poupança | epaʁɲ | banco | f | | Compte épargne = conta poupança.
+référence | referência | ʁefeʁɑ̃s | banco | f | cr_ancia_ance |
+cotisation | contribuição | kɔtizasjɔ̃ | banco | f | | Cotisations sociales = contribuições para a previdência.
+CV | currículo | se ve | trabalho | m | | Diz-se "cê-vê", as letras.
+candidature | candidatura | kɑ̃didatyʁ | trabalho | f | cr_ura_ure |
+stage | estágio | staʒ | trabalho | m | | Faire un stage = fazer estágio.
+télétravail | trabalho remoto | teletʁavaj | trabalho | m | | Télé (à distância) + travail.
+formation | formação, treinamento | fɔʁmasjɔ̃ | trabalho | f | cr_cao_tion |
+CDI | contrato por tempo indeterminado | se de i | trabalho | m | | Contrat à durée indéterminée: o contrato "efetivo".
+CDD | contrato por tempo determinado | se de de | trabalho | m | | Contrat à durée déterminée: temporário.
+comptable | contador | kɔ̃tabl | trabalho | | | Compter (contar) + -able: quem faz as contas. O P é mudo.
+vendeur | vendedor | vɑ̃dœʁ | trabalho | m | |
+informatique | informática | ɛ̃fɔʁmatik | trabalho | f | cr_ico_ique |
+comptabilité | contabilidade | kɔ̃tabilite | trabalho | f | cr_dade_te |
+pédiatre | pediatra | pedjatʁ | saude | | |
+vaccin | vacina | vaksɛ̃ | saude | m | | Os dois C soam diferente: "vak-sẽ".
+allergie | alergia | alɛʁʒi | saude | f | cr_ia_ie |
+sirop | xarope | siʁo | saude | m | | O P é mudo: "sirô".
+diarrhée | diarreia | djaʁe | saude | f | |
+rhume | resfriado | ʁym | saude | m | | O H é mudo: "rüm".
+antibiotique | antibiótico | ɑ̃tibjɔtik | saude | m | cr_ico_ique |
+comprimé | comprimido | kɔ̃pʁime | saude | m | |
+contrôle | controle; consulta de rotina | kɔ̃tʁol | saude | m | |
+remboursement | reembolso | ʁɑ̃buʁsəmɑ̃ | saude | m | | A CNS (caixa de saúde) reembolsa parte da consulta.
+poids | peso | pwa | saude | m | | Só "puá": D e S mudos.
+taille | altura; tamanho | taj | saude | f | | Quelle taille? = que tamanho? (roupa)
+promotion | promoção | pʁɔmɔsjɔ̃ | compras | f | cr_cao_tion |
+rayon | seção, corredor (loja) | ʁɛjɔ̃ | compras | m | | Le rayon fruits = a seção de frutas.
+caddie | carrinho (de compras) | kadi | compras | m | |
+consigne | depósito (de garrafa) | kɔ̃siɲ | compras | f | | Garrafas com consigne voltam ao mercado e você recebe o valor de volta.
+sachet | saquinho | saʃɛ | compras | m | | Diminutivo de sac.
+yaourt | iogurte | jauʁt | compras | m | |
+farine | farinha | faʁin | compras | f | |
+jambon | presunto | ʒɑ̃bɔ̃ | compras | m | | Soa "jãbõ": o "jamón" dos espanhóis.
+paquet | pacote | pakɛ | compras | m | |
+tram | bonde (tram) | tʁam | transporte | m | | O "tram" de Luxemburgo: bonde moderno.
+quai | plataforma | ke | transporte | m | | Soa "kê": o cais da estação.
+correspondance | conexão, baldeação | kɔʁɛspɔ̃dɑ̃s | transporte | f | cr_ancia_ance |
+direction | direção, sentido | diʁɛksjɔ̃ | transporte | f | cr_cao_tion |
+gratuit | grátis, gratuito | ɡʁatɥi | transporte | | | O transporte público em Luxemburgo é gratuit (fora a 1ª classe).
+parking | estacionamento | paʁkiŋ | transporte | m | |
+station | estação | stasjɔ̃ | transporte | f | cr_cao_tion |
+cave | porão | kav | casa | f | | Falso amigo: cave = PORÃO (e adega).
+boîte aux lettres | caixa de correio | bwat o lɛtʁ | casa | f | | "Caixa às cartas".
+syndic | administradora do condomínio | sɛ̃dik | casa | m | | O "síndico" do prédio (geralmente uma empresa).
+charges | taxas (de condomínio) | ʃaʁʒ | casa | fpl | | Loyer + charges = aluguel + condomínio.
+sonnette | campainha | sɔnɛt | casa | f | | Vem de sonner (tocar).
+plastique | plástico | plastik | casa | m | cr_ico_ique |
+carton | papelão | kaʁtɔ̃ | casa | m | |
+déchets | lixo, resíduos | deʃɛ | casa | mpl | |
 `;

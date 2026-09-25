@@ -235,8 +235,8 @@ main | mão | mɛ̃ | saude | f | | Main → "manual": mão.
 corps | corpo | kɔʁ | saude | m | |
 cœur | coração | kœʁ | saude | m | | Cœur → "cordial": coração.
 pied | pé | pje | saude | m | |
-histoire | história | istwaʁ | cotidiano | f | |
-problème | problema | pʁɔblɛm | cotidiano | m | |
+histoire | história | istwaʁ | cotidiano | f | cr_orio_oire |
+problème | problema | pʁɔblɛm | cotidiano | m | cr_ema_eme |
 question | pergunta, questão | kɛstjɔ̃ | cotidiano | f | cr_cao_tion |
 idée | ideia | ide | cotidiano | f | |
 raison | razão | ʁɛzɔ̃ | cotidiano | f | |

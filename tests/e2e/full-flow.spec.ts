@@ -20,7 +20,7 @@ test('do zero: sessão diária completa, sem erros, e reps persiste', async ({ p
   // 1. Primeira abertura: seed no IndexedDB e escolha de perfil.
   await page.goto('/');
   await expect(page.locator('.profile-card')).toHaveCount(2);
-  expect((await readStore(page, 'words')).length).toBeGreaterThanOrEqual(300);
+  expect((await readStore(page, 'words')).length).toBeGreaterThanOrEqual(800);
   await page.click('[data-user="u_lucas"]');
 
   // 2. A sessão diária é a entrada.
@@ -147,7 +147,7 @@ test('módulos: descoberta, vozes variadas, ligação, fala com melodia, situaç
   await expect(page.getByTestId('prosody')).toBeVisible();
 
   // Situações reais: pelo menos metade pede para produzir a frase.
-  await page.goto('/#/situacoes/sc_creche');
+  await page.goto('/#/situacoes/sc_lu_creche');
   await page.getByTestId('scene-start').click();
   let produce = 0;
   let total = 0;
@@ -264,13 +264,18 @@ test('offline: app, sessão e melodia funcionam sem rede', async ({ page, contex
   expect(cached).toEqual(expect.arrayContaining(['/index.html', '/seed/seed.json', '/manifest.webmanifest']));
 
   const failed: string[] = [];
-  page.on('requestfailed', (r) => !r.url().includes('/api/') && failed.push(r.url()));
+  // Conta o que falta offline. ERR_ABORTED não é falta de cache: é um pedido
+  // da página anterior cancelado pelo próprio reload abaixo.
+  page.on('requestfailed', (r) => {
+    const why = r.failure()?.errorText ?? '';
+    if (!r.url().includes('/api/') && !why.includes('ERR_ABORTED')) failed.push(`${r.url()} (${why})`);
+  });
   await context.setOffline(true);
   await page.reload();
   await page.click('[data-user="u_lucas"]');
   await page.getByTestId('session-start').click();
   await expect(page.locator('.session-stage')).toBeVisible();
-  for (const route of ['cognatos', 'leitura', 'escuta', 'frases', 'memoria', 'revisao', 'situacoes/sc_medico']) {
+  for (const route of ['cognatos', 'leitura', 'escuta', 'frases', 'memoria', 'revisao', 'situacoes/sc_lu_pediatra']) {
     await page.goto(`/#/${route}`);
     await expect(page.locator('main')).not.toBeEmpty();
   }

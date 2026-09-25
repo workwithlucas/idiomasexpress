@@ -9,6 +9,7 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CORE_WORDS } from './seed/words-core.mjs';
+import { CORE_WORDS_2 } from './seed/words-core-2.mjs';
 import { EXTRA_WORDS } from './seed/words-extra.mjs';
 import {
   COGNATE_RULES, FALSE_COGNATES, MINIMAL_PAIRS, READING_RULES, FRAMES, SCENES, USERS,
@@ -16,7 +17,7 @@ import {
 
 /** Incrementar quando o conteúdo mudar: o app repopula as tabelas de conteúdo
  *  (sem tocar no progresso dos usuários) ao detectar uma versão nova. */
-export const SEED_VERSION = 2;
+export const SEED_VERSION = 3;
 
 const THEMES = new Set([
   'essenciais', 'verbos', 'cotidiano', 'tempo', 'pessoas', 'lugares', 'numeros', 'casa',
@@ -44,9 +45,12 @@ function parseWords(block, source) {
   });
 }
 
-const core = parseWords(CORE_WORDS, 'words-core');
+const core1 = parseWords(CORE_WORDS, 'words-core');
+const core2 = parseWords(CORE_WORDS_2, 'words-core-2');
+const core = [...core1, ...core2];
 const extra = parseWords(EXTRA_WORDS, 'words-extra');
-if (core.length !== 300) fail(`words-core deve ter exatamente 300 palavras (tem ${core.length})`);
+if (core1.length !== 300) fail(`words-core deve ter exatamente 300 palavras (tem ${core1.length})`);
+if (core2.length !== 500) fail(`words-core-2 deve ter exatamente 500 palavras, ranks 301–800 (tem ${core2.length})`);
 
 const ruleIds = new Set(COGNATE_RULES.map((r) => r.id));
 const usedIds = new Set();
@@ -139,6 +143,12 @@ const frames = FRAMES.map((f) => {
 const scenes = SCENES.map((s) => {
   const word_ids = [...new Set(s.words)].map((fr) => ref(fr, `cena ${s.id}`));
   s.frames.forEach((id) => { if (!frameIds.has(id)) fail(`cena ${s.id}: frame ${id} não existe`); });
+  if (s.id.startsWith('sc_lu_')) {
+    if (word_ids.length < 15) fail(`cena ${s.id}: mínimo 15 palavras (tem ${word_ids.length})`);
+    // Molde próprio = usado só por esta cena.
+    const own = s.frames.filter((id) => SCENES.filter((o) => o.frames.includes(id)).length === 1);
+    if (own.length < 5) fail(`cena ${s.id}: mínimo 5 moldes próprios (tem ${own.length})`);
+  }
   return { id: s.id, name: s.name, icon: s.icon, description: s.description, word_ids, frame_ids: s.frames };
 });
 
@@ -165,7 +175,7 @@ mkdirSync(dirname(out), { recursive: true });
 writeFileSync(out, JSON.stringify(seed));
 const hooks = words.filter((w) => w.memory_hook_pt).length;
 console.log(
-  `✔ seed v${SEED_VERSION}: ${words.length} palavras (300 núcleo), ${hooks} ganchos, ` +
+  `✔ seed v${SEED_VERSION}: ${words.length} palavras (800 núcleo), ${hooks} ganchos, ` +
   `${cognate_rules.length} regras de cognato, ${false_cognates.length} falsos cognatos, ` +
   `${reading_rules.length} regras de leitura, ${minimal_pairs.length} pares mínimos, ` +
   `${frames.length} frames, ${scenes.length} cenas → public/seed/seed.json`,
