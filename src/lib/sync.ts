@@ -1,11 +1,11 @@
 import { getDB, getMeta, setMeta } from '../db/database';
-import type { ReviewState } from '../db/schema';
+import type { MomentoProgress, ReviewState } from '../db/schema';
 import { content } from '../db/repo';
-import { isNewer } from '../../server/syncMerge';
+import { isNewer, looksLikeProgress, mergeProgressPair, progressChanged } from '../../server/syncMerge';
 import { isValidReviewState } from './fsrs';
 
 /**
- * Sincronização do progresso (ReviewState, com reps) entre aparelhos pelo
+ * Sincronização do progresso (ReviewState, com reps, e Momentos concluídos) entre aparelhos pelo
  * "código de casal". É um extra: sem código, sem rede ou com o servidor fora
  * do ar, o app segue igual — nada aqui bloqueia a interface.
  */
@@ -17,7 +17,7 @@ export interface SyncResult {
   at: string;
   /** Estados enviados deste aparelho. */
   sent: number;
-  /** Estados que chegaram mais novos e foram gravados aqui. */
+  /** Estados e Momentos que chegaram mais novos e foram gravados aqui. */
   updated: number;
 }
 
@@ -62,19 +62,20 @@ async function doSync(): Promise<SyncResult> {
 
   const db = await getDB();
   const local = (await db.getAll('review_states')).filter(isValidReviewState);
+  const localProgress = await db.getAll('momento_progress');
   let res: Response;
   try {
     res = await fetch(ENDPOINT, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ code, states: local }),
+      body: JSON.stringify({ code, states: local, progress: localProgress }),
       signal: AbortSignal.timeout(20_000),
     });
   } catch (e) {
     const name = (e as DOMException)?.name;
     throw new SyncError(name === 'TimeoutError' ? 'timeout' : navigator.onLine ? 'network' : 'offline', (e as Error).message);
   }
-  const data = (await res.json().catch(() => null)) as { states?: unknown[]; error?: SyncErrorCode; message?: string } | null;
+  const data = (await res.json().catch(() => null)) as { states?: unknown[]; progress?: unknown[]; error?: SyncErrorCode; message?: string } | null;
   if (!res.ok || !data || !Array.isArray(data.states)) {
     throw new SyncError(data?.error ?? 'upstream', data?.message ?? `HTTP ${res.status}`);
   }
@@ -93,6 +94,19 @@ async function doSync(): Promise<SyncResult> {
     }
   }
   await tx.done;
+
+  // Momentos: concluído continua concluído; a frase mais recente vale.
+  const moTx = db.transaction('momento_progress', 'readwrite');
+  for (const p of (Array.isArray(data.progress) ? data.progress : []) as MomentoProgress[]) {
+    if (!looksLikeProgress(p)) continue;
+    const mine = await moTx.store.get([p.user_id, p.momento_id]);
+    const merged = mine ? mergeProgressPair(mine, p) : p;
+    if (progressChanged(mine, merged)) {
+      await moTx.store.put(merged);
+      updated++;
+    }
+  }
+  await moTx.done;
 
   const result: SyncResult = { at: new Date().toISOString(), sent: local.length, updated };
   await setMeta(LAST_KEY, result);

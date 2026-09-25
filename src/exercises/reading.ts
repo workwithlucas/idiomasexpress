@@ -26,7 +26,7 @@ function exampleCard(e: Example): HTMLElement {
   return h(
     'li',
     { class: 'ex-card' },
-    playButton(e.fr, { wordId: e.wordId, size: 'sm' }),
+    playButton(e.fr, { wordId: e.wordId }),
     h('span', { class: 'ex-card__text' }, h('strong', { lang: 'fr' }, e.fr), h('small', null, e.pt)),
   );
 }
@@ -61,7 +61,7 @@ export function readingLesson(rule: ReadingRule, userId: string, onDone: Done): 
         'div',
         { class: 'row row--between' },
         h('p', { class: 'eyebrow' }, 'Ouça os três'),
-        h('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => void speakSequence(discover.map((e) => e.fr), 450) }, 'Ouvir'),
+        h('button', { class: 'btn2', type: 'button', onclick: () => void speakSequence(discover.map((e) => e.fr), 450) }, 'Ouvir'),
       ),
       h('ul', { class: 'ex-list' }, discover.map(exampleCard)),
       h('h2', { class: 'ask' }, h('span', { class: 'grapheme', lang: 'fr' }, rule.grapheme), ' soa como…'),

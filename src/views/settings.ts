@@ -5,7 +5,7 @@ import type { View } from '../ui/router';
 import { navigate } from '../ui/router';
 import { content, loadContent } from '../db/repo';
 import { getMeta } from '../db/database';
-import { currentUser, notifyProgressChanged } from '../ui/session';
+import { currentUser } from '../ui/user';
 import { ensureVoices, frenchVoices, onVoicesChanged, pickVoice, speak, voiceStatus } from '../lib/tts';
 import { prefs, setPrefs } from '../lib/prefs';
 import { downloadJson, exportProgress, importProgress } from '../lib/progress';
@@ -62,9 +62,9 @@ export const settingsView: View = async () => {
     render(
       voiceInfo,
       status === 'ok'
-        ? h('p', { class: 'muted', dataset: { status } }, voices.length === 1 ? '1 voz francesa neste aparelho. Com duas ou mais, o treino de ouvido alterna entre elas.' : `${voices.length} vozes francesas neste aparelho. O treino de ouvido alterna entre elas.`)
+        ? h('p', { class: 'soft', dataset: { status } }, voices.length === 1 ? '1 voz francesa neste aparelho. Com duas ou mais, o treino de ouvido alterna entre elas.' : `${voices.length} vozes francesas neste aparelho. O treino de ouvido alterna entre elas.`)
         : status === 'loading'
-          ? h('p', { class: 'muted', dataset: { status } }, 'Procurando as vozes do aparelho…')
+          ? h('p', { class: 'soft', dataset: { status } }, 'Procurando as vozes do aparelho…')
           : status === 'no-french'
             ? note('Este aparelho tem vozes, mas nenhuma em francês. Para não ler francês com sotaque de outra língua, o áudio fica desligado até você instalar uma:', INSTALL)
             : status === 'none-listed'
@@ -85,12 +85,7 @@ export const settingsView: View = async () => {
     },
   });
 
-  // --- Revisão -------------------------------------------------------------
-  const newPerDay = h(
-    'select',
-    { class: 'select select--sm', 'aria-label': 'Palavras novas por dia', onchange: () => { setPrefs({ newPerDay: Number(newPerDay.value) }); notifyProgressChanged(); } },
-    [5, 10, 15, 20, 30, 50].map((n) => h('option', { value: String(n), selected: prefs().newPerDay === n }, String(n))),
-  );
+  // --- Estudo --------------------------------------------------------------
   const soundsToggle = h('input', { type: 'checkbox', class: 'switch', checked: prefs().sounds, 'aria-label': 'Sons de acerto', onchange: () => setPrefs({ sounds: soundsToggle.checked }) });
   const autoplay = h('input', { type: 'checkbox', class: 'switch', checked: prefs().autoplay, 'aria-label': 'Tocar áudio automaticamente', onchange: () => setPrefs({ autoplay: autoplay.checked }) });
 
@@ -105,8 +100,7 @@ export const settingsView: View = async () => {
     status.textContent = 'Sincronizando…';
     try {
       const r = await syncNow();
-      status.textContent = `Última sincronização: ${when(r.at)}. ${r.updated === 1 ? '1 palavra atualizada' : `${r.updated} palavras atualizadas`} neste aparelho.`;
-      if (r.updated) notifyProgressChanged();
+      status.textContent = `Última sincronização: ${when(r.at)}. ${r.updated === 1 ? '1 item atualizado' : `${r.updated} itens atualizados`} neste aparelho.`;
     } catch (e) {
       status.textContent = describeSyncError(e instanceof SyncError ? e.code : 'upstream');
     }
@@ -115,19 +109,19 @@ export const settingsView: View = async () => {
     const code = await getSyncCode();
     if (!code) {
       const input = h('input', { class: 'input', type: 'text', autocomplete: 'off', autocapitalize: 'off', spellcheck: false, placeholder: 'código de vocês', 'aria-label': 'Código de sincronização', 'data-testid': 'sync-code-input' });
-      const status = h('p', { class: 'muted', 'aria-live': 'polite', 'data-testid': 'sync-status' });
+      const status = h('p', { class: 'soft', 'aria-live': 'polite', 'data-testid': 'sync-status' });
       render(
         syncBox,
-        h('p', { class: 'muted' }, 'Os aparelhos com o mesmo código ficam com o mesmo progresso. Digitem o mesmo código nos dois celulares.'),
+        h('p', { class: 'soft' }, 'Os aparelhos com o mesmo código ficam com o mesmo progresso: momentos feitos, frases e palavras. Digitem o mesmo código nos dois celulares.'),
         input,
         h(
           'div',
-          { class: 'row row--wrap' },
-          h('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => { input.value = generateSyncCode(); input.focus(); } }, 'Gerar um código'),
+          { class: 'row gap' },
+          h('button', { class: 'btn2', type: 'button', onclick: () => { input.value = generateSyncCode(); input.focus(); } }, 'Gerar um código'),
           h(
             'button',
             {
-              class: 'btn btn--ghost btn--sm', type: 'button', 'data-testid': 'sync-save',
+              class: 'btn2', type: 'button', 'data-testid': 'sync-save',
               onclick: async () => {
                 if (input.value.trim().length < 8) {
                   status.textContent = describeSyncError('bad_code');
@@ -147,16 +141,16 @@ export const settingsView: View = async () => {
       return;
     }
     const last = await getLastSync();
-    const status = h('p', { class: 'muted', 'aria-live': 'polite', 'data-testid': 'sync-status' }, last ? `Última sincronização: ${when(last.at)}.` : 'Ainda não sincronizou.');
+    const status = h('p', { class: 'soft', 'aria-live': 'polite', 'data-testid': 'sync-status' }, last ? `Última sincronização: ${when(last.at)}.` : 'Ainda não sincronizou.');
     render(
       syncBox,
-      h('p', { class: 'muted' }, 'Sincroniza sozinho ao abrir o app. Código: ', h('strong', { 'data-testid': 'sync-code' }, code), '.'),
+      h('p', { class: 'soft' }, 'Sincroniza sozinho ao abrir o app. Código: ', h('strong', { 'data-testid': 'sync-code' }, code), '.'),
       status,
       h(
         'div',
-        { class: 'row row--wrap' },
-        h('button', { class: 'btn btn--ghost btn--sm', type: 'button', 'data-testid': 'sync-now', onclick: () => void runSync(status) }, 'Sincronizar agora'),
-        h('button', { class: 'btn btn--ghost btn--sm', type: 'button', 'data-testid': 'sync-off', onclick: async () => { await setSyncCode(null); await renderSync(); } }, 'Trocar código'),
+        { class: 'row gap' },
+        h('button', { class: 'btn2', type: 'button', 'data-testid': 'sync-now', onclick: () => void runSync(status) }, 'Sincronizar agora'),
+        h('button', { class: 'btn2', type: 'button', 'data-testid': 'sync-off', onclick: async () => { await setSyncCode(null); await renderSync(); } }, 'Trocar código'),
       ),
     );
   };
@@ -171,8 +165,7 @@ export const settingsView: View = async () => {
       if (!file) return;
       try {
         const summary = await importProgress(JSON.parse(await file.text()));
-        toast(`Importado: ${summary.statesAdded} novas, ${summary.statesUpdated} atualizadas, ${summary.activityAdded} atividades.`, 'success', undefined, 5000);
-        notifyProgressChanged();
+        toast(`Importado: ${summary.momentosUpdated} momentos, ${summary.statesAdded + summary.statesUpdated} palavras.`, 'success', undefined, 5000);
       } catch (e) {
         toast((e as Error).message.includes('JSON') ? 'Arquivo não é um JSON válido.' : (e as Error).message, 'error', undefined, 5000);
       }
@@ -189,7 +182,7 @@ export const settingsView: View = async () => {
   });
 
   // --- Data simulada (testes) ----------------------------------------------
-  const clockInfo = h('p', { class: 'muted' });
+  const clockInfo = h('p', { class: 'soft' });
   const updateClock = () => {
     const off = getClockOffsetDays();
     clockInfo.textContent = off
@@ -199,24 +192,25 @@ export const settingsView: View = async () => {
   updateClock();
   const shiftClock = (days: number) => {
     setClockOffsetDays(days === 0 ? 0 : getClockOffsetDays() + days);
-    notifyProgressChanged();
     navigate('/ajustes');
   };
 
   return {
     title: 'Ajustes',
-    tab: 'settings',
+    back: '/',
+    backLabel: 'Hoje',
     cleanup: unsubscribeVoices,
     content: h(
       'div',
-      { class: 'stack' },
+      { class: 'settings' },
+      h('h1', { class: 'h1' }, 'Perfil e ajustes'),
       section(
         'Perfil',
         h(
           'div',
           { class: 'field' },
           h('div', { class: 'field__label' }, h('span', null, user.name), h('small', null, 'Perfil ativo neste aparelho')),
-          h('a', { class: 'btn btn--ghost btn--sm', href: '#/perfil' }, 'Trocar'),
+          h('a', { class: 'btn2', href: '#/perfil', 'data-testid': 'switch-profile' }, 'Trocar'),
         ),
       ),
       section(
@@ -224,30 +218,29 @@ export const settingsView: View = async () => {
         field('Voz', selectWrap(voiceSelect)),
         voiceInfo,
         field('Velocidade', h('div', { class: 'range' }, rateInput, rateValue)),
-        h('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => void speak("Bonjour ! On va apprendre le français ensemble.") }, 'Testar voz'),
+        h('button', { class: 'btn2', type: 'button', onclick: () => void speak("Bonjour ! On va apprendre le français ensemble.") }, 'Testar voz'),
       ),
       section(
         'Estudo',
-        field('Palavras novas por dia', selectWrap(newPerDay, false)),
-        field('Tocar o áudio sozinho', autoplay),
+        field('Tocar a palavra sozinha nos reencontros', autoplay),
         field('Sons de acerto', soundsToggle),
       ),
       section('Sincronizar entre aparelhos', syncBox),
       section(
         'Cópia em arquivo',
-        h('p', { class: 'muted' }, 'Uma cópia do progresso para guardar ou levar a outro aparelho sem internet.'),
+        h('p', { class: 'soft' }, 'Uma cópia do progresso para guardar ou levar a outro aparelho sem internet.'),
         h(
           'div',
-          { class: 'row row--wrap' },
+          { class: 'row gap' },
           h(
             'button',
             {
-              class: 'btn btn--primary btn--sm', type: 'button', 'data-testid': 'export',
+              class: 'btn2', type: 'button', 'data-testid': 'export',
               onclick: async () => downloadJson(await exportProgress(), `poliglotas-progresso-${dayKey(new Date())}.json`),
             },
             'Exportar progresso',
           ),
-          h('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => fileInput.click() }, 'Importar'),
+          h('button', { class: 'btn2', type: 'button', onclick: () => fileInput.click() }, 'Importar'),
           fileInput,
         ),
       ),
@@ -257,27 +250,27 @@ export const settingsView: View = async () => {
       ),
       section(
         'Para testar',
-        h('p', { class: 'muted' }, 'Avance a data para testar a revisão sem esperar.'),
+        h('p', { class: 'soft' }, 'Avance a data para ver os reencontros sem esperar.'),
         clockInfo,
         h(
           'div',
-          { class: 'row row--wrap' },
-          h('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => shiftClock(1), 'data-testid': 'clock-plus-1' }, '+1 dia'),
-          h('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => shiftClock(7) }, '+7 dias'),
-          h('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => shiftClock(0), disabled: getClockOffsetDays() === 0 }, 'Voltar à data real'),
+          { class: 'row gap' },
+          h('button', { class: 'btn2', type: 'button', onclick: () => shiftClock(1), 'data-testid': 'clock-plus-1' }, '+1 dia'),
+          h('button', { class: 'btn2', type: 'button', onclick: () => shiftClock(7) }, '+7 dias'),
+          h('button', { class: 'btn2', type: 'button', onclick: () => shiftClock(0), disabled: getClockOffsetDays() === 0 }, 'Voltar à data real'),
         ),
       ),
       section(
         'Sobre',
         h(
           'p',
-          { class: 'muted' },
-          `${c.words.length} palavras e ${c.frames.length} frases. Conteúdo v${seedVersion ?? '?'}.`,
+          { class: 'soft' },
+          `${c.momentos.length} momentos em ${c.chapters.length} capítulos, ${c.words.length} palavras. Conteúdo v${seedVersion ?? '?'}.`,
         ),
         h(
           'button',
           {
-            class: 'btn btn--ghost btn--sm', type: 'button',
+            class: 'btn2', type: 'button',
             onclick: async () => { await loadContent(true); toast('Conteúdo recarregado.', 'success'); },
           },
           'Recarregar conteúdo',

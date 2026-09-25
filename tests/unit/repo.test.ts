@@ -4,8 +4,10 @@ import seed from '../../public/seed/seed.json';
 import type { SeedData } from '../../src/db/schema';
 import { ensureSeeded, getMeta } from '../../src/db/database';
 import {
-  addToReview, getDueStates, getNewWords, getReviewState, loadContent, rateWord, getActivity, computeStreak,
+  buildReencontros, completeMomento, completedMomentos, content, getDueStates, getReviewState, loadContent, markPhraseSeen, rateWord,
+  REENCONTROS_PER_DAY, todaysReencontros, extraReviewCount,
 } from '../../src/db/repo';
+import { momentoStats, reviewWordIds } from '../../src/lib/momento';
 import { setClockOffsetDays } from '../../src/lib/clock';
 import { exportProgress, importProgress } from '../../src/lib/progress';
 
@@ -25,14 +27,11 @@ describe('banco local (IndexedDB)', () => {
     expect(c.cognateRules[0].id).toBe(data.cognate_rules[0].id); // ordem do seed preservada
   });
 
-  it('palavras novas saem em ordem de frequência', async () => {
-    const fresh = await getNewWords('u_lucas', 3);
-    expect(fresh.map((w) => w.freq_rank)).toEqual([1, 2, 3]);
-  });
+  const firstWords = (n: number, skip = 0) => content().words.slice(skip, skip + n);
 
   it('revisão: avaliar hoje → aparece como vencida no dia seguinte simulado, por usuário', async () => {
     setClockOffsetDays(0);
-    const words = await getNewWords('u_lucas', 3);
+    const words = firstWords(3);
     for (const w of words) {
       await rateWord('u_lucas', w.id, 'good');
     }
@@ -48,7 +47,7 @@ describe('banco local (IndexedDB)', () => {
 
   it('"easy" sai da fila por muito mais tempo que "again" (com avanço de data)', async () => {
     setClockOffsetDays(0);
-    const [easyWord, againWord] = await getNewWords('u_eduarda', 2);
+    const [easyWord, againWord] = firstWords(2, 10);
     await rateWord('u_eduarda', easyWord.id, 'easy');
     await rateWord('u_eduarda', againWord.id, 'again');
     const dueIds = async (days: number) => {
@@ -67,16 +66,55 @@ describe('banco local (IndexedDB)', () => {
     expect(Date.parse(easy!.due_at) - Date.parse(again!.due_at)).toBeGreaterThan(5 * 86_400_000);
   });
 
-  it('addToReview não duplica', async () => {
-    expect(await addToReview('u_eduarda', 'w_banque')).toBe(true);
-    expect(await addToReview('u_eduarda', 'w_banque')).toBe(false);
-    expect((await getReviewState('u_eduarda', 'w_banque'))?.reps).toBe(0);
+
+  it('Momento 1: 14 de 17 palavras com ponte, calculado dos dados', () => {
+    const m1 = content().momentos[0];
+    const stats = momentoStats(m1, content().wordById);
+    expect([stats.known, stats.total]).toEqual([14, 17]);
   });
 
-  it('streak conta dias consecutivos com atividade', async () => {
-    const act = await getActivity('u_lucas');
-    expect(act.length).toBeGreaterThan(0);
-    expect(computeStreak(act)).toBe(1);
+  it('concluir um Momento: palavras (menos as de ponte "igual") voltam amanhã, e o 1º completed_at fica', async () => {
+    setClockOffsetDays(0);
+    const c = content();
+    const m1 = c.momentos[0];
+    const user = 'u_test_mo';
+    const first = await completeMomento(user, m1.id, "Un thé, s'il vous plaît.", 'w_the');
+    expect(first).toBe(true);
+    const expected = reviewWordIds(m1, c.wordById, ['w_the']);
+    expect(expected).not.toContain('w_cafe'); // "igual"
+    expect(expected).not.toContain('w_normal');
+    expect(expected).toContain('w_je'); // nova
+    expect(expected).toContain('w_lait'); // ponte de origem
+    // Hoje nada vence: as palavras voltam amanhã.
+    expect(await getDueStates(user)).toHaveLength(0);
+    setClockOffsetDays(1);
+    const due = (await getDueStates(user)).map((s) => s.word_id).sort();
+    expect(due).toEqual([...expected].sort());
+    // Refazer mantém o primeiro completed_at e troca a frase.
+    const before = (await completedMomentos(user)).get(m1.id)!;
+    expect(await completeMomento(user, m1.id, "Un café, s'il vous plaît.", 'w_cafe')).toBe(false);
+    const after = (await completedMomentos(user)).get(m1.id)!;
+    expect(after.completed_at).toBe(before.completed_at);
+    expect(after.built_phrase).toBe("Un café, s'il vous plaît.");
+    setClockOffsetDays(0);
+  });
+
+  it('reencontros do dia seguinte: a frase primeiro, no máximo 8, e o resto vai para "Revisar mais"', async () => {
+    setClockOffsetDays(1);
+    const user = 'u_test_mo';
+    const queue = await todaysReencontros(user, false);
+    expect(queue.length).toBe(REENCONTROS_PER_DAY);
+    expect(queue[0]).toEqual({ type: 'phrase', momentoId: 'm01' });
+    const due = (await getDueStates(user)).length;
+    expect(await extraReviewCount(user, false)).toBe(due - REENCONTROS_PER_DAY);
+    expect(await extraReviewCount(user, true)).toBe(due); // pulou hoje: tudo fica opcional no Caderno
+    // Fazer os de hoje: a frase não volta de novo, e a cota do dia acaba.
+    await markPhraseSeen(user, 'm01');
+    for (const r of queue.slice(1)) if (r.type === 'word') await rateWord(user, r.wordId, 'good');
+    expect(await todaysReencontros(user, false)).toHaveLength(0);
+    const later = await buildReencontros(user, 8);
+    expect(later.some((r) => r.type === 'phrase')).toBe(false);
+    setClockOffsetDays(0);
   });
 
   it('exporta e importa progresso, mantendo o estado mais recente', async () => {
@@ -95,6 +133,17 @@ describe('banco local (IndexedDB)', () => {
     expect(r2.statesUpdated).toBe(1);
     const s = newer.review_states[0];
     expect((await getReviewState(s.user_id, s.word_id))?.stability).toBe(42);
+
+    // Momentos vão junto no arquivo; importar o mesmo arquivo não muda nada.
+    expect(file.momento_progress?.length).toBeGreaterThan(0);
+    const r3 = await importProgress(file);
+    expect(r3.momentosUpdated).toBe(0);
+    const later = structuredClone(file);
+    later.momento_progress![0] = { ...later.momento_progress![0], built_phrase: 'Un thé.', updated_at: '2099-01-01T00:00:00.000Z', completed_at: '2099-01-01T00:00:00.000Z' };
+    expect((await importProgress(later)).momentosUpdated).toBe(1);
+    const p = (await completedMomentos(later.momento_progress![0].user_id)).get(later.momento_progress![0].momento_id)!;
+    expect(p.built_phrase).toBe('Un thé.');
+    expect(p.completed_at).toBe(file.momento_progress![0].completed_at); // o mais antigo fica
 
     await expect(importProgress({ foo: 1 })).rejects.toThrow(/inválido/);
   });

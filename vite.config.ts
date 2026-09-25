@@ -47,13 +47,14 @@ function localApi(cfg: AzureConfig): Plugin {
   };
 }
 
-const seedVersion: number = JSON.parse(readFileSync(new URL('./public/seed/seed.json', import.meta.url), 'utf8')).version;
+const seedMeta: { version: number; hash: string } = JSON.parse(readFileSync(new URL('./public/seed/seed.json', import.meta.url), 'utf8'));
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   return {
     define: {
-      __SEED_VERSION__: JSON.stringify(seedVersion),
+      __SEED_VERSION__: JSON.stringify(seedMeta.version),
+      __SEED_HASH__: JSON.stringify(seedMeta.hash),
     },
     plugins: [
       localApi({ key: env.AZURE_SPEECH_KEY, region: env.AZURE_SPEECH_REGION }),

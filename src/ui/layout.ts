@@ -1,16 +1,16 @@
 import { h, render } from './dom';
 import { brandMark, icon } from './icons';
 import { match, navigate, parseHash, type TabId, type ViewResult } from './router';
-import { maybeUser, onSessionChange } from './session';
-import { getReviewStats } from '../db/repo';
+import { maybeUser } from './user';
 import { stopSpeaking } from '../lib/tts';
 import { getClockOffsetDays } from '../lib/clock';
+import { closeSheet } from './sheet';
 
+/** Três abas, e só. Ajustes abre pelo avatar no topo. */
 const TABS: { id: TabId; label: string; icon: string; href: string }[] = [
-  { id: 'home', label: 'Hoje', icon: 'sun', href: '/' },
-  { id: 'review', label: 'Revisar', icon: 'cycle', href: '/revisao' },
-  { id: 'learn', label: 'Aprender', icon: 'book', href: '/aprender' },
-  { id: 'settings', label: 'Ajustes', icon: 'sliders', href: '/ajustes' },
+  { id: 'hoje', label: 'Hoje', icon: 'sun', href: '/' },
+  { id: 'caderno', label: 'Caderno', icon: 'book', href: '/caderno' },
+  { id: 'guia', label: 'Como funciona', icon: 'bulb', href: '/como-funciona' },
 ];
 
 let root: HTMLElement;
@@ -20,7 +20,6 @@ let renderToken = 0;
 export function mountApp(el: HTMLElement): void {
   root = el;
   window.addEventListener('hashchange', () => void renderRoute());
-  onSessionChange(() => void refreshBadges());
   void renderRoute();
 }
 
@@ -36,6 +35,7 @@ async function renderRoute(): Promise<void> {
 
   current?.cleanup?.();
   stopSpeaking();
+  closeSheet();
 
   const found = match(path) ?? match('/');
   let result: ViewResult;
@@ -45,7 +45,8 @@ async function renderRoute(): Promise<void> {
     console.error(e);
     result = {
       title: 'Algo deu errado',
-      content: h('div', { class: 'card card--error' }, h('p', null, (e as Error).message), h('a', { class: 'btn', href: '#/' }, 'Voltar ao início')),
+      back: '/',
+      content: h('div', { class: 'card' }, h('p', null, (e as Error).message), h('a', { class: 'btn2', href: '#/' }, 'Voltar para Hoje')),
     };
   }
   if (token !== renderToken) {
@@ -54,29 +55,36 @@ async function renderRoute(): Promise<void> {
   }
   current = result;
   document.title = result.title === 'Hoje' ? 'Poliglotas' : `${result.title} · Poliglotas`;
+  document.body.classList.toggle('is-full', !!result.full);
 
   if (result.bare) {
     render(root, h('main', { class: 'page page--bare', id: 'main' }, result.content));
+  } else if (result.full) {
+    render(root, h('main', { class: 'full', id: 'main' }, result.content));
   } else {
-    render(root, header(result), h('main', { class: 'page', id: 'main' }, clockBanner(), result.content), tabbar(result.tab));
+    render(root, h('main', { class: 'page', id: 'main' }, header(result), clockBanner(), result.content), tabbar(result.tab));
   }
   window.scrollTo({ top: 0 });
-  void refreshBadges();
 }
 
+/** Topo: logo e avatar nas abas; seta de voltar nas telas de dentro. */
 function header(r: ViewResult): HTMLElement {
   const user = maybeUser();
+  if (r.back) {
+    return h(
+      'header',
+      { class: 'top top--back' },
+      h('a', { class: 'back', href: `#${r.back}` }, icon('chevronLeft', 20), r.backLabel ?? 'Voltar'),
+    );
+  }
   return h(
     'header',
-    { class: 'topbar' },
-    r.back
-      ? h('a', { class: 'topbar__back', href: `#${r.back}`, 'aria-label': 'Voltar' }, icon('chevronLeft', 22))
-      : h('a', { class: 'topbar__brand', href: '#/', 'aria-label': 'Início' }, brandMark(30)),
-    h('h1', { class: 'topbar__title' }, r.title),
+    { class: 'top' },
+    h('a', { class: 'brand', href: '#/', 'aria-label': 'Poliglotas, início' }, brandMark(30), h('span', null, 'Poliglotas')),
     user &&
       h(
         'a',
-        { class: 'avatar', href: '#/perfil', title: `Perfil: ${user.name} (trocar)`, 'aria-label': `Perfil ${user.name}, trocar`, dataset: { user: user.id } },
+        { class: 'avatar', href: '#/ajustes', 'aria-label': `Perfil de ${user.name} e ajustes`, dataset: { user: user.id }, 'data-testid': 'avatar' },
         user.name.charAt(0),
       ),
   );
@@ -85,13 +93,17 @@ function header(r: ViewResult): HTMLElement {
 function tabbar(active?: TabId): HTMLElement {
   return h(
     'nav',
-    { class: 'tabbar', 'aria-label': 'Navegação principal' },
-    TABS.map((t) =>
-      h(
-        'a',
-        { class: 'tabbar__item', href: `#${t.href}`, 'aria-label': t.label, 'aria-current': t.id === active ? 'page' : undefined, dataset: { tab: t.id } },
-        h('span', { class: 'tabbar__icon' }, icon(t.icon, 24), t.id === 'review' && h('span', { class: 'badge', hidden: true, 'data-badge': 'review' })),
-        h('span', { class: 'tabbar__label' }, t.label),
+    { class: 'tabs', 'aria-label': 'Navegação' },
+    h(
+      'div',
+      { class: 'tabs__in' },
+      TABS.map((t) =>
+        h(
+          'a',
+          { class: 'tab', href: `#${t.href}`, 'aria-current': t.id === active ? 'page' : undefined, dataset: { tab: t.id } },
+          icon(t.icon, 24),
+          h('span', null, t.label),
+        ),
       ),
     ),
   );
@@ -106,13 +118,4 @@ function clockBanner(): HTMLElement | null {
     icon('clock', 16),
     `Modo de teste: data simulada +${offset} dia${offset > 1 ? 's' : ''}`,
   );
-}
-
-async function refreshBadges(): Promise<void> {
-  const user = maybeUser();
-  const badge = document.querySelector<HTMLElement>('[data-badge="review"]');
-  if (!user || !badge) return;
-  const { dueNow } = await getReviewStats(user.id);
-  badge.hidden = dueNow === 0;
-  badge.textContent = dueNow > 99 ? '99+' : String(dueNow);
 }

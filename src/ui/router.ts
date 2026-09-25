@@ -1,6 +1,6 @@
 import type { Child } from './dom';
 
-export type TabId = 'home' | 'review' | 'learn' | 'settings';
+export type TabId = 'hoje' | 'caderno' | 'guia';
 
 export interface ViewContext {
   params: Record<string, string>;
@@ -12,11 +12,15 @@ export interface ViewResult {
   content: Child;
   /** Rota do botão "voltar" no cabeçalho. */
   back?: string;
+  /** Texto do link de voltar (padrão: "Voltar"). */
+  backLabel?: string;
   tab?: TabId;
   /** Chamado ao sair da tela (parar áudio, liberar microfone…). */
   cleanup?: () => void;
   /** Esconde cabeçalho/navegação (ex.: seleção de perfil). */
   bare?: boolean;
+  /** Tela cheia sem barra de abas: a própria tela desenha o topo (o Momento). */
+  full?: boolean;
 }
 
 export type View = (ctx: ViewContext) => ViewResult | Promise<ViewResult>;

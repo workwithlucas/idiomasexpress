@@ -100,3 +100,80 @@ describe('seed', () => {
     expect(data.users.map((u) => u.name).sort()).toEqual(['Eduarda', 'Lucas']);
   });
 });
+
+describe('seed v5: capítulos, Momentos e pontes', () => {
+  const byId = new Map(data.words.map((w) => [w.id, w]));
+
+  it('9 capítulos na ordem da vida de quem chega, cada um com uma cena real', () => {
+    expect(data.chapters.map((c) => c.title)).toEqual([
+      'Primeiros passos', 'A Commune', 'Creche e CSA', 'Supermercado', 'Transporte', 'Médico e farmácia', 'Banco', 'Vizinhança', 'Entrevista de emprego',
+    ]);
+    const scenes = new Set(data.scenes.map((s) => s.id));
+    data.chapters.forEach((c) => expect(scenes.has(c.scene_id)).toBe(true));
+  });
+
+  it('Momento 1 é o do protótipo: café, pontes, letras caladas, molde e frase', () => {
+    const m1 = data.momentos[0];
+    expect(m1.title).toBe('Um café, por favor');
+    expect(m1.lines[0].fr).toBe("Bonjour ! Qu'est-ce que je vous sers ?");
+    expect(m1.key.name).toBe('letras caladas');
+    const frame = data.frames.find((f) => f.id === m1.frame_id)!;
+    expect(frame.slot_pool_ids.map((id) => byId.get(id)!.fr)).toEqual(['café', 'thé', 'croissant', 'chocolat chaud', "verre d'eau"]);
+    const distinct = [...new Set(m1.lines.flatMap((l) => l.word_ids))];
+    expect(distinct.filter((id) => byId.get(id)!.bridge || byId.get(id)!.cognate_rule_id)).toHaveLength(14);
+    expect(distinct).toHaveLength(17);
+  });
+
+  it('todo Momento: 4 a 6 falas, palavras existentes, chave única, molde de 4–5 opções', () => {
+    const keys = new Set<string>();
+    for (const m of data.momentos) {
+      expect(m.lines.length, m.id).toBeGreaterThanOrEqual(4);
+      expect(m.lines.length, m.id).toBeLessThanOrEqual(6);
+      m.lines.forEach((l) => l.word_ids.forEach((id) => expect(byId.has(id), `${m.id}: ${id}`).toBe(true)));
+      expect(keys.has(m.key.ref_id), m.id).toBe(false);
+      keys.add(m.key.ref_id);
+      const frame = data.frames.find((f) => f.id === m.frame_id)!;
+      expect(frame.slot_pool_ids.length).toBeGreaterThanOrEqual(4);
+      expect(frame.slot_pool_ids.length).toBeLessThanOrEqual(5);
+      expect(m.key.reveal.startsWith('Isso.')).toBe(true);
+      expect(m.key.hint.startsWith('Quase.')).toBe(true);
+    }
+  });
+
+  it('tipografia francesa: espaço fino antes de ! ? ; : nas falas', () => {
+    for (const m of data.momentos) for (const l of m.lines) expect(/[^ ][!?;:]/.test(l.fr), l.fr).toBe(false);
+  });
+
+  it('a partir do 2º Momento: ≥ 40% das palavras já apareceram e no máximo 6 realmente novas', () => {
+    const seen = new Set<string>();
+    data.momentos.forEach((m, i) => {
+      const distinct = [...new Set(m.lines.flatMap((l) => l.word_ids))];
+      if (i > 0) {
+        expect(distinct.filter((id) => seen.has(id)).length / distinct.length, m.id).toBeGreaterThanOrEqual(0.4);
+        const reallyNew = distinct.filter((id) => !seen.has(id) && !byId.get(id)!.bridge && !byId.get(id)!.cognate_rule_id);
+        expect(reallyNew.length, m.id).toBeLessThanOrEqual(6);
+      }
+      distinct.forEach((id) => seen.add(id));
+    });
+  });
+
+  it('pontes: tipo válido, nota escrita; as de regra vêm de uma regra de cognato', () => {
+    for (const w of data.words) {
+      if (!w.bridge) continue;
+      expect(['igual', 'parecida', 'regra', 'origem']).toContain(w.bridge.kind);
+      expect(w.bridge.note.length, w.fr).toBeGreaterThan(2);
+      if (w.bridge.kind === 'regra') expect(w.cognate_rule_id, w.fr).toBeTruthy();
+    }
+  });
+
+  it('textos de interface do conteúdo sem exclamação e sem jargão de app de estudo', () => {
+    const banned = /parabéns|mandou bem|sessão|módulo|unidade|cognato|fsrs/i;
+    for (const m of data.momentos) {
+      const texts = [m.title, m.can_do, m.intro_pt, m.build_title, m.build_intro, m.key.intro, m.key.question, m.key.reveal, m.key.hint, m.key.apply_question, m.key.apply_hint, m.key.extra ?? '', ...m.key.options];
+      for (const t of texts) {
+        expect(banned.test(t), t).toBe(false);
+        expect(t.includes('!'), t).toBe(false);
+      }
+    }
+  });
+});

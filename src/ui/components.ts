@@ -1,111 +1,77 @@
 import { h, type Child } from './dom';
 import { icon } from './icons';
-import { speak } from '../lib/tts';
-import { addToReview, markAudioGenerated } from '../db/repo';
+import { speak, type SpeakOptions } from '../lib/tts';
+import { markAudioGenerated } from '../db/repo';
 import type { Word } from '../db/schema';
-import { withArticle } from '../lib/text';
-import { currentUser, notifyProgressChanged } from './session';
-import { toast } from './toast';
+import { openSheet } from './sheet';
+import { hasBridge } from '../lib/momento';
 
-/** Botão de áudio: fala o texto e mostra estado "tocando". */
-export function playButton(text: string, opts: { wordId?: string; label?: string; size?: 'sm' | 'md' | 'lg'; rate?: number } = {}): HTMLButtonElement {
-  const size = opts.size ?? 'md';
+/** Botão de áudio redondo (44 px): fala o texto e marca "tocando". */
+export function playButton(text: string, opts: { wordId?: string; label?: string; voice?: SpeakOptions; testid?: string } = {}): HTMLButtonElement {
   const btn = h(
     'button',
     {
-      class: `play play--${size}`,
+      class: 'ib',
       type: 'button',
-      'aria-label': opts.label ?? `Ouvir "${text}"`,
-      title: 'Ouvir',
+      'aria-label': opts.label ?? `Ouvir ${text}`,
+      'data-testid': opts.testid,
       onclick: async (e: Event) => {
         e.stopPropagation();
-        document.querySelectorAll('.play--active').forEach((b) => b.classList.remove('play--active'));
-        btn.classList.add('play--active');
-        const ok = await speak(text, { rate: opts.rate });
-        btn.classList.remove('play--active');
+        document.querySelectorAll('.ib--on').forEach((b) => b.classList.remove('ib--on'));
+        btn.classList.add('ib--on');
+        const ok = await speak(text, opts.voice);
+        btn.classList.remove('ib--on');
         if (ok && opts.wordId) void markAudioGenerated(opts.wordId);
       },
     },
-    opts.rate && opts.rate < 0.8
-      ? h('span', { class: 'play__slow' }, `${String(opts.rate).replace('.', ',')}×`)
-      : icon('play', size === 'lg' ? 26 : size === 'sm' ? 16 : 20),
+    icon('play', 20),
   );
   return btn;
 }
 
-
-/** Botão "+ revisão" que adiciona a palavra ao FSRS do perfil ativo. */
-export function addReviewButton(word: Word): HTMLButtonElement {
-  const btn = h(
-    'button',
-    {
-      class: 'icon-btn',
-      type: 'button',
-      title: 'Adicionar à revisão',
-      'aria-label': `Adicionar "${word.fr}" à revisão`,
-      onclick: async (e: Event) => {
-        e.stopPropagation();
-        const added = await addToReview(currentUser().id, word.id);
-        btn.classList.add('icon-btn--done');
-        btn.replaceChildren(icon('check', 18));
-        btn.disabled = true;
-        toast(added ? `"${word.fr}" entrou na sua revisão.` : `"${word.fr}" já está na sua revisão.`, 'success');
-        notifyProgressChanged();
-      },
-    },
-    icon('bookmark', 18),
-  );
-  return btn;
+/** Botão secundário com ícone e texto ("Ouvir a conversa"). */
+export function iconButton(iconName: string, label: string, onclick: () => void, testid?: string): HTMLButtonElement {
+  return h('button', { class: 'btn2', type: 'button', onclick, 'data-testid': testid }, icon(iconName, 20), label);
 }
 
-/** Linha de palavra: áudio, francês (com artigo), IPA e tradução. */
-export function wordRow(word: Word, extra?: Child, opts: { review?: boolean } = {}): HTMLElement {
-  return h(
-    'li',
-    { class: 'word-row' },
-    playButton(word.fr, { wordId: word.id, size: 'sm' }),
-    h(
-      'div',
-      { class: 'word-row__text' },
-      h('div', { class: 'word-row__fr', lang: 'fr' }, withArticle(word)),
-      h('div', { class: 'word-row__meta' }, h('span', { class: 'word-row__pt' }, word.pt)),
-      extra,
-    ),
-    opts.review !== false && addReviewButton(word),
-  );
-}
+export const NEW_WORD_NOTE = 'Você não precisa decorar: ela volta nos seus reencontros.';
 
-export function sectionTitle(title: string, subtitle?: string): HTMLElement {
-  return h('header', { class: 'section-title' }, h('h2', null, title), subtitle && h('p', null, subtitle));
-}
-
-export function segmented<T extends string>(
-  options: { value: T; label: string }[],
-  value: T,
-  onChange: (v: T) => void,
-): HTMLElement {
-  const wrap = h('div', { class: 'segmented', role: 'tablist' });
-  const buttons = options.map((o) =>
-    h(
-      'button',
-      {
-        class: 'segmented__btn',
-        type: 'button',
-        role: 'tab',
-        'aria-selected': String(o.value === value),
-        onclick: () => {
-          buttons.forEach((b) => b.setAttribute('aria-selected', 'false'));
-          btnFor(o.value)?.setAttribute('aria-selected', 'true');
-          onChange(o.value);
-        },
-        dataset: { value: o.value },
-      },
-      o.label,
-    ),
+/**
+ * Folha de detalhe de uma palavra: francês, tradução, áudio e a ponte com o
+ * português. Palavra nova: significado, gancho de memória (verificado) e o
+ * lembrete de que ela volta sozinha. No Caderno (`full`), mostra tudo junto
+ * e o Momento de origem.
+ */
+export function openWordSheet(word: Word, opts: { surface?: string; gloss?: string; origin?: string; full?: boolean; voice?: SpeakOptions } = {}): void {
+  const surface = opts.surface ?? word.fr;
+  const isForm = surface.toLowerCase() !== word.fr.toLowerCase();
+  const bridged = hasBridge(word);
+  const bridge = word.bridge;
+  const blocks: Child[] = [];
+  if (bridged && bridge) {
+    blocks.push(h('div', { class: 'note' }, h('p', { class: 'lbl' }, 'A ponte com o português'), h('p', null, bridge.note)));
+    if (opts.full && word.memory_hook_pt) blocks.push(h('div', { class: 'note' }, h('p', { class: 'lbl' }, 'Para lembrar'), h('p', null, word.memory_hook_pt)));
+  } else {
+    blocks.push(
+      h(
+        'div',
+        { class: 'note' },
+        h('p', { class: 'lbl' }, 'Palavra nova'),
+        word.memory_hook_pt && h('p', null, word.memory_hook_pt),
+        h('p', null, NEW_WORD_NOTE),
+      ),
+    );
+  }
+  openSheet(
+    [
+      h('div', { class: 'row between' }, h('p', { class: 'big', lang: 'fr' }, surface), playButton(surface, { wordId: word.id, voice: opts.voice })),
+      h('p', { class: 'pt-l' }, opts.gloss ?? word.pt),
+      isForm && h('p', { class: 'fine' }, `Forma de ${word.fr}.`),
+      blocks,
+      opts.origin && h('p', { class: 'fine' }, `Apareceu no momento “${opts.origin}”.`),
+    ],
+    { label: surface, testid: 'word-sheet' },
   );
-  const btnFor = (v: T) => buttons.find((b) => b.dataset.value === v);
-  wrap.append(...buttons);
-  return wrap;
 }
 
 /** Envolve um <select> para desenhar a seta com a cor do token (claro e escuro). */

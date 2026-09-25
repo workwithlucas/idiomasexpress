@@ -17,25 +17,31 @@ Os tokens estão no topo de `src/styles/main.css`, e o resto da folha usa só el
 
 ## Como o app ensina
 
-### Sessão de hoje (tela de entrada)
-Cada dia começa com uma sessão de **16 passos intercalados**: tipos de exercício misturados, **nunca dois do mesmo tipo seguidos**, porque intercalar dá retenção melhor a longo prazo do que estudar em blocos.
-- **Metade é lembrar palavras:** primeiro as que **venceram** na revisão espaçada (prioridade), depois palavras novas do dia.
-- **Metade é conteúdo novo:** descobrir padrões de palavras-irmãs e de leitura, completar frases (sempre uma com ligação) e treinar o ouvido.
-- Na **primeira sessão da vida**, o passo 2 é uma descoberta (Palavras-irmãs) e o passo 4 é uma frase com "Fale você", para os dois momentos-chave acontecerem nos primeiros minutos. Depois disso, a ordem é sempre sorteada.
-- A sessão fica salva neste aparelho: dá para pausar (✕) e continuar depois. O tamanho está em `SESSION_SIZE` (`src/lib/session.ts`).
+O app tem **um caminho só**. Ele nunca pergunta o que treinar: diz o próximo passo. Três abas: **Hoje**, **Caderno** e **Como funciona**. Os Ajustes abrem pelo avatar no topo.
 
-### Os 8 módulos (também acessíveis sozinhos, em "Por conta própria")
+### Hoje
+Um cartão com **o seu próximo Momento** (título, a cena em uma frase, minutos) e o botão **Começar**. Se há palavras vencidas, o mesmo botão começa por até **8 reencontros** (uns 2 minutos) e emenda no Momento; "Pular reencontros hoje" deixa tudo para o Caderno, sem cobrança. Embaixo, a **trilha** (capítulos com seus Momentos: feito, atual, próximos, e uma barra fina por capítulo) e **o que você já consegue dizer** (o `can_do` de cada Momento concluído). Completar um Momento é a única animação especial do app: a barra do capítulo preenche e o marcador vira check.
 
-| Módulo | Mecanismo |
-|--------|-----------|
-| **Palavras-irmãs** (cognatos) | **Por dedução, não por declaração.** Você vê 3 pares PT → FR *sem a regra*, toca no pedaço que muda, e **só então** aparece a regra ("-ção → -tion"), como confirmação. Depois aplica sozinho em 2–3 palavras novas, digitando. 20 padrões. Aba de **falsos amigos** (attendre ≠ atender…). |
-| **Como se lê** (regras de leitura) | Mesmo fluxo: ouve 3 palavras, deduz como aquelas letras soam (2–3 opções), recebe a confirmação e depois reconhece palavras novas pelo ouvido. 35 regras. |
-| **Ouvido fino** (pares mínimos) | Treino de **alta variabilidade de falantes**: cada rodada sorteia outra voz francesa do aparelho, priorizando uma feminina e uma masculina. Com uma voz só, varia de leve a altura e a velocidade (plano B). As duas palavras de uma rodada saem na mesma voz. |
-| **Monte a frase** | Complete o molde e ouça a frase inteira. Os pontos de **ligação** (liaison: *petit‿ami*, *vous‿êtes*) aparecem marcados, e o áudio já sai ligado. Depois, **"Fale você"**: você repete e vê sua melodia ao lado da do francês. 40 moldes, 10 feitos para gerar ligação. |
-| **Truques de memória** | Ganchos em português para as palavras que **não** se parecem com o português. |
-| **Fale e compare** | Grave-se e veja **sua melodia e seu ritmo** × os do francês (no aparelho, offline), mais a **nota por som** do Azure (por palavra e fonema), quando configurado. Uma não depende da outra. |
-| **Revisar** (revisão espaçada, FSRS) | O cartão alterna a direção pelo número de revisões feitas (campo `reps`, que já existia no `ReviewState`): **par → reconhecer** (francês → português), **ímpar → produzir** (português → francês). |
-| **Situações reais** | Creche, banco, entrevista, médico, mercado, commune, dia a dia. A prática alterna **produzir** (ver a situação em português e dizer em francês) e **reconhecer** (ouvir e entender), começando por produzir: pelo menos metade pede produção. |
+### O Momento (tela cheia, 6 passos, uns 6 minutos)
+Uma cena curta da vida real em Luxemburgo. Todas as técnicas acontecem dentro dela, sempre na mesma ordem:
+
+| Passo | O que acontece | Motor reaproveitado |
+|---|---|---|
+| **1. Escute** | Diálogo de 4 a 6 falas entre uma pessoa e "Você", com **duas vozes francesas diferentes**, áudio por fala, tradução escondida e marcas de liaison. Par mínimo opcional no fim ("Ela disse X ou Y?"), tocado com a outra voz. | vozes variadas (`speakerPool`), liaison |
+| **2. Você já sabe** | "Mostrar o que eu já sei" acende as palavras com ponte para o português: **"{k} de {n} palavras desta conversa já moram no seu português"**, calculado dos dados (palavras distintas; conta quem tem `bridge` ou `cognate_rule_id`). Tocar numa palavra abre a folha com a ponte ou, se for nova, o gancho de memória verificado. | pontes, ganchos |
+| **3. A chave** | Uma única descoberta por dedução: 3 exemplos tirados do diálogo → pergunta → "Isso." com a explicação (ou "Quase." com uma pista) → 2 palavras novas para prever e depois ouvir. "Entender melhor" abre o capítulo do Como funciona numa folha. | descoberta (leitura, ponte, som ou gramática) |
+| **4. Monte** | Molde tirado do diálogo, com 4 a 5 opções. Cada troca toca a frase e mostra a tradução. Sem certo ou errado. | moldes |
+| **5. Fale** | Ouvir e Gravar a frase montada: **melodia** (local, offline) e **nota de cada som** (Azure) na mesma tela. "Agora não dá para falar alto" pula sem penalidade. | gravação, pitch, Azure |
+| **6. Leve com você** | "Agora você consegue {can_do}." + a frase de hoje com áudio + três números calculados (palavras encontradas, quantas já eram suas, chave nova). | — |
+
+### Reencontros (a revisão invisível)
+O FSRS e o campo `reps` continuam iguais. Ao concluir um Momento, entram na revisão as palavras do diálogo (novas e com ponte), **menos as de ponte "igual"** (café, normal), e a palavra escolhida no molde. Elas **voltam a partir do dia seguinte**. Os reencontros misturam palavras de Momentos diferentes e alternam a direção pela paridade de `reps` (**par → reconhecer**, **ímpar → produzir**). A frase do último Momento também volta uma vez, primeiro. Até 8 por dia antes do Momento; o que passar disso fica no Caderno, em **Revisar mais**, opcional.
+
+### Caderno
+**Suas frases** (a frase de hoje de cada Momento, com áudio e o Momento de origem), **Suas palavras** (todas as palavras dos Momentos concluídos, com busca, áudio, "já era sua" ou "nova" e a folha de detalhe com ponte, gancho e Momento de origem) e **Revisar mais**, quando houver.
+
+### Como funciona
+13 capítulos curtos, sempre abertos, explicando o francês a partir do português, com exemplos em áudio e práticas curtas que reaproveitam os motores de descoberta: pontes (as 35 regras + falsos amigos + descoberta), letras caladas, como se lê (regras de leitura + descoberta), sons que o português não tem (pares mínimos com várias vozes), liaison, tu/vous, le/la/un/une, être/avoir, ne… pas, perguntas, aller + verbo, passé composé e números (padrão da França, usado em Luxemburgo). Cada capítulo mostra "Apareceu no momento…" quando a chave dele já foi vista.
 
 ### Melodia e ritmo ("Sua melodia")
 O Azure só dá nota de prosódia para inglês. Para o francês, o app mede a **altura da voz (pitch)** de quem fala com **autocorrelação**, sem bibliotecas (`src/lib/pitch.ts`). A medição é feita **ao vivo** durante a gravação, via `AnalyserNode` da Web Audio API (`src/lib/pitchTracker.ts`), e cai para a análise do arquivo gravado se a captura ao vivo falhar. O gráfico sobrepõe duas linhas no mesmo eixo de tempo: **francês** (meta) e **você**. Embaixo, as sílabas aparecem como batidas, para comparar o ritmo. Duas dicas curtas: a direção da voz no fim da frase e o ritmo.
@@ -192,10 +198,10 @@ A chave fica **só** no painel. O navegador nunca a recebe: quem chama o Azure �
 - **iPhone (Safari):** abra o link **no Safari** (não no Chrome do iPhone) → botão **Compartilhar** → **Adicionar à Tela de Início** → *Adicionar*. Abra pelo ícone: o app ocupa a tela toda, sem a barra do Safari.
 
 ### 4. Roteiro de teste no celular (5 minutos)
-1. **Online:** abra pelo ícone → escolha o perfil → faça 3 passos da sessão de hoje → **Fale e compare**: grave uma frase → a melodia aparece → **Ver nota da pronúncia** → nota geral.
-2. **Offline:** ative o modo avião → feche e reabra o app pelo ícone. Ele abre, a sessão continua e a melodia funciona. A nota avisa "Sem internet agora…".
+1. **Online:** abra pelo ícone → escolha o perfil → **Começar** → atravesse o Momento até o passo **Fale**: grave a frase → a melodia e a nota de cada som aparecem juntas.
+2. **Offline:** ative o modo avião → feche e reabra o app pelo ícone. Ele abre, o Momento inteiro funciona e a melodia também. A nota avisa "Sem internet agora…".
 3. **Volta da rede:** desative o modo avião → a nota volta a funcionar.
-4. **iPhone:** o primeiro áudio de cada sessão precisa de um toque (regra do iOS; veja Known issues).
+4. **iPhone:** o primeiro áudio precisa de um toque (regra do iOS; veja Known issues).
 
 Deploy por linha de comando (opcional): `npx netlify-cli deploy --build --prod`.
 
@@ -211,8 +217,9 @@ O progresso fica no IndexedDB de cada aparelho, e o app funciona 100% offline. H
 3. Pronto: cada aparelho sincroniza sozinho **ao abrir o app** e **ao voltar para ele**, com pelo menos 2 minutos de intervalo. Também há o botão **Sincronizar agora**.
 
 Como funciona:
-- **Onde fica:** o app manda os estados de revisão (`ReviewState` completo, com `reps`, datas e dados do FSRS) para `/api/sync`, uma Netlify Function que guarda um documento por código no **Netlify Blobs**. Não há conta, chave nem configuração: o Blobs vem pronto para as Functions do site. O código não é guardado, só o hash dele.
-- **Conflitos:** por palavra e por pessoa, vence a revisão mais recente; em empate, a com mais `reps`. O estado vencedor vai inteiro, então `reps` nunca se separa do resto e a alternância reconhecer/produzir continua certa. A importação manual usa a mesma regra (`server/syncMerge.ts`).
+- **Onde fica:** o app manda os estados de revisão (`ReviewState` completo, com `reps`, datas e dados do FSRS) e os **Momentos concluídos** (`momento_progress`) para `/api/sync`, uma Netlify Function que guarda um documento por código no **Netlify Blobs**. Não há conta, chave nem configuração: o Blobs vem pronto para as Functions do site. O código não é guardado, só o hash dele.
+- **Momentos:** concluído continua concluído (união). No mesmo Momento, vale o `completed_at` mais antigo e a frase (`built_phrase`) do registro com `updated_at` mais recente.
+- **Conflitos de revisão:** por palavra e por pessoa, vence a revisão mais recente; em empate, a com mais `reps`. O estado vencedor vai inteiro, então `reps` nunca se separa do resto e a alternância reconhecer/produzir continua certa. A importação manual usa a mesma regra (`server/syncMerge.ts`).
 - **Dois aparelhos ao mesmo tempo:** a gravação é condicional (ETag). Se o outro aparelho gravou no meio, a Function relê, mescla de novo e tenta outra vez, então nenhuma revisão se perde.
 - **Offline:** a sincronização é um extra. Sem código, sem internet ou com o servidor fora do ar, nada muda no app, e o status em Ajustes explica.
 
@@ -225,7 +232,7 @@ Serve para backup ou para levar o progresso sem internet.
 
 ## Testar a revisão espaçada sem esperar
 
-**Ajustes → Para testar → +1 dia** avança a data do app (fica um aviso amarelo no topo enquanto estiver ativo). "Voltar à data real" desfaz. O teste E2E usa isso para conferir que, depois de uma sessão, as palavras esquecidas ("Não lembrei") voltam no dia seguinte, as lembradas ("Lembrei") uns dias depois e as "Fácil" só depois de ~10 dias, exatamente como o FSRS agendou.
+**Ajustes → Para testar → +1 dia** avança a data do app (fica um aviso no topo enquanto estiver ativo). "Voltar à data real" desfaz. O teste E2E usa isso para conferir que, depois do Momento 1, as palavras voltam no dia seguinte em reencontros (reconhecer) e, dias depois, na direção contrária (produzir).
 
 ---
 
@@ -249,7 +256,11 @@ Os testes do seed (`tests/unit/seed.test.ts`) conferem ainda que:
 - nenhum molde preenchido quebra a elisão (ex.: "ce antibiotique");
 - nenhum par mínimo se repete.
 
-Para mudar o conteúdo: edite esses arquivos, aumente `SEED_VERSION` em `build-seed.mjs` e rode `npm run seed`. Na próxima abertura, o app atualiza as tabelas de conteúdo **sem apagar o progresso**.
+- `momentos.mjs`: os **9 capítulos** (na ordem da vida de quem chega, cada um ligado a uma cena) e os **Momentos**. O build confere: 4 a 6 falas entre uma pessoa e "Você"; toda palavra marcada existe no banco; a partir do 2º Momento, **pelo menos 40% das palavras já apareceram** e **no máximo 6 são realmente novas** (nunca vistas e sem ponte); cada chave é nova uma vez só e usa 3 exemplos tirados do diálogo; o molde sai de uma fala e tem 4 a 5 opções; tipografia francesa (espaço fino antes de ! ? : ;) aplicada automaticamente.
+- `bridges.mjs`: as **pontes** com o português (`igual`, `parecida`, `origem`, com justificativa obrigatória para `origem`). Palavras com regra de cognato ganham a ponte `regra` automaticamente.
+- `words-momentos.mjs`: palavras que os diálogos usam e ainda não estavam no banco.
+
+Para mudar o conteúdo: edite esses arquivos e rode `npm run seed`. O seed leva uma impressão digital (`hash`): na próxima abertura, o app atualiza as tabelas de conteúdo **sem apagar o progresso** (ReviewState, reps, Momentos concluídos, histórico de pronúncia).
 
 ### Sobre o áudio (`audio_generated`)
 O TTS é a Web Speech API do próprio aparelho. Ela não entrega o áudio gerado, então não há arquivo para guardar em cache. Na v1, `audio_generated` marca que a palavra já foi sintetizada com sucesso neste aparelho. O campo está pronto para uma v2 que salve áudio de um TTS em nuvem. A qualidade da voz depende do sistema: iOS e macOS têm vozes francesas muito boas (instale uma voz "Aprimorada" em Ajustes → Acessibilidade → Conteúdo Falado). No Android, instale os dados de voz em francês do Google TTS para ter áudio offline. A voz pode ser escolhida em **Ajustes → Voz em francês**.
@@ -260,30 +271,26 @@ O TTS é a Web Speech API do próprio aparelho. Ela não entrega o áudio gerado
 
 ```
 ├── index.html
-├── netlify.toml                  # build + função + cabeçalhos
-├── netlify/functions/pronunciation.mts   # /api/pronunciation em produção
-├── server/pronunciation.ts       # proxy do Azure (compartilhado dev/prod)
+├── netlify.toml                  # build + funções + cabeçalhos
+├── netlify/functions/            # /api/pronunciation e /api/sync em produção
+├── server/                       # proxy do Azure, sincronização e regras de mescla (dev e prod)
 ├── scripts/
 │   ├── build-seed.mjs            # valida e gera public/seed/seed.json
-│   ├── generate-icons.mjs
-│   └── seed/                     # conteúdo-fonte (palavras, regras, cenas…)
+│   └── seed/                     # conteúdo: palavras, pontes, regras, cenas, capítulos e Momentos
 ├── public/                       # ícones, favicon, seed.json
 ├── src/
-│   ├── main.ts                   # boot: IndexedDB → seed → rotas → service worker
-│   ├── db/
-│   │   ├── schema.ts             # tipos (Word, CognateRule, ReviewState…)
-│   │   ├── database.ts           # stores/índices IndexedDB + população pelo seed
-│   │   └── repo.ts               # consultas: conteúdo, revisão, atividade
-│   ├── lib/                      # fsrs, tts (vozes), gravação, WAV, pitch, prosódia, liaison,
-│   │                             #   sessão diária, Azure, export/import, relógio, sons
-│   ├── exercises/                # exercícios reutilizáveis (sessão e módulos usam os mesmos)
-│   ├── ui/                       # hyperscript, roteador por hash, layout, componentes, gráfico
-│   ├── views/                    # sessão, hoje, um módulo por tela, perfil, ajustes
+│   ├── main.ts                   # boot: IndexedDB → seed → rotas → service worker → sincronização
+│   ├── db/                       # tipos, stores (v3: chapters, momentos, momento_progress) e consultas
+│   ├── lib/                      # momento (contas), reencontro, fsrs, tts, gravação, pitch, prosódia,
+│   │                             #   liaison, números, Azure, sincronização, export/import, relógio
+│   ├── exercises/                # motores de descoberta (ponte, leitura, par mínimo) do Como funciona
+│   ├── ui/                       # layout (3 abas), folha, falas, painel de fala, componentes
+│   ├── views/                    # hoje, momento, caderno, guide (Como funciona), perfil, ajustes
 │   └── styles/main.css           # design system (claro/escuro, mobile-first)
 └── tests/
-    ├── unit/                     # vitest: seed, FSRS, pitch, prosódia, liaison, sessão…
-    ├── e2e/                      # playwright: sessão completa, módulos, offline, falhas
-    └── fixtures/voz-sintetica.wav  # "voz" do microfone falso (scripts/make-voice-fixture.mjs)
+    ├── unit/                     # vitest: seed, Momentos, reencontros, migração, sync, FSRS, pitch…
+    ├── e2e/                      # playwright: Momento 1, reencontros, offline, sync, acessibilidade, falhas
+    └── fixtures/voz-sintetica.wav
 ```
 
 ## Verificação de qualidade (QA)
@@ -335,9 +342,9 @@ Limitações conhecidas que **não** foram corrigidas nesta versão, com o motiv
 14. **A melodia "francês" é modelada, não extraída da voz nativa.** A Web Speech API não entrega o áudio que sintetiza, então o pitch da voz nativa não pode ser medido no navegador. O que é medido de verdade é **a sua voz** (autocorrelação, ao vivo). A meta segue as regras de entonação do francês, e o **ritmo** dela usa os tempos reais da voz nativa quando o aparelho informa o início das palavras. *Por quê:* extrair da voz nativa exige áudio gravado (ex.: Azure TTS ou arquivos), o que mexe na integração com o Azure e no esquema de dados, e esta etapa proibia os dois. O extrator já aceita qualquer áudio, então é só ligar quando houver.
 15. **O detector de pitch foi validado com sinais sintéticos e o microfone falso do Chromium, não com vozes humanas reais.** Com AGC e cancelamento de eco do celular ligados, vozes muito graves (< 70 Hz) ou sussurradas saem como "não deu pra ouvir". *Por quê:* não havia gravações humanas neste ambiente. Confira com a sua voz nas primeiras sessões.
 16. **As dicas de melodia são deliberadamente simples** (direção da voz no fim e ritmo geral). A contagem de sílabas é aproximada, pela escrita, então frases com muitos "e" mudos podem ficar com a meta um pouco mais longa. *Por quê:* dicas curtas e sem jargão eram o objetivo. Uma análise fina por sílaba precisaria de áudio nativo (item 14).
-17. **A sessão diária fica salva por aparelho** (`localStorage`). No celular da Eduarda e no do Lucas, cada um tem a sua; exportar/importar leva o progresso, não a sessão em andamento. *Por quê:* guardar a sessão no banco mudaria o esquema de dados, o que esta etapa não permitia.
-18. **Descobrir uma regra adiciona os exemplos dela à revisão**, e isso conta no limite de palavras novas do dia (item 9). Num dia com muitas descobertas, a metade de revisão da sessão seguinte vem cheia de vencidas. *Por quê:* é o comportamento esperado (o que foi descoberto precisa ser revisto), mas vale saber.
-19. **"Fale você" dentro de Monte a frase é pulável**, e na sessão isso acontece em 2 dos 16 passos. Quem pular sempre não vê a própria melodia na sessão (continua disponível em "Fale e compare"). *Por quê:* obrigar gravação trava quem estuda no ônibus ou sem microfone.
+17. **Um Momento em andamento não fica salvo.** Sair pelo X no meio volta para Hoje e o Momento recomeça do passo 1 na próxima vez. Ele leva uns 6 minutos, e o progresso só conta ao chegar em "Leve com você". *Por quê:* guardar o meio do caminho criaria estado a sincronizar sem ganho real para uma cena tão curta.
+18. **As práticas do Como funciona não entram nos reencontros.** Só as palavras dos Momentos entram no FSRS, para a revisão continuar pequena e ligada ao que a pessoa viveu.
+19. **O passo Fale é pulável** ("Agora não dá para falar alto"), sem penalidade. Quem pular sempre não vê a própria melodia. *Por quê:* obrigar gravação trava quem estuda no ônibus ou sem microfone.
 20. **O IPA não aparece mais na interface** (pedido de leveza: zero termo técnico). A pronúncia vem do áudio e das descrições em português. O IPA continua nos dados, para uso futuro.
 21. **O `accent` do tema claro foi escurecido de #F1704E para #B54A2B** (mesmo tom coral do #C4502F sugerido, só mais escuro), e o design system publicado recebeu o mesmo valor. Os pares medidos no tema claro:
     - Texto branco do botão primário sobre `accent`: **5,28:1**.
@@ -363,9 +370,9 @@ Limitações conhecidas que **não** foram corrigidas nesta versão, com o motiv
 28. **Limite por IP da API é de melhor esforço.** Cada instância da Function guarda a própria contagem. Contra abuso sério, o teto real é a cota do F0, que não gera cobrança.
 29. **Dicas de memória: origem só quando é real.** Nas 533 dicas, "vem de…" só aparece quando a origem foi conferida (latim ou francês antigo em comum com o português). Associação sem origem verificável virou dica de som ou de uso. Casos corrigidos: *très*, *vite*, *heureux* (vem de *heur*, sorte, não de *heure*), *tomber*, *petit* e *après* (que não vem de "após").
 30. **O código de casal é a única chave do progresso sincronizado.** Quem souber o código lê e altera o progresso de vocês, porque não há login, de propósito. Use o código gerado pelo app (12 caracteres aleatórios) e não o publique. Para trocar: *Trocar código* nos dois aparelhos.
-31. **A sincronização leva as revisões (`ReviewState`), não o resto.** O histórico de atividade, o histórico de pronúncia e a sessão do dia em andamento continuam por aparelho; a cópia em arquivo leva os dois primeiros. *Por quê:* o pedido era sincronizar a revisão com `reps`. O resto pode entrar depois pelo mesmo endpoint.
+31. **A sincronização leva as revisões (`ReviewState`) e os Momentos concluídos (`momento_progress`), não o resto.** O histórico de atividade (inclusive quais frases já voltaram em reencontro e quantos reencontros foram feitos hoje) e o histórico de pronúncia continuam por aparelho; a cópia em arquivo leva os dois. *Por quê:* o pedido era sincronizar a revisão com `reps` e os Momentos. O resto pode entrar depois pelo mesmo endpoint.
 32. **O "modo de teste" (data simulada) também vale na sincronização.** Revisões feitas com a data avançada ficam com data futura e ganham dos conflitos até o tempo real alcançá-las. Use o modo de teste só num aparelho sem código de casal.
 33. **Os documentos sincronizados ficam no Netlify Blobs do site** (loja `poliglotas-sync`). Os de teste criados nas verificações de produção (código `teste-…`) podem ser apagados pelo painel da Netlify, em *Blobs*.
 
 ## Fora do escopo da v1 (de propósito)
-Nenhuma IA generalista, nenhuma conversa livre, nenhuma sincronização automática e nenhum login. A escolha de perfil é local.
+Nenhuma IA generalista, nenhuma conversa livre e nenhum login. A escolha de perfil é local.

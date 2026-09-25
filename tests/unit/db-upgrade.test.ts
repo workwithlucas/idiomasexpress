@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { _resetDBConnection, getDB } from '../../src/db/database';
 import { getPronunciationHistory, savePronunciation } from '../../src/db/repo';
 
-describe('migração do banco v1 → v2 (histórico de pronúncia)', () => {
+describe('migração do banco v1 → v3 (histórico de pronúncia e Momentos)', () => {
   it('cria a store nova sem perder o progresso de quem já usa o app', async () => {
     await _resetDBConnection();
     // Banco como a v1 deixou: com um estado de revisão salvo.
@@ -18,8 +18,9 @@ describe('migração do banco v1 → v2 (histórico de pronúncia)', () => {
     v1.close();
 
     const db = await getDB();
-    expect(db.version).toBe(2);
+    expect(db.version).toBe(3);
     expect([...db.objectStoreNames]).toContain('pronunciation_history');
+    expect([...db.objectStoreNames]).toEqual(expect.arrayContaining(['chapters', 'momentos', 'momento_progress']));
     expect(await db.get('review_states', ['u_lucas', 'w_cafe'])).toMatchObject({ reps: 4 });
 
     const result = {

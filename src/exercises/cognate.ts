@@ -1,7 +1,7 @@
 import { h } from '../ui/dom';
 import { icon } from '../ui/icons';
 import { playButton } from '../ui/components';
-import { addToReview, content, logActivity } from '../db/repo';
+import { content, logActivity } from '../db/repo';
 import type { CognateRule, Word } from '../db/schema';
 import { diffWords, runs, tapHits } from '../lib/diff';
 import { normalize } from '../lib/text';
@@ -42,7 +42,7 @@ function pairRow(w: Word, highlight: boolean): HTMLElement {
     h('span', { class: 'pair-row__pt' }, highlight ? marked(pt, d.pt, 'marked--pt') : pt),
     h('span', { class: 'pair-row__arrow', 'aria-hidden': 'true' }, icon('chevronRight', 16)),
     h('span', { class: 'pair-row__fr', lang: 'fr' }, highlight ? marked(w.fr, d.fr, 'marked--fr') : w.fr),
-    playButton(w.fr, { wordId: w.id, size: 'sm' }),
+    playButton(w.fr, { wordId: w.id }),
   );
 }
 
@@ -130,7 +130,6 @@ export function cognateLesson(rule: CognateRule, userId: string, onDone: Done): 
       if (exact || near) applyRight++;
       cue(exact || near ? 'right' : 'almost');
       input.disabled = true;
-      void addToReview(userId, w.id);
       swapResult(result, exact ? feedback('right', 'Isso.') : near ? feedback('right', 'Quase perfeito.', `É "${w.fr}".`) : feedback('almost', giveUp ? 'É assim:' : 'Quase.', `É "${w.fr}".`), w, () => stepApply(i + 1), i === apply.length - 1);
       void speak(w.fr);
     };
@@ -142,7 +141,7 @@ export function cognateLesson(rule: CognateRule, userId: string, onDone: Done): 
         'form',
         { class: 'answer', onsubmit: (e: Event) => { e.preventDefault(); check(false); } },
         input,
-        h('div', { class: 'row' }, h('button', { class: 'btn btn--ghost', type: 'button', onclick: () => check(true), 'data-testid': 'dont-know' }, 'Não sei'), h('button', { class: 'btn btn--primary', type: 'submit', 'data-testid': 'check' }, 'Conferir')),
+        h('div', { class: 'row' }, h('button', { class: 'btn2', type: 'button', onclick: () => check(true), 'data-testid': 'dont-know' }, 'Não sei'), h('button', { class: 'btn', type: 'submit', 'data-testid': 'check' }, 'Conferir')),
       ),
       result,
     );
@@ -150,7 +149,6 @@ export function cognateLesson(rule: CognateRule, userId: string, onDone: Done): 
   };
 
   const finish = () => {
-    for (const w of discover) void addToReview(userId, w.id);
     onDone({ correct: applyRight >= Math.ceil(apply.length / 2) });
   };
 
@@ -164,7 +162,7 @@ function swapResult(box: HTMLElement, fb: HTMLElement, w: Word, next: () => void
       'div',
       { class: 'step-in stack stack--sm' },
       fb,
-      h('div', { class: 'row' }, h('span', { class: 'answer-word', lang: 'fr' }, w.fr), playButton(w.fr, { wordId: w.id, size: 'sm' })),
+      h('div', { class: 'row' }, h('span', { class: 'answer-word', lang: 'fr' }, w.fr), playButton(w.fr, { wordId: w.id })),
       primaryButton(last ? 'Concluir' : 'Próxima', next),
     ),
   );

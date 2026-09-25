@@ -3,14 +3,15 @@ export interface Prefs {
   currentUserId: string | null;
   voiceURI: string | null;
   speechRate: number;
-  newPerDay: number;
   autoplay: boolean;
+  /** Dia (yyyy-mm-dd) em que a pessoa pulou os reencontros. */
+  skipReencontrosDay: string | null;
   /** Toques curtos de acerto/erro. */
   sounds: boolean;
 }
 
 const KEY = 'ie.prefs';
-const DEFAULTS: Prefs = { currentUserId: null, voiceURI: null, speechRate: 0.9, newPerDay: 10, autoplay: true, sounds: true };
+const DEFAULTS: Prefs = { currentUserId: null, voiceURI: null, speechRate: 0.9, autoplay: true, sounds: true, skipReencontrosDay: null };
 
 let cache: Prefs | null = null;
 

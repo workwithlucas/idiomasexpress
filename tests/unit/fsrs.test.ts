@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatInterval, newReviewState, previewIntervals, review } from '../../src/lib/fsrs';
+import { newReviewState, review } from '../../src/lib/fsrs';
 
 const DAY = 86_400_000;
 
@@ -38,7 +38,8 @@ describe('FSRS', () => {
 
   it('prévia ordena again < hard < good < easy', () => {
     const t = new Date('2026-01-10T09:00:00Z');
-    const p = previewIntervals(newReviewState('u', 'w', t), t);
+    const s0 = newReviewState('u', 'w', t);
+    const p = Object.fromEntries((['again', 'hard', 'good', 'easy'] as const).map((r) => [r, new Date(review(s0, r, t).due_at)])) as Record<'again' | 'hard' | 'good' | 'easy', Date>;
     expect(p.again.getTime()).toBeLessThanOrEqual(p.hard.getTime());
     expect(p.hard.getTime()).toBeLessThanOrEqual(p.good.getTime());
     expect(p.good.getTime()).toBeLessThan(p.easy.getTime());
@@ -51,7 +52,7 @@ describe('FSRS', () => {
       s = review(s, 'good', t);
       t = new Date(s.due_at);
     }
-    const p = previewIntervals(s, t);
+    const p = Object.fromEntries((['again', 'hard', 'good', 'easy'] as const).map((r) => [r, new Date(review(s, r, t).due_at)])) as Record<'again' | 'hard' | 'good' | 'easy', Date>;
     const d = (x: Date) => x.getTime() - t.getTime();
     expect(d(p.easy)).toBeGreaterThan(d(p.good));
     expect(d(p.good)).toBeGreaterThan(d(p.hard));
@@ -60,9 +61,4 @@ describe('FSRS', () => {
     expect(d(p.easy)).toBeGreaterThan(30 * DAY);
   });
 
-  it('formata intervalos', () => {
-    const t = new Date(0);
-    expect(formatInterval(t, new Date(10 * 60_000))).toBe('10 min');
-    expect(formatInterval(t, new Date(3 * DAY))).toBe('3 d');
-  });
 });

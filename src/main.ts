@@ -12,36 +12,23 @@ import { listUsers, loadContent, repairReviewStates } from './db/repo';
 import { h, render } from './ui/dom';
 import { mountApp } from './ui/layout';
 import { navigate, parseHash, route } from './ui/router';
-import { notifyProgressChanged, restoreUser } from './ui/session';
+import { restoreUser } from './ui/user';
 import { toast } from './ui/toast';
 import type { TtsProblem } from './lib/tts';
 import { profileView } from './views/profile';
-import { homeView } from './views/home';
-import { learnView } from './views/learn';
-import { sessionView } from './views/session';
-import { cognatesView } from './views/cognates';
-import { readingView } from './views/reading';
-import { listeningView } from './views/listening';
-import { builderView } from './views/builder';
-import { memoryView } from './views/memory';
-import { speakingView } from './views/speaking';
-import { reviewView } from './views/review';
-import { sceneDetailView, scenesView } from './views/scenes';
+import { hojeView } from './views/hoje';
+import { momentoView } from './views/momento';
+import { cadernoView } from './views/caderno';
+import { guideChapterView, guideView } from './views/guide';
 import { settingsView } from './views/settings';
 
-route('/', homeView);
+route('/', hojeView);
 route('/perfil', profileView);
-route('/aprender', learnView);
-route('/sessao', sessionView);
-route('/cognatos', cognatesView);
-route('/leitura', readingView);
-route('/escuta', listeningView);
-route('/frases', builderView);
-route('/memoria', memoryView);
-route('/fala', speakingView);
-route('/revisao', reviewView);
-route('/situacoes', scenesView);
-route('/situacoes/:id', sceneDetailView);
+route('/momento/:id', momentoView);
+route('/reencontros', momentoView);
+route('/caderno', cadernoView);
+route('/como-funciona', guideView);
+route('/como-funciona/:n', guideChapterView);
 route('/ajustes', settingsView);
 
 // Aviso único (a cada 20 s no máximo) quando não há voz francesa para falar.
@@ -65,7 +52,7 @@ async function boot(): Promise<void> {
   try {
     await getDB();
     // Primeiro uso (ou conteúdo novo): baixa o seed JSON e popula o IndexedDB.
-    await ensureSeeded(__SEED_VERSION__);
+    await ensureSeeded(__SEED_VERSION__, undefined, __SEED_HASH__);
     await loadContent();
     const repaired = await repairReviewStates();
     if (repaired) console.warn(`${repaired} estado(s) de revisão corrompido(s) foram reiniciados.`);
@@ -86,8 +73,8 @@ async function boot(): Promise<void> {
         h('div', { class: 'boot__mark' }, '!'),
         h('h1', null, 'Não foi possível iniciar'),
         h('p', null, (e as Error).message),
-        h('p', { class: 'muted' }, 'Verifique se o navegador permite armazenamento local (IndexedDB) e se não está em modo privado. Na primeira abertura é preciso estar online.'),
-        h('button', { class: 'btn btn--primary', onclick: () => location.reload() }, 'Tentar de novo'),
+        h('p', { class: 'soft' }, 'Verifique se o navegador permite armazenamento local (IndexedDB) e se não está em modo privado. Na primeira abertura é preciso estar online.'),
+        h('button', { class: 'btn', onclick: () => location.reload() }, 'Tentar de novo'),
       ),
     );
     return;
@@ -119,9 +106,8 @@ function startAutoSync(): void {
       if (!(await getSyncCode())) return;
       const r = await syncNow();
       if (r.updated) {
-        notifyProgressChanged();
-        // Só redesenha a tela Hoje (não interrompe um exercício em andamento).
-        if (parseHash().path === '/') navigate('/');
+        // Só redesenha Hoje e Caderno (não interrompe um Momento em andamento).
+        if (['/', '/caderno'].includes(parseHash().path)) navigate(parseHash().path);
       }
     } catch (e) {
       console.info('Sincronização adiada:', (e as Error).message);

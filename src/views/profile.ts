@@ -2,12 +2,12 @@ import { h } from '../ui/dom';
 import { brandMark, icon } from '../ui/icons';
 import type { View } from '../ui/router';
 import { navigate } from '../ui/router';
-import { getReviewStats, listUsers } from '../db/repo';
-import { maybeUser, setCurrentUser } from '../ui/session';
+import { getMomentoProgress, listUsers } from '../db/repo';
+import { maybeUser, setCurrentUser } from '../ui/user';
 
 export const profileView: View = async () => {
   const users = await listUsers();
-  const stats = await Promise.all(users.map((u) => getReviewStats(u.id)));
+  const stats = await Promise.all(users.map(async (u) => (await getMomentoProgress(u.id)).length));
   const active = maybeUser();
 
   return {
@@ -46,7 +46,7 @@ export const profileView: View = async () => {
                 'span',
                 { class: 'profile-card__text' },
                 h('strong', null, u.name),
-                h('span', null, stats[i].inStudy ? `${stats[i].inStudy} palavras no caminho` : 'Começando agora'),
+                h('span', null, stats[i] ? `${stats[i]} ${stats[i] === 1 ? 'momento feito' : 'momentos feitos'}` : 'Começando agora'),
               ),
               icon('chevronRight', 20),
             ),

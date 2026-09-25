@@ -71,46 +71,60 @@ export async function repsByWord(page: Page, userId: string): Promise<Record<str
 }
 
 /**
- * Responde o passo atual da sessão, seja qual for o tipo. Devolve o tipo.
- * Responde de propósito a pior opção às vezes? Não: aqui sempre acerta ou
- * pede ajuda ("Não sei") — o objetivo é atravessar o fluxo.
+ * Atravessa o Momento aberto do começo ao fim, do jeito que uma pessoa faria:
+ * escuta, acende o que já sabe, deduz a chave (errando uma vez), aplica,
+ * monta a frase com `slot`, pula a fala e termina.
  */
-export async function answerCurrentStep(page: Page): Promise<void> {
-  const v = (sel: string) => page.locator(sel).first().isVisible().catch(() => false);
-  // A tela troca com animação: um clique pode mirar um elemento que acabou de
-  // sair. Cliques curtos e tolerantes; o laço tenta de novo com a tela nova.
-  const tap = (sel: string, which: 'first' | 'last' = 'first') => page.locator(sel)[which]().click({ timeout: 1500 }).catch(() => undefined);
-  const progress = () => page.locator('.session-top .progress__bar').getAttribute('style', { timeout: 1500 }).catch(() => null);
-  const start = await progress();
-  for (let guard = 0; guard < 40; guard++) {
-    if (await v('[data-testid=session-done]')) return;
-    if ((await progress()) !== start) return;
-    if (await v('[data-testid=reveal]')) await tap('[data-testid=reveal]');
-    else if (await v('.rate__btn')) await tap('.rate__btn--good');
-    else if ((await v('.tile')) && !(await v('[data-testid=feedback]'))) await tap('.tile', 'last');
-    else if ((await v('[data-testid=apply-input]')) && (await page.getByTestId('apply-input').isEnabled().catch(() => false))) await tap('[data-testid=dont-know]');
-    else if ((await v('.choice:not([disabled])')) && !(await v('[data-testid=feedback]'))) await tap('.choice[data-right="true"]');
-    else if (await v('.slot-option')) await tap('.slot-option');
-    else if (await v('.option:not([disabled])')) await tap('.option');
-    else await tap('[data-testid=continue], [data-testid=next-frame], [data-testid=next-round]', 'last');
-    await page.waitForTimeout(100);
+export async function completeMomento(page: Page, opts: { slot?: string; record?: boolean } = {}): Promise<void> {
+  const next = page.getByTestId('momento-next');
+  await expect(page.getByTestId('step-listen')).toBeVisible();
+  await next.click();
+  await page.getByTestId('reveal-known').click();
+  await next.click();
+  await expect(page.getByTestId('step-key')).toBeVisible();
+  await page.locator('[data-testid=step-key] .opt[data-right="false"]').first().click();
+  await page.locator('[data-testid=step-key] > .opts .opt[data-right="true"]').click();
+  for (const card of await page.getByTestId('apply').all()) await card.locator('.opt[data-right="true"]').click();
+  await next.click();
+  await page.locator('.chip').filter({ hasText: opts.slot ?? 'café' }).first().click();
+  await next.click();
+  await expect(page.getByTestId('step-speak')).toBeVisible();
+  if (opts.record) {
+    await page.getByTestId('rec-start').click();
+    await page.waitForTimeout(2600);
+    await page.getByTestId('rec-stop').click();
+    await expect(page.getByTestId('prosody-tips')).toBeVisible();
+    await next.click();
+  } else {
+    await page.getByTestId('skip-speak').click();
   }
-  throw new Error('Passo da sessão não avançou');
+  await expect(page.getByTestId('step-take')).toBeVisible();
+  await next.click();
+  await expect(page.getByTestId('hero')).toBeVisible();
 }
 
-/** Completa a sessão diária inteira; devolve a sequência de tipos. */
-export async function completeSession(page: Page): Promise<string[]> {
-  const types: string[] = [];
-  for (let i = 0; i < 40; i++) {
-    await expect(page.locator('.session-stage').or(page.getByTestId('session-done')).first()).toBeVisible();
-    if (await page.getByTestId('session-done').isVisible()) break;
-    types.push((await page.locator('.session-stage').getAttribute('data-type')) ?? '?');
-    const before = await page.locator('.session-top .progress__bar').getAttribute('style');
-    await answerCurrentStep(page);
-    await expect.poll(async () => (await page.getByTestId('session-done').isVisible()) || (await page.locator('.session-top .progress__bar').getAttribute('style')) !== before).toBe(true);
+/** Faz os reencontros que estiverem na tela (Lembrei em todos). Devolve as direções. */
+export async function doReencontros(page: Page): Promise<{ word?: string; direction?: string; kind?: string }[]> {
+  const seen: { word?: string; direction?: string; kind?: string }[] = [];
+  await page.getByTestId('reencontro').waitFor({ timeout: 5000 }).catch(() => undefined);
+  for (let i = 0; i < 12; i++) {
+    const card = page.getByTestId('reencontro');
+    if (!(await card.isVisible().catch(() => false))) break;
+    await page.getByTestId('reencontro-show').click();
+    const kind = (await card.getAttribute('data-kind')) ?? 'word';
+    const word = (await card.getAttribute('data-word')) ?? undefined;
+    const direction = (await card.getAttribute('data-direction')) ?? undefined;
+    seen.push({ word, direction, kind });
+    const before = word ?? kind;
+    if (kind === 'phrase') await page.getByTestId('reencontro-done').click();
+    else await page.getByTestId('reencontro-good').click();
+    await expect.poll(async () => {
+      const c = page.getByTestId('reencontro');
+      if (!(await c.isVisible().catch(() => false))) return 'fim';
+      return (await c.getAttribute('data-word')) ?? (await c.getAttribute('data-kind'));
+    }).not.toBe(before);
   }
-  await expect(page.getByTestId('session-done')).toBeVisible();
-  return types;
+  return seen;
 }
 
 /** Avança a data do app (Ajustes → Para testar). */

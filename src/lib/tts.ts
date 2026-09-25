@@ -66,10 +66,6 @@ export function onVoicesChanged(fn: () => void): () => void {
   return () => listeners.delete(fn);
 }
 
-export function allVoicesCount(): number {
-  return voices.length;
-}
-
 export function frenchVoices(): SpeechSynthesisVoice[] {
   return voices.filter((v) => v.lang.toLowerCase().replace('_', '-').startsWith('fr'));
 }

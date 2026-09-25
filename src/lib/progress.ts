@@ -1,7 +1,7 @@
 import { getDB } from '../db/database';
-import type { Activity, PronunciationRecord, ReviewState, User } from '../db/schema';
+import type { Activity, MomentoProgress, PronunciationRecord, ReviewState, User } from '../db/schema';
 import { isValidReviewState } from './fsrs';
-import { isNewer } from '../../server/syncMerge';
+import { isNewer, looksLikeProgress, mergeProgressPair, progressChanged } from '../../server/syncMerge';
 
 /**
  * Exportação/importação manual de progresso (sincronização entre aparelhos
@@ -17,17 +17,20 @@ export interface ProgressFile {
   activity: Activity[];
   /** Desde a versão 2 do banco; arquivos antigos não têm (continuam válidos). */
   pronunciation_history?: PronunciationRecord[];
+  /** Momentos concluídos (desde a versão 3 do banco). */
+  momento_progress?: MomentoProgress[];
 }
 
 export async function exportProgress(): Promise<ProgressFile> {
   const db = await getDB();
-  const [users, review_states, activity, pronunciation_history] = await Promise.all([
+  const [users, review_states, activity, pronunciation_history, momento_progress] = await Promise.all([
     db.getAll('users'),
     db.getAll('review_states'),
     db.getAll('activity'),
     db.getAll('pronunciation_history'),
+    db.getAll('momento_progress'),
   ]);
-  return { app: 'idiomasexpress', type: 'progress', version: 1, exported_at: new Date().toISOString(), users, review_states, activity, pronunciation_history };
+  return { app: 'idiomasexpress', type: 'progress', version: 1, exported_at: new Date().toISOString(), users, review_states, activity, pronunciation_history, momento_progress };
 }
 
 export function downloadJson(data: unknown, filename: string): void {
@@ -46,6 +49,7 @@ export interface ImportSummary {
   statesKept: number;
   activityAdded: number;
   pronunciationAdded: number;
+  momentosUpdated: number;
 }
 
 function isProgressFile(x: unknown): x is ProgressFile {
@@ -65,8 +69,8 @@ function isProgressFile(x: unknown): x is ProgressFile {
 export async function importProgress(raw: unknown): Promise<ImportSummary> {
   if (!isProgressFile(raw)) throw new Error('Arquivo inválido: não é uma exportação de progresso do Poliglotas.');
   const db = await getDB();
-  const tx = db.transaction(['users', 'review_states', 'activity', 'words', 'pronunciation_history'], 'readwrite');
-  const summary: ImportSummary = { statesAdded: 0, statesUpdated: 0, statesKept: 0, activityAdded: 0, pronunciationAdded: 0 };
+  const tx = db.transaction(['users', 'review_states', 'activity', 'words', 'pronunciation_history', 'momento_progress'], 'readwrite');
+  const summary: ImportSummary = { statesAdded: 0, statesUpdated: 0, statesKept: 0, activityAdded: 0, pronunciationAdded: 0, momentosUpdated: 0 };
 
   const validWords = new Set(await tx.objectStore('words').getAllKeys());
   for (const u of raw.users) {
@@ -109,6 +113,17 @@ export async function importProgress(raw: unknown): Promise<ImportSummary> {
     if (ok && !(await store.get(r.id))) {
       await store.put({ ...r, syllables: Array.isArray(r.syllables) ? r.syllables : [] });
       summary.pronunciationAdded++;
+    }
+  }
+  // Momentos: mesma regra da sincronização (concluído continua concluído).
+  for (const p of raw.momento_progress ?? []) {
+    if (!looksLikeProgress(p)) continue;
+    const store = tx.objectStore('momento_progress');
+    const local = await store.get([p.user_id, p.momento_id]);
+    const merged = local ? mergeProgressPair(local, p) : p;
+    if (progressChanged(local, merged)) {
+      await store.put(merged);
+      summary.momentosUpdated++;
     }
   }
   await tx.done;

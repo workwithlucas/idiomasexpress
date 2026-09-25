@@ -80,27 +80,4 @@ export function review(rs: ReviewState, result: ReviewResult, at: Date): ReviewS
   return fromCard(card, rs.user_id, rs.word_id, result, rs.created_at);
 }
 
-/** Próxima data de cada botão, para mostrar "10 min", "3 d" etc. antes de avaliar. */
-export function previewIntervals(rs: ReviewState, at: Date): Record<ReviewResult, Date> {
-  const card = toCard(rs);
-  const out = {} as Record<ReviewResult, Date>;
-  for (const key of Object.keys(RESULT_TO_RATING) as ReviewResult[]) {
-    out[key] = scheduler.next(card, at, RESULT_TO_RATING[key]).card.due;
-  }
-  return out;
-}
-
-export function formatInterval(from: Date, to: Date): string {
-  const min = Math.max(1, Math.round((to.getTime() - from.getTime()) / 60_000));
-  if (min < 60) return `${min} min`;
-  const h = Math.round(min / 60);
-  if (h < 24) return `${h} h`;
-  const d = Math.round(h / 24);
-  if (d < 31) return `${d} d`;
-  const m = Math.round(d / 30);
-  if (m < 12) return `${m} m`;
-  return `${(d / 365).toFixed(1).replace('.0', '')} a`;
-}
-
-/** Palavra considerada "consolidada" quando a estabilidade passa de 21 dias. */
 export const MATURE_STABILITY_DAYS = 21;

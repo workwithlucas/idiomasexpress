@@ -43,19 +43,24 @@ function core(word: string): string {
   return parts[parts.length - 1];
 }
 
+/** Som da ligação entre duas palavras vizinhas (ou null, se não liga). */
+export function liaisonBetween(text: string, next: string | undefined): { sound: string; letter: string } | null {
+  if (!next || /[,.;:!?…]$/.test(text)) return null;
+  // Expressões de várias palavras ("s'il vous plaît"): vale a última e a primeira.
+  const last = text.trim().split(/\s+/).pop() ?? text;
+  const first = next.trim().split(/\s+/)[0] ?? next;
+  const sound = LIAISON[core(last)];
+  const nextCore = core(first);
+  if (!sound || !VOWEL_START.test(nextCore) || BLOCKERS.has(nextCore)) return null;
+  const bare = last.replace(/[,.;:!?…]+$/, '');
+  return { sound, letter: bare.charAt(bare.length - 1) };
+}
+
 export function analyzeLiaisons(sentence: string): SentenceToken[] {
   const words = sentence.trim().split(/\s+/).filter(Boolean);
   return words.map((text, i) => {
-    const next = words[i + 1];
-    if (!next || /[,.;:!?…]$/.test(text)) return { text };
-    const sound = LIAISON[core(text)];
-    const nextCore = core(next);
-    if (!sound || !VOWEL_START.test(nextCore) || BLOCKERS.has(nextCore)) return { text };
-    const bare = text.replace(/[,.;:!?…]+$/, '');
-    return { text, liaison: { sound, letter: bare.charAt(bare.length - 1) } };
+    const liaison = liaisonBetween(text, words[i + 1]);
+    return liaison ? { text, liaison } : { text };
   });
 }
 
-export function hasLiaison(sentence: string): boolean {
-  return analyzeLiaisons(sentence).some((t) => t.liaison);
-}

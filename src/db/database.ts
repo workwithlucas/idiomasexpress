@@ -1,6 +1,6 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import type {
-  Activity, CognateRule, FalseCognate, Frame, MinimalPair, PronunciationRecord, ReadingRule, ReviewState, Scene, SeedData, User, Word,
+  Activity, Chapter, CognateRule, FalseCognate, Frame, MinimalPair, Momento, MomentoProgress, PronunciationRecord, ReadingRule, ReviewState, Scene, SeedData, User, Word,
 } from './schema';
 
 export interface AppDB extends DBSchema {
@@ -11,6 +11,13 @@ export interface AppDB extends DBSchema {
   minimal_pairs: { key: string; value: MinimalPair };
   frames: { key: string; value: Frame };
   scenes: { key: string; value: Scene };
+  chapters: { key: string; value: Chapter };
+  momentos: { key: string; value: Momento };
+  momento_progress: {
+    key: [string, string]; // [user_id, momento_id]
+    value: MomentoProgress;
+    indexes: { by_user: string };
+  };
   users: { key: string; value: User };
   review_states: {
     key: [string, string]; // [user_id, word_id]
@@ -29,12 +36,12 @@ export interface AppDB extends DBSchema {
 export type DB = IDBPDatabase<AppDB>;
 
 const DB_NAME = 'idiomasexpress';
-/** 1: v1 · 2: + pronunciation_history. */
-const DB_VERSION = 2;
+/** 1: v1 · 2: + pronunciation_history · 3: + chapters, momentos, momento_progress. */
+const DB_VERSION = 3;
 
 /** Tabelas de conteúdo: substituídas quando chega um seed novo. */
 export const CONTENT_STORES = [
-  'words', 'cognate_rules', 'false_cognates', 'reading_rules', 'minimal_pairs', 'frames', 'scenes',
+  'words', 'cognate_rules', 'false_cognates', 'reading_rules', 'minimal_pairs', 'frames', 'scenes', 'chapters', 'momentos',
 ] as const;
 
 /** Ordem pedagógica do seed (as object stores devolvem registros ordenados por id). */
@@ -50,6 +57,13 @@ export function getDB(): Promise<DB> {
         const ph = db.createObjectStore('pronunciation_history', { keyPath: 'id' });
         ph.createIndex('by_user_word_at', ['user_id', 'word_id', 'at']);
         ph.createIndex('by_user_at', ['user_id', 'at']);
+      }
+      if (oldVersion < 3) {
+        // Só acrescenta: review_states (com reps), activity e histórico ficam intactos.
+        db.createObjectStore('chapters', { keyPath: 'id' });
+        db.createObjectStore('momentos', { keyPath: 'id' });
+        const mp = db.createObjectStore('momento_progress', { keyPath: ['user_id', 'momento_id'] });
+        mp.createIndex('by_user', 'user_id');
       }
     },
     blocked() {
@@ -119,6 +133,8 @@ export async function applySeed(seed: SeedData): Promise<void> {
   seed.minimal_pairs.forEach((r) => puts.push(tx.objectStore('minimal_pairs').put(r)));
   seed.frames.forEach((r) => puts.push(tx.objectStore('frames').put(r)));
   seed.scenes.forEach((r) => puts.push(tx.objectStore('scenes').put(r)));
+  seed.chapters.forEach((r) => puts.push(tx.objectStore('chapters').put(r)));
+  seed.momentos.forEach((r) => puts.push(tx.objectStore('momentos').put(r)));
 
   const users = tx.objectStore('users');
   for (const u of seed.users) {
@@ -140,10 +156,13 @@ export async function applySeed(seed: SeedData): Promise<void> {
     minimal_pairs: seed.minimal_pairs.length,
     frames: seed.frames.length,
     scenes: seed.scenes.length,
+    chapters: seed.chapters.length,
+    momentos: seed.momentos.length,
   };
   puts.push(tx.objectStore('meta').put({ key: 'content_counts', value: counts }));
   puts.push(tx.objectStore('meta').put({ key: 'seed_user_ids', value: seed.users.map((u) => u.id) }));
   puts.push(tx.objectStore('meta').put({ key: 'seed_version', value: seed.version }));
+  puts.push(tx.objectStore('meta').put({ key: 'seed_hash', value: seed.hash ?? null }));
   puts.push(tx.objectStore('meta').put({ key: 'seeded_at', value: new Date().toISOString() }));
 
   await Promise.all(puts);
@@ -158,9 +177,11 @@ export async function applySeed(seed: SeedData): Promise<void> {
 export async function ensureSeeded(
   expectedVersion: number,
   fetchSeed: () => Promise<SeedData> = defaultFetchSeed,
+  expectedHash?: string,
 ): Promise<boolean> {
   const current = await getMeta<number>('seed_version');
-  const upToDate = typeof current === 'number' && current >= expectedVersion;
+  const hash = await getMeta<string | null>('seed_hash');
+  const upToDate = typeof current === 'number' && current >= expectedVersion && (!expectedHash || hash === expectedHash);
   if (upToDate && (await contentIntact())) return false;
   const seed = await fetchSeed();
   if (!isSeedData(seed)) throw new Error('O arquivo de conteúdo (seed.json) está corrompido.');
@@ -193,7 +214,7 @@ function isSeedData(x: unknown): x is SeedData {
   const s = x as SeedData;
   return (
     !!s && typeof s.version === 'number' &&
-    [s.words, s.cognate_rules, s.false_cognates, s.reading_rules, s.minimal_pairs, s.frames, s.scenes, s.users].every(Array.isArray) &&
+    [s.words, s.cognate_rules, s.false_cognates, s.reading_rules, s.minimal_pairs, s.frames, s.scenes, s.chapters, s.momentos, s.users].every(Array.isArray) &&
     s.words.length > 0 && s.users.length > 0
   );
 }

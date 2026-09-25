@@ -1,6 +1,6 @@
 import { h, type Child } from '../ui/dom';
 import { icon } from '../ui/icons';
-import { analyzeLiaisons } from '../lib/liaison';
+import { liaisonBetween } from '../lib/liaison';
 
 /** Um exercício montado: o elemento e (opcional) o que desligar ao sair. */
 export interface Exercise {
@@ -30,45 +30,26 @@ function liaisonArc(): SVGSVGElement {
 }
 
 export function frenchSentence(sentence: string, cls = ''): HTMLElement {
-  const tokens = analyzeLiaisons(sentence);
+  // Separa por espaços mantendo cada separador (o espaço fino antes de "?" fica).
+  const parts = sentence.trim().split(/(\s+)/);
+  const words = parts.filter((_, i) => i % 2 === 0);
   const el = h('p', { class: `fr-sentence ${cls}`.trim(), lang: 'fr' });
-  tokens.forEach((t, i) => {
-    if (t.liaison) {
-      const bare = t.text.slice(0, -1);
-      el.append(
-        h(
-          'span',
-          { class: 'lia', title: `Aqui liga: o "${t.liaison.letter}" soa "${t.liaison.sound}"` },
-          bare,
-          h('span', { class: 'lia__letter' }, t.text.slice(-1)),
-          liaisonArc(),
-        ),
-      );
-    } else {
-      el.append(t.text);
-    }
-    if (i < tokens.length - 1) el.append(t.liaison ? h('span', { class: 'lia__gap' }, ' ') : ' ');
+  words.forEach((text, i) => {
+    const liaison = liaisonBetween(text, words[i + 1]);
+    el.append(liaison ? liaisonWord(text, liaison) : text);
+    if (i < words.length - 1) el.append(liaison ? h('span', { class: 'lia__gap' }, ' ') : parts[2 * i + 1]);
   });
   return el;
 }
 
-/** Legenda curta que explica as ligações da frase (só se houver). */
-export function liaisonNote(sentence: string): HTMLElement | null {
-  const links = analyzeLiaisons(sentence)
-    .map((t, i, all) => (t.liaison ? { word: t.text.replace(/[,.;:!?…]+$/, ''), next: all[i + 1].text.replace(/[,.;:!?…]+$/, ''), ...t.liaison } : null))
-    .filter(Boolean) as { word: string; next: string; sound: string; letter: string }[];
-  if (!links.length) return null;
+/** Palavra com a letra calada que acorda na ligação, e o arco embaixo. */
+export function liaisonWord(text: string, liaison: { sound: string; letter: string }): HTMLElement {
   return h(
-    'p',
-    { class: 'lia-note', 'data-testid': 'liaison-note' },
-    h('span', { class: 'lia-note__mark', 'aria-hidden': 'true' }, '‿'),
-    h(
-      'span',
-      null,
-      links
-        .map((l) => (l.letter.toLowerCase() === l.sound ? `${l.word}‿${l.next}: o "${l.letter}" volta a soar` : `${l.word}‿${l.next}: o "${l.letter}" soa "${l.sound}"`))
-        .join(' · '),
-    ),
+    'span',
+    { class: 'lia', title: `Aqui liga: o "${liaison.letter}" soa "${liaison.sound}"` },
+    text.slice(0, -1),
+    h('span', { class: 'lia__letter' }, text.slice(-1)),
+    liaisonArc(),
   );
 }
 
@@ -82,19 +63,7 @@ export function feedback(kind: 'right' | 'almost', title: string, text?: Child):
 }
 
 export function primaryButton(label: string, onclick: () => void, testid = 'continue'): HTMLButtonElement {
-  return h('button', { class: 'btn btn--primary btn--block btn--lg', type: 'button', onclick, 'data-testid': testid }, label);
-}
-
-/** "Quando volta" em linguagem de gente, para os botões da revisão. */
-export function friendlyWhen(from: Date, to: Date): string {
-  const min = (to.getTime() - from.getTime()) / 60_000;
-  if (min < 60) return 'já já';
-  const days = Math.round(min / 1440);
-  if (days < 1) return 'hoje';
-  if (days === 1) return 'amanhã';
-  if (days < 14) return `em ${days} dias`;
-  if (days < 60) return `em ${Math.round(days / 7)} semanas`;
-  return `em ${Math.round(days / 30)} meses`;
+  return h('button', { class: 'btn', type: 'button', onclick, 'data-testid': testid }, label);
 }
 
 /** Troca o conteúdo de um palco com uma transição curta. */

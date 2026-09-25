@@ -2,8 +2,8 @@
  * Sincronização do progresso entre aparelhos por "código de casal".
  *
  * Contrato HTTP (dev e produção):
- *   POST /api/sync   corpo: { code: string, states: ReviewState[] }
- *        → 200 { states: ReviewState[], updated_at } (conjunto já mesclado)
+ *   POST /api/sync   corpo: { code: string, states: ReviewState[], progress?: MomentoProgress[] }
+ *        → 200 { states, progress, updated_at } (conjuntos já mesclados)
  *        → 4xx { error, message }
  *
  * O servidor guarda UM documento por código (a chave é o hash do código; o
@@ -13,11 +13,13 @@
  */
 import { createHash } from 'node:crypto';
 import { rateLimiter, sameOrigin } from './guard.ts';
-import { looksLikeState, mergeStates, type SyncState } from './syncMerge.ts';
+import { looksLikeProgress, looksLikeState, mergeProgress, mergeStates, type SyncProgress, type SyncState } from './syncMerge.ts';
 
 export interface SyncDoc {
   v: 1;
   states: SyncState[];
+  /** Momentos concluídos. Documentos antigos não têm (continuam válidos). */
+  progress?: SyncProgress[];
   updated_at: string;
 }
 
@@ -56,7 +58,7 @@ export async function handleSync(req: Request, store: SyncStore): Promise<Respon
 
   const raw = await req.text();
   if (raw.length > MAX_BODY) return err('bad_request', 'Progresso grande demais.', 413);
-  let body: { code?: unknown; states?: unknown };
+  let body: { code?: unknown; states?: unknown; progress?: unknown };
   try {
     body = JSON.parse(raw);
   } catch {
@@ -66,6 +68,8 @@ export async function handleSync(req: Request, store: SyncStore): Promise<Respon
   if (code.length < MIN_CODE || code.length > MAX_CODE) return err('bad_code', `O código precisa ter de ${MIN_CODE} a ${MAX_CODE} caracteres.`, 400);
   if (!Array.isArray(body.states) || body.states.length > MAX_STATES) return err('bad_request', 'Lista de estados inválida.', 400);
   const incoming = body.states.filter(looksLikeState);
+  if (body.progress !== undefined && (!Array.isArray(body.progress) || body.progress.length > MAX_STATES)) return err('bad_request', 'Lista de momentos inválida.', 400);
+  const incomingProgress = ((body.progress as unknown[] | undefined) ?? []).filter(looksLikeProgress);
 
   const key = storeKey(code);
   for (let attempt = 0; attempt < 5; attempt++) {
@@ -76,14 +80,15 @@ export async function handleSync(req: Request, store: SyncStore): Promise<Respon
       return err('upstream', `Armazenamento indisponível: ${(e as Error).message}`, 502);
     }
     const states = mergeStates(current?.doc.states ?? [], incoming);
-    const doc: SyncDoc = { v: 1, states, updated_at: new Date().toISOString() };
+    const progress = mergeProgress(current?.doc.progress ?? [], incomingProgress);
+    const doc: SyncDoc = { v: 1, states, progress, updated_at: new Date().toISOString() };
     let saved: boolean;
     try {
       saved = await store.write(key, doc, current ? current.etag ?? '' : null);
     } catch (e) {
       return err('upstream', `Armazenamento indisponível: ${(e as Error).message}`, 502);
     }
-    if (saved) return json({ states, updated_at: doc.updated_at });
+    if (saved) return json({ states, progress, updated_at: doc.updated_at });
     // Outro aparelho gravou no meio: relê e mescla de novo.
   }
   return err('conflict', 'Muitas sincronizações ao mesmo tempo; tente de novo.', 409);

@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { analyzeLiaisons, hasLiaison } from '../../src/lib/liaison';
+import { analyzeLiaisons } from '../../src/lib/liaison';
+
+const hasLiaison = (s: string) => analyzeLiaisons(s).some((t) => t.liaison);
 import seed from '../../public/seed/seed.json';
 import type { SeedData } from '../../src/db/schema';
 import { fillFrame } from '../../src/lib/text';

@@ -1,5 +1,5 @@
 import { expect, test, type Browser, type Page } from '@playwright/test';
-import { advanceDays, collectErrors, readStore, repsByWord, stubSpeech } from './helpers';
+import { advanceDays, collectErrors, completeMomento, doReencontros, readStore, repsByWord, stubSpeech } from './helpers';
 
 /**
  * (O aviso "Service Worker registration blocked by Playwright" vem do bloqueio
@@ -18,7 +18,7 @@ async function device(browser: Browser): Promise<Page> {
   await stubSpeech(page);
   await page.goto('/');
   await page.click('[data-user="u_lucas"]');
-  await expect(page.locator('.today')).toBeVisible();
+  await expect(page.getByTestId('hero')).toBeVisible();
   return page;
 }
 
@@ -29,51 +29,52 @@ async function linkCode(page: Page) {
   await expect(page.getByTestId('sync-status')).toContainText('Última sincronização');
 }
 
-test('A revisa e sincroniza; B recebe o estado com o reps certo; a volta também chega', async ({ browser }) => {
-  // --- Aparelho A: primeira revisão da palavra (reps 0 → 1) e sincroniza.
+type Progress = { user_id: string; momento_id: string; completed_at: string; built_phrase: string };
+
+test('A conclui o Momento 1 e sincroniza; B recebe o Momento, a frase e as palavras; a volta também chega', async ({ browser }) => {
+  // --- Aparelho A: conclui o Momento 1 com "thé" e sincroniza.
   const a = await device(browser);
   const errorsA = collectErrors(a);
-  await a.goto('/#/revisao');
-  const word = (await a.locator('.review-card').getAttribute('data-word'))!;
-  await expect(a.getByTestId('flash-direction')).toHaveText('O que significa?');
-  await a.getByTestId('reveal').click();
-  await a.locator('.rate__btn--good').click();
-  expect((await repsByWord(a, 'u_lucas'))[word]).toBe(1);
+  await a.getByTestId('start').click();
+  await completeMomento(a, { slot: 'thé' });
   await linkCode(a);
+  const progressA = (await readStore<Progress>(a, 'momento_progress'))[0];
+  expect(progressA.built_phrase).toBe("Un thé, s'il vous plaît.");
 
-  // --- Aparelho B, do zero: mesmo código → recebe a palavra com reps 1.
+  // --- Aparelho B, do zero: mesmo código → Momento concluído, frase e palavras.
   const b = await device(browser);
-  expect((await repsByWord(b, 'u_lucas'))[word]).toBeUndefined();
+  await expect(b.getByTestId('hero-title')).toHaveText('Um café, por favor');
   await linkCode(b);
-  await expect(b.getByTestId('sync-status')).toContainText('palavra');
-  const bStates = await repsByWord(b, 'u_lucas');
-  expect(bStates[word]).toBe(1);
-  // O estado chegou inteiro (não só o reps): mesma data de vencimento que em A.
-  const due = async (p: Page) => (await readStore<{ user_id: string; word_id: string; due_at: string }>(p, 'review_states')).find((s) => s.user_id === 'u_lucas' && s.word_id === word)!.due_at;
-  expect(await due(b)).toBe(await due(a));
+  expect(await readStore<Progress>(b, 'momento_progress')).toEqual([progressA]);
+  await b.goto('/#/');
+  await expect(b.getByTestId('cando')).toHaveText('Pedir algo num café');
+  await b.goto('/#/caderno');
+  await expect(b.getByTestId('phrases')).toContainText("Un thé, s'il vous plaît.");
+  expect(Object.keys(await repsByWord(b, 'u_lucas')).sort()).toEqual(Object.keys(await repsByWord(a, 'u_lucas')).sort());
 
-  // No dia seguinte, em B, a palavra vem para PRODUZIR (reps ímpar): a alternância veio junto.
+  // --- B refaz o Momento mais tarde com outra frase: a frase nova vale, a 1ª data fica.
   await advanceDays(b, 1);
-  await b.goto('/#/revisao');
-  await expect(b.locator('.review-card')).toHaveAttribute('data-word', word);
-  await expect(b.getByTestId('flash-direction')).toHaveText('Como se diz em francês?');
-  await b.getByTestId('reveal').click();
-  await b.locator('.rate__btn--good').click();
-  expect((await repsByWord(b, 'u_lucas'))[word]).toBe(2);
+  await b.goto('/#/momento/m01');
+  await completeMomento(b, { slot: 'croissant' });
   await b.goto('/#/ajustes');
   await b.getByTestId('sync-now').click();
   await expect(b.getByTestId('sync-status')).toContainText('Última sincronização');
 
-  // --- A reabre o app: a sincronização automática da abertura traz o reps 2.
+  // --- A reabre: a sincronização automática traz a frase nova, sem perder a conclusão.
   await a.reload();
-  await expect.poll(async () => (await repsByWord(a, 'u_lucas'))[word]).toBe(2);
-  expect(await due(a)).toBe(await due(b));
+  await expect.poll(async () => (await readStore<Progress>(a, 'momento_progress'))[0]?.built_phrase).toBe("Un croissant, s'il vous plaît.");
+  expect((await readStore<Progress>(a, 'momento_progress'))[0].completed_at).toBe(progressA.completed_at);
 
-  // --- Offline: o app abre e funciona igual; a sincronização só fica para depois.
-  await a.context().setOffline(true);
-  await a.reload().catch(() => undefined);
-  await a.goto('/#/revisao').catch(() => undefined);
-  await a.context().setOffline(false);
+  // --- Reencontros em B (reps 0 → 1) chegam em A com o reps certo.
+  await b.goto('/#/reencontros?hoje=1');
+  const done = (await doReencontros(b)).filter((r) => r.kind === 'word');
+  expect(done.length).toBeGreaterThan(0);
+  await b.goto('/#/ajustes');
+  await b.getByTestId('sync-now').click();
+  await expect(b.getByTestId('sync-status')).toContainText('Última sincronização');
+  await a.reload();
+  await expect.poll(async () => (await repsByWord(a, 'u_lucas'))[done[0].word!]).toBe(1);
+
   expect(errorsA.filter((e) => !/ERR_INTERNET_DISCONNECTED|Failed to load resource|blocked by Playwright/.test(e))).toEqual([]);
 });
 
@@ -84,7 +85,7 @@ test('sem código, nada é enviado; com a rede fora, o app abre normalmente', as
   await stubSpeech(page);
   await page.goto('/');
   await page.click('[data-user="u_lucas"]');
-  await expect(page.locator('.today')).toBeVisible();
+  await expect(page.getByTestId('hero')).toBeVisible();
   await page.goto('/#/ajustes');
   await expect(page.getByTestId('sync-code-input')).toBeVisible();
   expect(calls).toBe(0);
@@ -93,13 +94,13 @@ test('sem código, nada é enviado; com a rede fora, o app abre normalmente', as
   await page.getByTestId('sync-save').click();
   await expect(page.getByTestId('sync-status')).toContainText('pelo menos 8');
   expect(calls).toBe(0);
-  // Com código e sem rede: "Sincronizar agora" explica e nada quebra.
+  // Com código e sem rede: explica e nada quebra.
   await page.getByTestId('sync-code-input').fill(CODE + '-offline');
   await context.setOffline(true);
   await page.getByTestId('sync-save').click();
   await expect(page.getByTestId('sync-status')).toContainText('Sem internet');
-  await page.goto('/#/revisao');
-  await expect(page.locator('.review-card')).toBeVisible();
+  await page.goto('/#/momento/m01');
+  await expect(page.getByTestId('step-listen')).toBeVisible();
   await context.setOffline(false);
   expect(errors.filter((e) => !/blocked by Playwright/.test(e))).toEqual([]);
 });

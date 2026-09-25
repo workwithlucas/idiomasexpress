@@ -10,8 +10,11 @@ test.use({ serviceWorkers: 'block' });
 async function login(page: Page) {
   await page.goto('/');
   await page.click('[data-user="u_lucas"]');
-  await expect(page.locator('.today')).toBeVisible();
+  await expect(page.getByTestId('hero')).toBeVisible();
 }
+
+/** O passo Fale do Momento 1 (frase "Un café, s'il vous plaît."). */
+const SPEAK = '/#/momento/m01?passo=5';
 
 /** Executa uma alteração direta no IndexedDB do app. */
 function mutateDB(page: Page, stores: string[], body: string) {
@@ -47,15 +50,13 @@ test('conteúdo apagado com seed_version intacto é repopulado no próximo boot'
   await mutateDB(page, ['words', 'frames', 'users'], "['words','frames','users'].forEach((s) => tx.objectStore(s).clear());");
   await page.reload();
   // Perfis voltaram, e o perfil salvo continua ativo.
-  await expect(page.locator('.today')).toBeVisible();
-  await page.goto('/#/frases');
-  await expect(page.locator('.slot-option').first()).toBeVisible();
-  await page.goto('/#/fala');
-  await expect(page.getByTestId('speak-target')).not.toBeEmpty();
+  await expect(page.getByTestId('hero-title')).toHaveText('Um café, por favor');
+  await page.goto('/#/momento/m01?passo=4');
+  await expect(page.locator('.chip').first()).toBeVisible();
   expect(errors).toEqual([]);
 });
 
-test('estado de revisão corrompido não trava a revisão', async ({ page }) => {
+test('estado de revisão corrompido não trava os reencontros', async ({ page }) => {
   const errors = collectErrors(page);
   await login(page);
   await mutateDB(
@@ -65,12 +66,13 @@ test('estado de revisão corrompido não trava a revisão', async ({ page }) => 
      tx.objectStore('review_states').put({ user_id: 'u_lucas', word_id: 'w_palavra_removida', due_at: '2000-01-01T00:00:00.000Z', stability: 1, difficulty: 5, state: 2, reps: 1, lapses: 0, scheduled_days: 1, elapsed_days: 0, learning_steps: 0, last_review: null, created_at: '2000-01-01T00:00:00.000Z', last_result: 'good' });`,
   );
   await page.reload();
-  // O órfão não conta; o corrompido volta a ser uma palavra nova vencida.
-  await expect(page.getByTestId('due-count')).toHaveText('1');
-  await page.goto('/#/revisao');
-  await page.getByTestId('reveal').click();
-  await page.locator('.rate__btn--good').click();
-  await expect(page.locator('.review-card')).toBeVisible();
+  // O órfão não conta; o corrompido volta a ser uma palavra nova, vencida agora.
+  await expect(page.getByTestId('hero-meta')).toContainText('Começa com 1 reencontro rápido');
+  await page.getByTestId('start').click();
+  await expect(page.getByTestId('reencontro')).toHaveAttribute('data-word', 'w_de');
+  await page.getByTestId('reencontro-show').click();
+  await page.getByTestId('reencontro-good').click();
+  await expect(page.getByTestId('step-listen')).toBeVisible();
   expect(errors.filter((e) => !e.includes('corrompido'))).toEqual([]);
 });
 
@@ -96,8 +98,8 @@ test('sem voz francesa: não fala em outro idioma e avisa', async ({ page }) => 
     };
   });
   await login(page);
-  await page.goto('/#/memoria');
-  await page.locator('.hook-card .play').first().click();
+  await page.getByTestId('start').click();
+  await page.locator('.line .ib').first().click();
   await expect(page.locator('.toast', { hasText: 'Nenhuma voz em francês' })).toBeVisible();
   expect(await page.evaluate(() => (window as unknown as { __spoken: number }).__spoken)).toBe(0);
   await page.goto('/#/ajustes');
@@ -154,8 +156,8 @@ test('com voz francesa disponível, sempre usa ela (mesmo com preferência antig
     localStorage.setItem('ie.prefs', JSON.stringify({ voiceURI: 'Samantha' }));
   });
   await login(page);
-  await page.goto('/#/memoria');
-  await page.locator('.hook-card .play').first().click();
+  await page.goto('/#/momento/m01?passo=3');
+  await page.locator('.kw .ib').first().click();
   await expect.poll(() => page.evaluate(() => (window as unknown as { __utt: unknown[] }).__utt)).toEqual([{ voice: 'Thomas', lang: 'fr-FR' }]);
 });
 
@@ -167,12 +169,13 @@ test('microfone negado: mensagem clara, app continua usável', async ({ page }) 
     };
   });
   await login(page);
-  await page.goto('/#/fala?texto=bonjour');
+  await page.goto(SPEAK);
   await page.getByTestId('rec-start').click();
   await expect(page.getByTestId('mic-error')).toContainText('Permissão de microfone negada');
   await expect(page.getByTestId('rec-start')).toBeEnabled();
-  await page.getByTestId('another-word').click();
-  await expect(page.getByTestId('speak-target')).not.toHaveText('bonjour');
+  // Sem microfone, dá para seguir sem culpa.
+  await page.getByTestId('skip-speak').click();
+  await expect(page.getByTestId('step-take')).toBeVisible();
   expect(errors).toEqual([]);
 });
 
@@ -188,7 +191,7 @@ test('toque múltiplo em Gravar abre um único microfone', async ({ page, contex
     };
   });
   await login(page);
-  await page.goto('/#/fala?texto=bonjour');
+  await page.goto(SPEAK);
   await page.evaluate(() => {
     const b = document.querySelector<HTMLButtonElement>('[data-testid=rec-start]')!;
     b.click();
@@ -203,7 +206,7 @@ test('toque múltiplo em Gravar abre um único microfone', async ({ page, contex
 test('Azure sem chave: avisa, e a melodia aparece mesmo assim', async ({ page, context }) => {
   await context.grantPermissions(['microphone']);
   await login(page);
-  await page.goto(`/#/fala?texto=${encodeURIComponent('Je veux manger.')}`);
+  await page.goto(SPEAK);
   await page.getByTestId('rec-start').click();
   await page.waitForTimeout(2600);
   await page.getByTestId('rec-stop').click();
@@ -211,8 +214,6 @@ test('Azure sem chave: avisa, e a melodia aparece mesmo assim', async ({ page, c
   await expect(page.getByTestId('prosody-tips')).toBeVisible();
   expect(await page.getByTestId('contour-user').count()).toBeGreaterThan(0);
   await expect(page.getByTestId('azure-status')).toContainText('ainda não está ligada');
-  await expect(page.getByTestId('evaluate')).toHaveCount(0);
-  await page.getByTestId('another-sentence').click();
   await expect(page.getByTestId('rec-start')).toBeEnabled();
 });
 
@@ -225,12 +226,11 @@ test('Azure falhando (erro 500): nota avisa com calma, melodia continua', async 
       : route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ error: 'upstream', message: 'Azure respondeu 500' }) }),
   );
   await login(page);
-  await page.goto(`/#/fala?texto=${encodeURIComponent('Je veux manger.')}`);
+  await page.goto(SPEAK);
   await page.getByTestId('rec-start').click();
   await page.waitForTimeout(2600);
   await page.getByTestId('rec-stop').click();
   await expect(page.getByTestId('prosody-tips')).toBeVisible();
-  await page.getByTestId('evaluate').click();
   await expect(page.getByTestId('assess-error')).toContainText('Não deu pra calcular a nota agora');
   await expect(page.getByTestId('assess-error')).not.toContainText('500'); // sem jargão técnico
   await expect(page.getByTestId('prosody')).toBeVisible();
@@ -240,9 +240,9 @@ test('Azure falhando (erro 500): nota avisa com calma, melodia continua', async 
 
 // ---- Nota por som: uso real e contínuo --------------------------------------
 
-/** Grava ~2,6 s com o microfone falso (voz sintética) na tela Fale e compare. */
+/** Grava ~2,6 s com o microfone falso (voz sintética) no passo Fale do Momento. */
 async function recordSentence(page: Page) {
-  await page.goto(`/#/fala?texto=${encodeURIComponent('Je voudrais un café.')}`);
+  await page.goto(SPEAK);
   await page.getByTestId('rec-start').click();
   await page.waitForTimeout(2600);
   await page.getByTestId('rec-stop').click();
@@ -250,12 +250,12 @@ async function recordSentence(page: Page) {
 }
 
 const okResult = {
-  recognizedText: 'Je voudrais un café.', accuracy: 81, fluency: 90, completeness: 100, pronunciation: 78,
+  recognizedText: "Un café, s'il vous plaît.", accuracy: 81, fluency: 90, completeness: 100, pronunciation: 78,
   words: [
-    { word: 'Je', accuracy: 92, errorType: 'None', phonemes: [], syllables: [{ grapheme: 'je', accuracy: 92 }] },
-    { word: 'voudrais', accuracy: 88, errorType: 'None', phonemes: [], syllables: [{ grapheme: 'vou', accuracy: 90 }, { grapheme: 'drais', accuracy: 86 }] },
-    { word: 'un', accuracy: 85, errorType: 'None', phonemes: [], syllables: [{ grapheme: 'un', accuracy: 85 }] },
+    { word: 'Un', accuracy: 85, errorType: 'None', phonemes: [], syllables: [{ grapheme: 'un', accuracy: 85 }] },
     { word: 'café', accuracy: 52, errorType: 'Mispronunciation', phonemes: [], syllables: [{ grapheme: 'ca', accuracy: 95 }, { grapheme: 'fé', accuracy: 31 }] },
+    { word: 'vous', accuracy: 92, errorType: 'None', phonemes: [], syllables: [{ grapheme: 'vous', accuracy: 92 }] },
+    { word: 'plaît', accuracy: 88, errorType: 'None', phonemes: [], syllables: [{ grapheme: 'plaît', accuracy: 88 }] },
   ],
 };
 
@@ -267,7 +267,6 @@ test('nota real: geral em destaque, pior palavra/sílaba em accent, histórico s
   );
   await login(page);
   await recordSentence(page);
-  await page.getByTestId('evaluate').click();
   await expect(page.getByTestId('overall-score')).toContainText('78');
   await expect(page.getByTestId('prosody')).toBeVisible(); // nota e melodia na mesma tela
   // Só "café" fica em destaque; e dentro dela, a sílaba "fé".
@@ -286,7 +285,7 @@ test('nota real: geral em destaque, pior palavra/sílaba em accent, histórico s
       all.onsuccess = () => resolve(all.result);
     };
   }));
-  expect(hist.map((r) => [r.word_id, r.score]).sort()).toEqual([['w_cafe', 52], ['w_je', 92], ['w_un', 85]]);
+  expect(hist.map((r) => [r.word_id, r.score]).sort()).toEqual([['w_cafe', 52], ['w_un', 85], ['w_vous', 92]]);
   expect(hist.every((r) => r.overall === 78)).toBe(true);
   expect(errors).toEqual([]);
 });
@@ -301,7 +300,6 @@ test('cota do plano gratuito esgotada: avisa, não oferece "tentar de novo", mel
   });
   await login(page);
   await recordSentence(page);
-  await page.getByTestId('evaluate').click();
   await expect(page.getByTestId('assess-error')).toContainText('limite gratuito do Azure deste mês acabou');
   await expect(page.getByTestId('assess-error')).not.toContainText('HTTP');
   await expect(page.getByTestId('assess-retry')).toHaveCount(0);
@@ -311,7 +309,6 @@ test('cota do plano gratuito esgotada: avisa, não oferece "tentar de novo", mel
   await page.waitForTimeout(1500);
   await page.getByTestId('rec-stop').click();
   await expect(page.getByTestId('azure-status')).toContainText('limite gratuito');
-  await expect(page.getByTestId('evaluate')).toHaveCount(0);
   expect(posts).toBe(1);
 });
 
@@ -321,7 +318,6 @@ test('chave recusada pelo Azure: mensagem clara já antes de avaliar, melodia co
   await login(page);
   await recordSentence(page);
   await expect(page.getByTestId('azure-status')).toContainText('chave do Azure não foi aceita');
-  await expect(page.getByTestId('evaluate')).toHaveCount(0);
   await expect(page.getByTestId('contour-user').first()).toBeVisible();
   await page.goto('/#/ajustes');
   await expect(page.getByTestId('azure-settings-status')).toHaveText('chave recusada');
@@ -337,7 +333,6 @@ test('Azure demorou (timeout): mensagem amigável, tela livre e "tentar de novo"
   });
   await login(page);
   await recordSentence(page);
-  await page.getByTestId('evaluate').click();
   await expect(page.getByTestId('assess-error')).toContainText('demorou demais');
   await expect(page.getByTestId('rec-start')).toBeEnabled(); // nada travado
   fail = false;
@@ -367,12 +362,11 @@ test('gravação silenciosa: pede para gravar de novo e nem chama o Azure', asyn
     return route.fulfill({ json: okResult });
   });
   await login(page);
-  await page.goto(`/#/fala?texto=${encodeURIComponent('Je voudrais un café.')}`);
+  await page.goto(SPEAK);
   await page.getByTestId('rec-start').click();
   await page.waitForTimeout(1500);
   await page.getByTestId('rec-stop').click();
   await expect(page.getByTestId('recording-check')).toContainText('Grave de novo');
-  await expect(page.getByTestId('evaluate')).toHaveCount(0);
   await expect(page.getByTestId('rec-start')).toBeEnabled();
   expect(posts).toBe(0);
 });
