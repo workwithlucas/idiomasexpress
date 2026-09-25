@@ -89,6 +89,8 @@ export function describePronunciationError(code: PronunciationErrorCode): { text
       return { text: 'O limite gratuito do Azure deste mês acabou. A nota volta no próximo ciclo; a melodia acima continua valendo.', retry: false };
     case 'auth':
       return { text: 'A nota por som está desligada: a chave do Azure não foi aceita (veja o README). A melodia acima continua valendo.', retry: false };
+    case 'forbidden':
+      return { text: 'Não deu pra calcular a nota por aqui. Abra o app pelo endereço oficial. A melodia acima continua valendo.', retry: false };
     case 'not_configured':
       return { text: 'A nota por som ainda não foi ligada neste app (veja o README). A melodia acima funciona sem ela.', retry: false };
     default:

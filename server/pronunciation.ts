@@ -61,6 +61,7 @@ export type ApiErrorCode =
   | 'too_short' //      gravação curta demais
   | 'silent' //         gravação sem voz audível
   | 'no_speech' //      o Azure não reconheceu fala
+  | 'forbidden' //      pedido de fora do próprio site
   | 'bad_request'
   | 'method';
 
@@ -69,12 +70,55 @@ export interface ApiError {
   message: string;
 }
 
-const MAX_AUDIO_BYTES = 4 * 1024 * 1024; // ~2 min de PCM 16 kHz; o Azure aceita até 60 s
+/** 30 s de PCM 16 kHz mono (o app grava no máximo 15 s). */
+const MAX_AUDIO_BYTES = 30 * 16_000 * 2 + 44;
 const MAX_TEXT = 400;
 const LOCALE = 'fr-FR';
 /** Uma frase curta volta em ~1,5 s; passar disso é rede ruim ou Azure lento. */
 const UPSTREAM_TIMEOUT_MS = 15_000;
 const KEY_CHECK_TTL_MS = 10 * 60_000;
+/** Limite por IP (melhor esforço: cada instância da Function tem a sua memória). */
+const RATE_LIMIT = 40;
+const RATE_WINDOW_MS = 10 * 60_000;
+const hits = new Map<string, number[]>();
+
+/**
+ * O endpoint é público (o site é público), então só aceita avaliação pedida
+ * pelo próprio app: navegadores sempre mandam Origin/Sec-Fetch-Site num POST.
+ * Não é autenticação — impede outros sites e scripts simples de gastar a cota.
+ */
+function sameOrigin(req: Request): boolean {
+  const site = req.headers.get('sec-fetch-site');
+  if (site) return site === 'same-origin';
+  const origin = req.headers.get('origin');
+  if (!origin) return false;
+  let host: string;
+  try {
+    host = new URL(origin).host;
+  } catch {
+    return false;
+  }
+  const own = [new URL(req.url).host, req.headers.get('host'), req.headers.get('x-forwarded-host')];
+  return own.includes(host);
+}
+
+function rateLimited(req: Request, now = Date.now()): boolean {
+  const ip = req.headers.get('x-nf-client-connection-ip') ?? req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'local';
+  const recent = (hits.get(ip) ?? []).filter((t) => now - t < RATE_WINDOW_MS);
+  if (recent.length >= RATE_LIMIT) {
+    hits.set(ip, recent);
+    return true;
+  }
+  recent.push(now);
+  hits.set(ip, recent);
+  if (hits.size > 5_000) hits.clear(); // não deixa a memória crescer sem limite
+  return false;
+}
+
+/** Só para testes. */
+export function _resetRateLimit(): void {
+  hits.clear();
+}
 
 const json = (body: unknown, status = 200): Response =>
   new Response(JSON.stringify(body), {
@@ -127,6 +171,9 @@ export async function handlePronunciation(req: Request, cfg: AzureConfig): Promi
   if (req.method === 'GET') return json({ configured, valid: configured ? await verifyKey(cfg) : null });
   if (req.method !== 'POST') return err('method', 'Use GET ou POST.', 405);
 
+  if (!sameOrigin(req)) return err('forbidden', 'Pedido de fora do app.', 403);
+  if (rateLimited(req)) return err('busy', 'Muitas avaliações seguidas; espere alguns minutos.', 429);
+
   if (!configured) {
     return err(
       'not_configured',
@@ -143,7 +190,7 @@ export async function handlePronunciation(req: Request, cfg: AzureConfig): Promi
 
   const audio = await req.arrayBuffer();
   if (audio.byteLength <= 44) return err('too_short', 'Áudio vazio.', 422);
-  if (audio.byteLength > MAX_AUDIO_BYTES) return err('bad_request', 'Áudio longo demais (máx. ~60 s).', 413);
+  if (audio.byteLength > MAX_AUDIO_BYTES) return err('bad_request', 'Áudio longo demais (máx. 30 s).', 413);
 
   // Curto ou silencioso: responde aqui mesmo, sem gastar a cota do Azure.
   const pcm = readPcm16Wav(audio);

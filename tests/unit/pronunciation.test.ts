@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { classifyAzureError, handlePronunciation, normalizeAzureResponse } from '../../server/pronunciation';
+import { _resetRateLimit, classifyAzureError, handlePronunciation, normalizeAzureResponse } from '../../server/pronunciation';
 import { readFileSync } from 'node:fs';
 import { checkSpeech, readPcm16Wav } from '../../server/audioCheck';
 import { encodePcm16Wav } from '../../src/lib/wav';
@@ -16,8 +16,9 @@ function voice(secs: number, amp = 0.3): Float32Array {
   return out;
 }
 const wavBody = (samples: Float32Array) => new Blob([encodePcm16Wav(samples, RATE)]);
-const post = (samples: Float32Array, text = 'Je voudrais un café.') =>
-  new Request(`http://x/api/pronunciation?text=${encodeURIComponent(text)}`, { method: 'POST', headers: { 'content-type': 'audio/wav' }, body: wavBody(samples) });
+/** POST como o navegador manda de dentro do app (mesma origem). */
+const post = (samples: Float32Array, text = 'Je voudrais un café.', headers: Record<string, string> = { 'sec-fetch-site': 'same-origin' }) =>
+  new Request(`http://x/api/pronunciation?text=${encodeURIComponent(text)}`, { method: 'POST', headers: { 'content-type': 'audio/wav', ...headers }, body: wavBody(samples) });
 
 /** fetch falso: devolve a resposta dada (ou lança o erro) e conta as chamadas. */
 function fakeFetch(respond: () => Response | Promise<Response>) {
@@ -65,17 +66,17 @@ describe('proxy Azure', () => {
   });
 
   it('POST sem chave → 503 not_configured (a chave nunca vem do cliente)', async () => {
-    const res = await handlePronunciation(new Request('http://x/api/pronunciation?text=bonjour', { method: 'POST', body: 'x' }), {});
+    const res = await handlePronunciation(new Request('http://x/api/pronunciation?text=bonjour', { method: 'POST', body: 'x', headers: { origin: 'http://x' } }), {});
     expect(res.status).toBe(503);
     expect((await res.json()).error).toBe('not_configured');
   });
 
   it('valida texto e formato', async () => {
     const cfg = { key: 'k', region: 'westeurope' };
-    const noText = await handlePronunciation(new Request('http://x/api/pronunciation', { method: 'POST', body: 'x' }), cfg);
+    const noText = await handlePronunciation(new Request('http://x/api/pronunciation', { method: 'POST', body: 'x', headers: { 'sec-fetch-site': 'same-origin' } }), cfg);
     expect(noText.status).toBe(400);
     const wrongType = await handlePronunciation(
-      new Request('http://x/api/pronunciation?text=oui', { method: 'POST', body: 'x', headers: { 'content-type': 'audio/webm' } }),
+      new Request('http://x/api/pronunciation?text=oui', { method: 'POST', body: 'x', headers: { 'content-type': 'audio/webm', 'sec-fetch-site': 'same-origin' } }),
       cfg,
     );
     expect(wrongType.status).toBe(400);
@@ -96,6 +97,34 @@ describe('proxy Azure', () => {
     });
     expect(nested.words[0]).toEqual({ word: 'oui', accuracy: 55, errorType: 'Mispronunciation', phonemes: [], syllables: [] });
     expect(nested.fluency).toBe(60);
+  });
+});
+
+describe('proxy Azure: endpoint público protegido', () => {
+  it('recusa POST de outro site ou sem origem, sem chamar o Azure', async () => {
+    const ff = fakeFetch(() => jsonRes(azureOk));
+    const c = { key: 'k', region: 'francecentral', fetch: ff.f };
+    const other = await handlePronunciation(post(voice(1.5), undefined, { 'sec-fetch-site': 'cross-site' }), c);
+    expect(other.status).toBe(403);
+    expect((await other.json()).error).toBe('forbidden');
+    expect((await handlePronunciation(post(voice(1.5), undefined, { origin: 'https://malicioso.example' }), c)).status).toBe(403);
+    expect((await handlePronunciation(post(voice(1.5), undefined, {}), c)).status).toBe(403); // curl, sem cabeçalhos
+    expect((await handlePronunciation(post(voice(1.5), undefined, { origin: 'http://x' }), c)).status).toBe(200); // mesma origem (Safari antigo)
+    expect(ff.calls.filter((u) => u.includes('stt.speech'))).toHaveLength(1);
+  });
+
+  it('limita avaliações seguidas por IP (429 busy)', async () => {
+    _resetRateLimit();
+    const ff = fakeFetch(() => jsonRes(azureOk));
+    const c = { key: 'k', region: 'francecentral', fetch: ff.f };
+    const h = { 'sec-fetch-site': 'same-origin', 'x-nf-client-connection-ip': '203.0.113.9' };
+    const statuses: number[] = [];
+    for (let i = 0; i < 41; i++) statuses.push((await handlePronunciation(post(voice(0.8), undefined, h), c)).status);
+    expect(statuses.slice(0, 40).every((s) => s === 200)).toBe(true);
+    expect(statuses[40]).toBe(429);
+    // Outro IP continua livre.
+    expect((await handlePronunciation(post(voice(0.8), undefined, { ...h, 'x-nf-client-connection-ip': '203.0.113.10' }), c)).status).toBe(200);
+    _resetRateLimit();
   });
 });
 
