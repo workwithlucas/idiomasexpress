@@ -189,7 +189,7 @@ tante | tia | tɑ̃t | pessoas | f | |
 cousin | primo | kuzɛ̃ | pessoas | m | |
 grand-père | avô | ɡʁɑ̃pɛʁ | pessoas | m | | "Pai grande": avô.
 grand-mère | avó | ɡʁɑ̃mɛʁ | pessoas | f | | "Mãe grande": avó.
-voisin | vizinho | vwazɛ̃ | casa | m | | Vizinho → voisin (o nh vira "in" nasal).
+voisin | vizinho | vwazɛ̃ | casa | m | | Vem do latim vicinus, o mesmo de "vizinho". Soa "vuazẽ".
 collègue | colega | kɔlɛɡ | trabalho | | |
 patron | chefe, patrão | patʁɔ̃ | trabalho | m | cr_ao_on |
 couple | casal | kupl | pessoas | m | |

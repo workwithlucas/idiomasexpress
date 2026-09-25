@@ -82,7 +82,7 @@ parce que | porque | paʁskə | | | | "Por isso que": parce que = porque.
 quand | quando | kɑ̃ | | | | "Quan(do)" cortado: quand?
 comment | como | kɔmɑ̃ | | | | Comment ça va? = como vai? Nada a ver com "comentar".
 alors | então | alɔʁ | | | | "À l'ora": naquela hora → então.
-très | muito | tʁɛ | | | | Três vezes mais → muito: très bien.
+très | muito | tʁɛ | | | | Soa "tré". Très bien = muito bem.
 aussi | também | osi | | | | Soa "ossi": moi aussi = eu também.
 bon | bom | bɔ̃ | descricao | | |
 merci | obrigado(a) | mɛʁsi | cotidiano | | | Merci → "mercê": grato pela sua mercê.
@@ -153,12 +153,12 @@ travailler | trabalhar | tʁavaje | trabalho | | | O "ill" é um "lh" enfraqueci
 commencer | começar | kɔmɑ̃se | verbos | | |
 finir | terminar | finiʁ | verbos | | | Finir → "fim, finalizar".
 ouvrir | abrir | uvʁiʁ | verbos | | | Abra a porta para ouvir quem bate: ouvrir = ABRIR.
-fermer | fechar | fɛʁme | verbos | | | Fermer → "ferrolho": fechar.
+fermer | fechar | fɛʁme | verbos | | | Vem do latim firmare, o mesmo de "firmar": fechar firme. Fermez la porte = feche a porta.
 manger | comer | mɑ̃ʒe | verbos | | | Manger → "manjar": comer.
 boire | beber | bwaʁ | verbos | | | "Beber" encolhido: je bois = eu bebo. Boisson = bebida.
 dormir | dormir | dɔʁmiʁ | verbos | | |
 écrire | escrever | ekʁiʁ | verbos | | cr_es_e |
-lire | ler | liʁ | verbos | | | Lire → "lírica, leitura".
+lire | ler | liʁ | verbos | | | Vem do latim legere, o mesmo de "ler" e "legível". Je lis = eu leio.
 payer | pagar | peje | banco | | | Payer → "pay" do inglês: pagar.
 acheter | comprar | aʃte | compras | | | Soa "achtê": ACHEI na loja e comprei!
 apprendre | aprender | apʁɑ̃dʁ | verbos | | |
@@ -285,7 +285,7 @@ froid | frio | fʁwa | cotidiano | | |
 mal | mal; dor | mal | saude | | |
 mieux | melhor (advérbio) | mjø | descricao | | | Soa "miê". Ça va mieux = está melhor.
 meilleur | melhor (adjetivo) | mɛjœʁ | descricao | | | O "ill" é o nosso "lh": me-lhor → meilleur.
-vite | rápido | vit | descricao | | | Vite → "vitamina": energia, rápido!
+vite | rápido | vit | descricao | | | Soa "vit". Vite! = rápido!
 ensemble | juntos | ɑ̃sɑ̃bl | | | | O "ensemble" musical: todos juntos.
 presque | quase | pʁɛsk | | | | Près (perto) + que: quase.
 d'accord | de acordo, ok | dakɔʁ | cotidiano | | | "De acordo" → ok!
