@@ -146,6 +146,13 @@ button {
   display: none !important;
 }
 
+/* Selo/barra que a Netlify injeta no site publicado: fora do Design System
+   (reserva, caso o marcador em index.html deixe de funcionar). */
+iframe#nl-badge-frame,
+iframe#nl-hud-frame {
+  display: none !important;
+}
+
 ul,
 ol {
   list-style: none;

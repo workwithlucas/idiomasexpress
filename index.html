@@ -25,6 +25,12 @@
         <p class="boot__text">Preparando seu francês…</p>
       </div>
     </div>
+    <!--
+      A Netlify injeta no site publicado um selo/barra próprios (/.netlify/scripts/hud)
+      num iframe com script inline, fora do Design System e bloqueado pela nossa CSP.
+      O script dela desiste de montar quando este id já existe na página.
+    -->
+    <div id="nl-badge-frame" hidden></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
