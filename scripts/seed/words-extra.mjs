@@ -87,26 +87,26 @@ vêtements | roupas | vɛtmɑ̃ | creche | mpl | cr_circ_s |
 coût | custo | ku | banco | m | cr_circ_s |
 forêt | floresta | fɔʁɛ | lugares | f | cr_circ_s |
 intérêt | interesse; juros | ɛ̃teʁɛ | banco | m | cr_circ_s |
-vent | vento | vɑ̃ | cotidiano | m | | Vent → vento: nasal "vã", boca bem aberta.
+vent | vento | vɑ̃ | cotidiano | m | | Vem do latim ventus, como "vento". Soa "vã", nasal, boca bem aberta.
 vont | (eles) vão | vɔ̃ | verbos | | | Ils vont = eles vão: nasal "võ", lábios arredondados.
-roue | roda | ʁu | transporte | f | | Roue → roda: é o nosso "u" normal.
+roue | roda | ʁu | transporte | f | | Vem do latim rota, como "roda". O OU é o nosso "u" normal.
 dessus | em cima | dəsy | lugares | | | Dessus = em cima: "u" com bico (língua no "i").
 dessous | embaixo | dəsu | lugares | | | Dessous = embaixo: "u" normal do português.
-vu | visto | vy | verbos | | | Vu = visto (déjà vu!).
-poison | veneno | pwazɔ̃ | cotidiano | m | | Um S entre vogais = Z: poison → "poção" venenosa.
+vu | visto | vy | verbos | | | Vu = visto, como em déjà vu.
+poison | veneno | pwazɔ̃ | cotidiano | m | | Vem do latim potionem, como "poção": veneno. S entre vogais soa Z.
 dessert | sobremesa | desɛʁ | compras | m | | SS = S: dessert, a sobremesa.
 désert | deserto | dezɛʁ | lugares | m | | S entre vogais = Z: désert, o deserto.
 chevaux | cavalos | ʃəvo | cotidiano | mpl | | Soa "xevô": cheval, chevaux = cavalo(s).
 crèche | creche | kʁɛʃ | creche | f | |
 couche | fralda | kuʃ | creche | f | | Couche = camada: a fralda é a "camada" do bebê.
 biberon | mamadeira | bibʁɔ̃ | creche | m | | Bi-be-ron: o bebê bebe na mamadeira.
-sieste | soneca | sjɛst | creche | f | | Sieste → "sesta": a soneca depois do almoço.
+sieste | soneca | sjɛst | creche | f | | A "sesta" da soneca depois do almoço, a hora sexta dos romanos.
 doudou | naninha, bichinho de pelúcia | dudu | creche | m | | O "dudu" do bebê: a naninha que ele não larga.
 goûter | lanche da tarde | ɡute | creche | m | | Goûter = provar ("gosto"): o lanche da tarde.
-jouet | brinquedo | ʒwɛ | creche | m | | Jouet ← jouer (brincar): brinquedo.
+jouet | brinquedo | ʒwɛ | creche | m | | Vem de jouer (brincar): brinquedo.
 éducatrice | educadora | edykatʁis | creche | f | |
 fièvre | febre | fjɛvʁ | saude | f | |
-virement | transferência | viʁmɑ̃ | banco | m | | Virement ← virer (virar): o dinheiro "vira" de conta.
+virement | transferência | viʁmɑ̃ | banco | m | | Vem de virer (virar): o dinheiro vira de conta.
 crédit | crédito | kʁedi | banco | m | |
 frais | taxas, tarifas | fʁɛ | banco | mpl | | Frais bancaires = tarifas bancárias. (Frais também = fresco.)
 code | senha (PIN), código | kɔd | banco | m | |
@@ -116,58 +116,58 @@ entretien | entrevista (de emprego) | ɑ̃tʁətjɛ̃ | trabalho | m | | Entreti
 poste | vaga, cargo | pɔst | trabalho | m | | Le poste = o posto, o cargo. (La poste = o correio.)
 diplôme | diploma | diplom | trabalho | m | |
 équipe | equipe | ekip | trabalho | f | |
-entreprise | empresa | ɑ̃tʁəpʁiz | trabalho | f | | Entreprise → "empreendimento": empresa.
+entreprise | empresa | ɑ̃tʁəpʁiz | trabalho | f | | Vem de entreprendre, como "empreender": empresa.
 contrat | contrato | kɔ̃tʁa | trabalho | m | |
 ingénieur | engenheiro | ɛ̃ʒenjœʁ | trabalho | m | |
 motivé | motivado | mɔtive | trabalho | | |
 portugais | português | pɔʁtyɡɛ | trabalho | m | cr_es_ais |
 luxembourgeois | luxemburguês | lyksɑ̃buʁʒwa | trabalho | m | |
-gorge | garganta | ɡɔʁʒ | saude | f | | Gorge → "gorjeio", o canto que sai da garganta.
-ventre | barriga | vɑ̃tʁ | saude | m | | Ventre → "ventre": barriga.
-dos | costas | do | saude | m | | Dos → "dorso": costas. O S é mudo.
-jambe | perna | ʒɑ̃b | saude | f | | Jambe → "jambon" (presunto, a perna do porco).
+gorge | garganta | ɡɔʁʒ | saude | f | | Da mesma raiz de "gorja" e "gorjeio", o canto que sai da garganta.
+ventre | barriga | vɑ̃tʁ | saude | m | | Igual ao nosso "ventre": barriga. J'ai mal au ventre = estou com dor de barriga.
+dos | costas | do | saude | m | | Vem do latim dorsum, como "dorso": costas. O S é mudo.
+jambe | perna | ʒɑ̃b | saude | f | | "Jambon" (presunto) vem daqui: a perna do porco.
 ordonnance | receita médica | ɔʁdɔnɑ̃s | saude | f | | A "ordem" do médico: a receita.
 médicament | remédio | medikamɑ̃ | saude | m | |
-douleur | dor | dulœʁ | saude | f | | Douleur → "dolorido".
+douleur | dor | dulœʁ | saude | f | | Vem do latim dolorem, como "dor" e "dolorido".
 toux | tosse | tu | saude | f | |
 lait | leite | lɛ | compras | m | |
-fromage | queijo | fʁɔmaʒ | compras | m | | Fromage → "forma": o queijo era feito em formas.
-poulet | frango | pulɛ | compras | m | | Poulet → "pollo" (espanhol): frango.
-viande | carne | vjɑ̃d | compras | f | | Viande → "vianda" (comida).
+fromage | queijo | fʁɔmaʒ | compras | m | | Vem de "formage": o queijo era feito em forma.
+poulet | frango | pulɛ | compras | m | | Vem do latim pullus, o mesmo do espanhol "pollo": frango.
+viande | carne | vjɑ̃d | compras | f | | Da mesma origem de "vianda", comida no português antigo: carne.
 légumes | legumes | leɡym | compras | mpl | |
 fruit | fruta | fʁɥi | compras | m | |
-pomme | maçã | pɔm | compras | f | | Pomme → "pomar": maçã. Pomme de terre = batata.
+pomme | maçã | pɔm | compras | f | | Vem do latim pomum, a raiz de "pomar": maçã. Pomme de terre = batata.
 caisse | caixa (do mercado) | kɛs | compras | f | |
 kilo | quilo | kilo | compras | m | |
-bouteille | garrafa | butɛj | compras | f | | Bouteille → "botelha": garrafa.
+bouteille | garrafa | butɛj | compras | f | | Da mesma origem de "botelha" e do inglês "bottle": garrafa.
 œuf | ovo | œf | compras | m | | O F é pronunciado: "éuf".
-beurre | manteiga | bœʁ | compras | m | | Beurre → "butter": manteiga.
-sortie | saída | sɔʁti | lugares | f | | Sortie ← sortir (sair): a saída.
+beurre | manteiga | bœʁ | compras | m | | Vem do latim butyrum, como o inglês "butter": manteiga.
+sortie | saída | sɔʁti | lugares | f | | Vem de sortir (sair): a saída.
 boulangerie | padaria | bulɑ̃ʒʁi | compras | f | | Boulanger = padeiro; boulangerie = padaria.
 commune | prefeitura (comuna) | kɔmyn | administracao | f | | Em Luxemburgo, é na commune que se faz o registro de residência.
 certificat | certificado | sɛʁtifika | administracao | m | |
 passeport | passaporte | paspɔʁ | administracao | m | |
-logement | moradia | lɔʒmɑ̃ | casa | m | | Logement → "alojamento": moradia.
-loyer | aluguel | lwaje | casa | m | | Loyer → "locar": o aluguel.
-remplir | preencher | ʁɑ̃pliʁ | administracao | | | Remplir → "repleto": encher, preencher.
+logement | moradia | lɔʒmɑ̃ | casa | m | | Vem de loger, o mesmo de "alojar": moradia.
+loyer | aluguel | lwaje | casa | m | | Vem do latim locarium, a raiz de "locar": o aluguel.
+remplir | preencher | ʁɑ̃pliʁ | administracao | | | Da mesma raiz de "repleto": encher, preencher.
 pièce d'identité | documento de identidade | pjɛs didɑ̃tite | administracao | f | |
 salle | sala | sal | lugares | f | |
-salir | sujar | saliʁ | casa | | | Falso amigo: salir = SUJAR. "Sair" é sortir.
-sale | sujo | sal | casa | | | Falso amigo: sale = SUJO. "Sala" é salle.
-tirer | puxar; atirar | tiʁe | cotidiano | | | Falso amigo: na porta, "tirez" = PUXE.
-pousser | empurrar | puse | cotidiano | | | Falso amigo: na porta, "poussez" = EMPURRE.
-casser | quebrar | kase | cotidiano | | | Falso amigo: casser = QUEBRAR. "Casar" é se marier.
-embrasser | beijar | ɑ̃bʁase | pessoas | | | Falso amigo: embrasser = BEIJAR (não é abraçar).
-prétendre | afirmar, alegar | pʁetɑ̃dʁ | cotidiano | | | Falso amigo: prétendre = AFIRMAR. "Pretender" é avoir l'intention.
-facteur | carteiro | faktœʁ | cotidiano | m | | Falso amigo: le facteur = o CARTEIRO.
+salir | sujar | saliʁ | casa | | | Salir é sujar. Sair é sortir.
+sale | sujo | sal | casa | | | Sale é sujo. Sala é salle.
+tirer | puxar; atirar | tiʁe | cotidiano | | | Na porta, "tirez" quer dizer puxe.
+pousser | empurrar | puse | cotidiano | | | Na porta, "poussez" quer dizer empurre.
+casser | quebrar | kase | cotidiano | | | Casser é quebrar. Casar é se marier.
+embrasser | beijar | ɑ̃bʁase | pessoas | | | Embrasser é beijar, não abraçar.
+prétendre | afirmar, alegar | pʁetɑ̃dʁ | cotidiano | | | Prétendre é afirmar. Pretender é avoir l'intention.
+facteur | carteiro | faktœʁ | cotidiano | m | | Le facteur é o carteiro.
 optimiste | otimista | ɔptimist | sentimentos | | cr_ista_iste |
 moderniser | modernizar | mɔdɛʁnize | trabalho | | cr_izar_iser |
-appartement | apartamento | apaʁtəmɑ̃ | casa | m | | Quase igual: apartamento → appartement (com dois P).
-occupé | ocupado | ɔkype | descricao | | | Occupé → "ocupado" (o C dobra).
+appartement | apartamento | apaʁtəmɑ̃ | casa | m | | Quase igual a "apartamento", mas com dois P.
+occupé | ocupado | ɔkype | descricao | | | Quase igual a "ocupado", com o C dobrado.
 produire | produzir | pʁɔdɥiʁ | trabalho | | cr_uzir_uire |
 traduire | traduzir | tʁadɥiʁ | trabalho | | cr_uzir_uire |
 réduire | reduzir | ʁedɥiʁ | verbos | | cr_uzir_uire |
-s'inscrire | inscrever-se, matricular-se | sɛ̃skʁiʁ | administracao | | | Inscrever → inscrire: matricular-se na creche, na escola, na commune.
+s'inscrire | inscrever-se, matricular-se | sɛ̃skʁiʁ | administracao | | | Vem do latim inscribere, como "inscrever": matricular-se na creche, na escola, na commune.
 guérir | sarar, curar | ɡeʁiʁ | saude | | |
 protéger | proteger | pʁɔteʒe | verbos | | |
 corriger | corrigir | kɔʁiʒe | verbos | | |
@@ -180,10 +180,10 @@ accueillir | acolher, receber | akœjiʁ | verbos | | | O "ueil" soa "ëi": "ak�
 tenter | tentar | tɑ̃te | verbos | | cr_ar_er |
 emprunter | pegar emprestado | ɑ̃pʁœ̃te | banco | | |
 prêter | emprestar | pʁete | banco | | | Prêt = empréstimo (e também "pronto").
-dépenser | gastar | depɑ̃se | banco | | | Despesa → dépense.
+dépenser | gastar | depɑ̃se | banco | | | Vem do latim dispensare, a raiz de "despesa": gastar.
 garer | estacionar | ɡaʁe | transporte | | | Garer la voiture = estacionar o carro (na "garagem").
 traverser | atravessar | tʁavɛʁse | transporte | | |
-se reposer | descansar | sə ʁəpoze | saude | | | Repousar → se reposer.
+se reposer | descansar | sə ʁəpoze | saude | | | Vem do latim repausare, como "repousar": descansar.
 s'habiller | vestir-se | sabije | casa | | | Habit = roupa.
 nager | nadar | naʒe | verbos | | |
 danser | dançar | dɑ̃se | verbos | | |
@@ -199,7 +199,7 @@ système | sistema | sistɛm | | m | cr_ema_eme |
 salade | salada | salad | compras | f | cr_ada_ade |
 mémoire | memória | memwaʁ | | f | cr_orio_oire |
 compagnie | companhia | kɔ̃paɲi | trabalho | f | cr_nh_gn |
-feuille | folha | fœj | | f | | "Folha" → feuille: o lh virou ill.
+feuille | folha | fœj | | f | | Vem do latim folia, como "folha"; o LH vira ILL.
 porte-monnaie | carteira (de moedas) | pɔʁtmɔnɛ | compras | m | | Porta-moeda.
 monnaie | trocado; moeda | mɔnɛ | compras | f | | Vous avez de la monnaie? = tem trocado?
 bouton | botão | butɔ̃ | | m | |
@@ -276,7 +276,7 @@ raquette | raquete | ʁakɛt | cotidiano | f | cr_eta_ette |
 cassette | cassete, fita | kasɛt | cotidiano | f | cr_eta_ette |
 étiquette | etiqueta | etikɛt | compras | f | cr_eta_ette |
 bicyclette | bicicleta | bisiklɛt | transporte | f | cr_eta_ette |
-chant | canto | ʃɑ̃ | cotidiano | m | | O "ca" virou "cha": canto → chant. Só o nasal: o T é mudo.
+chant | canto | ʃɑ̃ | cotidiano | m | | Vem do latim cantus, como "canto". Soa "xã": o T é mudo.
 bonne | boa | bɔn | descricao | | | Bon soa "bõ" (nasal); bonne soa "bón", com N de verdade.
 fine | fina | fin | descricao | | | Fin soa "fẽ"; fine soa "fín".
 voisine | vizinha | vwazin | casa | f | | Voisin soa "vuazẽ"; voisine soa "vuazín".
@@ -300,17 +300,17 @@ bail | contrato de aluguel | baj | casa | m | | O "ai" com L soa "ai": "bái".
 propriétaire | proprietário, dono | pʁɔpʁijetɛʁ | casa | | cr_ario_aire |
 locataire | inquilino | lɔkatɛʁ | casa | | | Quem "loca" (aluga): o inquilino.
 nationalité | nacionalidade | nasjɔnalite | administracao | f | cr_dade_te |
-demande | pedido, solicitação | dəmɑ̃d | administracao | f | | Falso amigo: demande = PEDIDO (sem briga).
+demande | pedido, solicitação | dəmɑ̃d | administracao | f | | Demande é pedido, sem briga.
 naissance | nascimento | nɛsɑ̃s | administracao | f | | Date de naissance = data de nascimento.
-délai | prazo | delɛ | administracao | m | | Falso amigo: délai = PRAZO, não atraso.
+délai | prazo | delɛ | administracao | m | | Délai é prazo, não atraso.
 amende | multa | amɑ̃d | administracao | f | | Emendar o erro: pagar a multa.
-domiciliation | débito automático | dɔmisiljasjɔ̃ | banco | f | | A conta vai ao seu domicílio (banco) e é debitada sozinha.
+domiciliation | débito automático | dɔmisiljasjɔ̃ | banco | f | | A fatura fica "domiciliada" no seu banco e é paga sozinha todo mês.
 ordre permanent | transferência programada, ordem permanente | ɔʁdʁ pɛʁmanɑ̃ | banco | m | | Uma "ordem permanente": o aluguel sai todo mês sozinho.
 communication | referência (do pagamento); comunicação | kɔmynikasjɔ̃ | banco | f | cr_cao_tion |
-solde | saldo | sɔld | banco | m | | Soldes (no plural) = liquidação!
+solde | saldo | sɔld | banco | m | | Saldo. No plural, soldes = liquidação.
 relevé | extrato | ʁəlve | banco | m | | Relevé de compte = extrato bancário.
 retrait | saque | ʁətʁɛ | banco | m | | Vem de retirer: retirar dinheiro.
-dépôt | depósito | depo | banco | m | | O circunflexo esconde um S: depost → depósito.
+dépôt | depósito | depo | banco | m | | O circunflexo esconde um S: depost, como "depósito".
 montant | valor, quantia | mɔ̃tɑ̃ | banco | m | | O "montante".
 taux | taxa (percentual) | to | banco | m | | Taux d'intérêt = taxa de juros. X mudo: "tô".
 épargne | poupança | epaʁɲ | banco | f | | Compte épargne = conta poupança.
@@ -355,7 +355,7 @@ direction | direção, sentido | diʁɛksjɔ̃ | transporte | f | cr_cao_tion |
 gratuit | grátis, gratuito | ɡʁatɥi | transporte | | | O transporte público em Luxemburgo é gratuit (fora a 1ª classe).
 parking | estacionamento | paʁkiŋ | transporte | m | |
 station | estação | stasjɔ̃ | transporte | f | cr_cao_tion |
-cave | porão | kav | casa | f | | Falso amigo: cave = PORÃO (e adega).
+cave | porão | kav | casa | f | | Cave é porão (e adega).
 boîte aux lettres | caixa de correio | bwat o lɛtʁ | casa | f | | "Caixa às cartas".
 syndic | administradora do condomínio | sɛ̃dik | casa | m | | O "síndico" do prédio (geralmente uma empresa).
 charges | taxas (de condomínio) | ʃaʁʒ | casa | fpl | | Loyer + charges = aluguel + condomínio.

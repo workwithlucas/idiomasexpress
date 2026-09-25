@@ -17,7 +17,7 @@ import {
 
 /** Incrementar quando o conteúdo mudar: o app repopula as tabelas de conteúdo
  *  (sem tocar no progresso dos usuários) ao detectar uma versão nova. */
-export const SEED_VERSION = 3;
+export const SEED_VERSION = 4;
 
 const THEMES = new Set([
   'essenciais', 'verbos', 'cotidiano', 'tempo', 'pessoas', 'lugares', 'numeros', 'casa',

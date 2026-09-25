@@ -17,7 +17,7 @@ ceux | aqueles, os que | sø | | | |
 celle | aquela, a que | sɛl | | | |
 aucun | nenhum | okœ̃ | | | | Anda com ne: je n'ai aucune idée = não tenho nenhuma ideia.
 plusieurs | vários | plyzjœʁ | | | | Plus (mais) + … = mais de um: vários.
-assez | bastante, o suficiente | ase | | | | Assez! = chega! J'en ai assez = estou farto.
+assez | bastante, o suficiente | ase | | | | Assez! = chega. J'en ai assez = estou farto.
 moins | menos | mwɛ̃ | | | | O "–" da conta: dix moins deux = dez menos dois.
 autant | tanto quanto | otɑ̃ | | | |
 tant | tanto | tɑ̃ | | | | Tant pis = paciência; tant mieux = ainda bem.
@@ -39,7 +39,7 @@ ensuite | em seguida, depois | ɑ̃sɥit | | | | En + suite: em seguida.
 enfin | enfim, finalmente | ɑ̃fɛ̃ | | | | Enfin = enfim, igualzinho.
 d'abord | primeiro, antes | dabɔʁ | | | | "Da borda": começa pela beira, primeiro.
 ainsi | assim | ɛ̃si | | | |
-pourtant | porém, no entanto | puʁtɑ̃ | | | | Parece "portanto", mas é o contrário: PORÉM.
+pourtant | porém, no entanto | puʁtɑ̃ | | | | Parece "portanto", mas é o contrário: porém.
 car | pois, porque | kaʁ | | | | Car não é carro: é "pois". Je reste, car il pleut.
 ni | nem | ni | | | | Ni… ni = nem… nem.
 sinon | senão | sinɔ̃ | | | |
@@ -47,7 +47,7 @@ lorsque | quando | lɔʁsk | | | | Um quand mais formal.
 puisque | já que | pɥisk | | | |
 quand même | mesmo assim | kɑ̃ mɛm | | | | Merci quand même = obrigado mesmo assim.
 tellement | tanto, tão | tɛlmɑ̃ | | | | C'est tellement bon = é tão bom.
-plutôt | de preferência; bem, bastante | plyto | | | | Plus tôt (mais cedo) → antes → de preferência.
+plutôt | de preferência; bem, bastante | plyto | | | | Plus tôt (mais cedo) virou "antes", e daí "de preferência".
 environ | cerca de | ɑ̃viʁɔ̃ | | | | "Em volta de": environ dix euros = uns dez euros.
 seulement | somente, só | sœlmɑ̃ | | | | Seul (só) + -ment = somente.
 sûrement | com certeza | syʁmɑ̃ | | | | Sûr (seguro) + -ment: certamente.
@@ -58,10 +58,10 @@ normalement | normalmente | nɔʁmalmɑ̃ | | | cr_mente_ment |
 absolument | absolutamente | apsɔlymɑ̃ | | | cr_mente_ment |
 justement | justamente | ʒystəmɑ̃ | | | cr_mente_ment |
 complètement | completamente | kɔ̃plɛtəmɑ̃ | | | cr_mente_ment |
-tout de suite | já, imediatamente | tutsɥit | | | | "Tudo em seguida": agora mesmo!
+tout de suite | já, imediatamente | tutsɥit | | | | "Tudo em seguida": agora mesmo.
 tout le monde | todo mundo | tu lə mɔ̃d | pessoas | | | Tout (todo) + le monde (o mundo) = todo mundo.
-bien sûr | claro, com certeza | bjɛ̃ syʁ | | | | "Bem seguro": claro!
-voilà | aí está; pronto | vwala | | | | Vois là! = veja lá! Serve para entregar algo ou encerrar um assunto.
+bien sûr | claro, com certeza | bjɛ̃ syʁ | | | | "Bem seguro": claro.
+voilà | aí está; pronto | vwala | | | | Vois là! = veja lá. Serve para entregar algo ou encerrar um assunto.
 voici | aqui está | vwasi | | | | Vois ici = veja aqui: voici mon passeport.
 hein | né?, hein? | ɛ̃ | | | | O "né?" do francês falado: c'est bon, hein?
 combien | quanto | kɔ̃bjɛ̃ | compras | | | Combien ça coûte? = quanto custa?
@@ -71,23 +71,23 @@ rendre | devolver; deixar (alguém) | ʁɑ̃dʁ | verbos | | | "Render" de volta
 laisser | deixar | lese | verbos | | | Laisse-moi = me deixa.
 suivre | seguir | sɥivʁ | verbos | | | Suivez-moi = sigam-me.
 permettre | permitir | pɛʁmɛtʁ | verbos | | |
-garder | guardar; cuidar de | ɡaʁde | verbos | | | Guardar → garder. Garder les enfants = cuidar das crianças.
+garder | guardar; cuidar de | ɡaʁde | verbos | | | Mesma origem de "guardar". Garder les enfants = cuidar das crianças.
 poser | pôr; fazer (pergunta) | poze | verbos | | | Poser une question = fazer uma pergunta.
 servir | servir | sɛʁviʁ | verbos | | |
 mourir | morrer | muʁiʁ | verbos | | |
-naître | nascer | nɛtʁ | verbos | | | O circunflexo esconde um S: naistre → nascer.
+naître | nascer | nɛtʁ | verbos | | | O circunflexo esconde um S: naistre, do latim nascere, como "nascer".
 tuer | matar | tɥe | verbos | | |
-sauver | salvar | sove | verbos | | | O L virou U: salvar → sauver.
+sauver | salvar | sove | verbos | | | Vem do latim salvare, como "salvar"; o L virou U.
 rappeler | ligar de volta; lembrar | ʁaple | verbos | | | Re + appeler: chamar de novo. Je vous rappelle = eu te ligo de volta.
 retrouver | reencontrar, achar de novo | ʁətʁuve | verbos | | | Re + trouver: achar de novo.
 reprendre | retomar; pegar de novo | ʁəpʁɑ̃dʁ | verbos | | | Re + prendre.
 apporter | trazer | apɔʁte | verbos | | | "Aportar": trazer algo até aqui.
 amener | trazer (alguém) | amne | verbos | | | À + mener (conduzir): trazer alguém junto.
 emmener | levar (alguém) | ɑ̃mne | verbos | | | Emmener les enfants à la crèche = levar as crianças à creche.
-rentrer | voltar (para casa) | ʁɑ̃tʁe | verbos | | | Re + entrer: entrar de novo → voltar para casa.
+rentrer | voltar (para casa) | ʁɑ̃tʁe | verbos | | | Re + entrer: entrar de novo, voltar para casa.
 retourner | voltar, retornar; virar | ʁətuʁne | verbos | | |
 tourner | virar | tuʁne | verbos | | | Tournez à gauche = vire à esquerda.
-bouger | mexer-se | buʒe | verbos | | | Ne bouge pas! = não se mexa!
+bouger | mexer-se | buʒe | verbos | | | Ne bouge pas! = não se mexa.
 courir | correr | kuʁiʁ | verbos | | |
 s'asseoir | sentar-se | saswaʁ | verbos | | | Asseyez-vous = sentem-se.
 se lever | levantar-se | sə ləve | verbos | | | Lever = levantar: lever la main = levantar a mão.
@@ -95,14 +95,14 @@ se coucher | deitar-se, ir dormir | sə kuʃe | verbos | | | Le coucher de solei
 se réveiller | acordar | sə ʁeveje | verbos | | | O réveil é o despertador.
 laver | lavar | lave | casa | | |
 occuper | ocupar | ɔkype | verbos | | | S'occuper de = cuidar de.
-plaire | agradar | plɛʁ | verbos | | | S'il vous plaît = se lhe agrada → por favor.
+plaire | agradar | plɛʁ | verbos | | | Vem do latim placere, como "aprazer". S'il vous plaît = se lhe agrada.
 rire | rir | ʁiʁ | verbos | | |
 pleurer | chorar | plœʁe | verbos | | | "Plorar": chorar.
 crier | gritar | kʁije | verbos | | |
-chanter | cantar | ʃɑ̃te | verbos | | | O "ca" virou "cha": cantar → chanter.
+chanter | cantar | ʃɑ̃te | verbos | | | Vem do latim cantare, como "cantar"; o CA virou CHA.
 conduire | conduzir, dirigir | kɔ̃dɥiʁ | transporte | | cr_uzir_uire |
 vendre | vender | vɑ̃dʁ | compras | | |
-coûter | custar | kute | compras | | | O circunflexo esconde um S: couster → custar.
+coûter | custar | kute | compras | | | O circunflexo esconde um S: couster, do latim constare, como "custar".
 compter | contar | kɔ̃te | verbos | | | O P é mudo: "kõtê".
 louer | alugar | lwe | casa | | | À louer = aluga-se.
 décider | decidir | deside | verbos | | |
@@ -112,9 +112,9 @@ promettre | prometer | pʁɔmɛtʁ | verbos | | |
 proposer | propor | pʁɔpoze | verbos | | |
 refuser | recusar | ʁəfyze | verbos | | |
 nettoyer | limpar | netwaje | casa | | | Net = limpo: nettoyer = deixar tudo net.
-ranger | arrumar | ʁɑ̃ʒe | casa | | | Range ta chambre! = arrume seu quarto!
-réparer | consertar | ʁepaʁe | casa | | | Reparar → réparer: consertar.
-toucher | tocar | tuʃe | verbos | | | Ne touche pas! = não toque!
+ranger | arrumar | ʁɑ̃ʒe | casa | | | Range ta chambre! = arrume seu quarto.
+réparer | consertar | ʁepaʁe | casa | | | Vem do latim reparare, como "reparar": consertar.
+toucher | tocar | tuʃe | verbos | | | Ne touche pas! = não toque.
 jeter | jogar (fora) | ʒəte | verbos | | | Jeter à la poubelle = jogar no lixo.
 frapper | bater | fʁape | verbos | | | Frapper à la porte = bater na porta.
 enseigner | ensinar | ɑ̃seɲe | trabalho | | | O GN é o nosso NH: "ãsenhê".
@@ -137,7 +137,7 @@ durer | durar | dyʁe | tempo | | cr_ar_er |
 dépendre | depender | depɑ̃dʁ | verbos | | | Ça dépend = depende.
 exister | existir | ɛɡziste | verbos | | |
 valoir | valer | valwaʁ | verbos | | | Ça vaut la peine = vale a pena.
-suffire | bastar | syfiʁ | verbos | | | Ça suffit! = chega! Suficiente vem daqui.
+suffire | bastar | syfiʁ | verbos | | | Ça suffit! = chega. "Suficiente" vem da mesma raiz.
 obtenir | obter, conseguir | ɔptəniʁ | administracao | | |
 offrir | oferecer; dar de presente | ɔfʁiʁ | verbos | | |
 souffrir | sofrer | sufʁiʁ | saude | | |
@@ -146,34 +146,34 @@ mentir | mentir | mɑ̃tiʁ | verbos | | |
 construire | construir | kɔ̃stʁɥiʁ | verbos | | |
 grandir | crescer | ɡʁɑ̃diʁ | pessoas | | | Grand + -ir: ficar grande.
 réfléchir | pensar, refletir | ʁefleʃiʁ | verbos | | |
-prévenir | avisar | pʁevniʁ | verbos | | | Falso amigo parcial: prévenir quase sempre é AVISAR.
+prévenir | avisar | pʁevniʁ | verbos | | | Prévenir quase sempre é avisar, não prevenir.
 employer | empregar, usar | ɑ̃plwaje | trabalho | | |
 appuyer | apertar (botão); apoiar | apɥije | verbos | | | Appuyez sur le bouton = aperte o botão.
 s'ennuyer | entediar-se | sɑ̃nɥije | sentimentos | | | Ennui = tédio.
-partager | dividir, compartilhar | paʁtaʒe | verbos | | | Partilhar → partager.
+partager | dividir, compartilhar | paʁtaʒe | verbos | | | Da mesma raiz de "partir" (dividir) e "partilhar": dividir, compartilhar.
 continuer | continuar | kɔ̃tinɥe | verbos | | cr_ar_er |
 préparer | preparar | pʁepaʁe | casa | | cr_ar_er |
 imaginer | imaginar | imaʒine | verbos | | cr_ar_er |
 accepter | aceitar | aksɛpte | verbos | | cr_ar_er |
 adorer | adorar | adɔʁe | verbos | | cr_ar_er |
 voyager | viajar | vwajaʒe | transporte | | |
-déranger | incomodar | deʁɑ̃ʒe | verbos | | | Des-arrumar → incomodar. Je vous dérange? = estou incomodando?
+déranger | incomodar | deʁɑ̃ʒe | verbos | | | Dé + ranger (arrumar): desarrumar, incomodar. Je vous dérange? = estou incomodando?
 créer | criar | kʁee | verbos | | |
 prouver | provar | pʁuve | verbos | | |
 présenter | apresentar | pʁezɑ̃te | verbos | | | Je vous présente mon mari = este é o meu marido.
 respecter | respeitar | ʁɛspɛkte | verbos | | |
-sonner | tocar (campainha, telefone) | sɔne | casa | | | Ça sonne! = está tocando! Soar → sonner.
+sonner | tocar (campainha, telefone) | sɔne | casa | | | Vem do latim sonare, como "soar": tocar. Ça sonne = está tocando.
 enlever | tirar | ɑ̃lve | verbos | | | Enlève tes chaussures = tire os sapatos.
 défendre | defender; proibir | defɑ̃dʁ | verbos | | | Défense de fumer = proibido fumar.
 paraître | parecer | paʁɛtʁ | verbos | | | Il paraît que… = parece que…
-se taire | calar-se | sə tɛʁ | verbos | | | Tais-toi! = fique quieto!
+se taire | calar-se | sə tɛʁ | verbos | | | Tais-toi! = fique quieto.
 pleuvoir | chover | pløvwaʁ | tempo | | | Il pleut = está chovendo. Pluie = chuva.
 prévoir | prever | pʁevwaʁ | verbos | | |
 revoir | rever | ʁəvwaʁ | verbos | | | Au revoir = até rever.
-inviter | convidar | ɛ̃vite | verbos | | | Convite → invitation.
-discuter | conversar | diskyte | verbos | | | Falso amigo: discuter é CONVERSAR (sem briga).
+inviter | convidar | ɛ̃vite | verbos | | | Vem do latim invitare, parente de "convidar". Je t'invite = eu te convido.
+discuter | conversar | diskyte | verbos | | | Discuter é conversar, sem briga.
 raconter | contar (história) | ʁakɔ̃te | verbos | | | Raconte-moi = me conta.
-se dépêcher | apressar-se | sə depeʃe | verbos | | | Dépêche-toi! = anda logo!
+se dépêcher | apressar-se | sə depeʃe | verbos | | | Dépêche-toi! = anda logo.
 s'inquiéter | preocupar-se | sɛ̃kjete | sentimentos | | | Ne t'inquiète pas = não se preocupe.
 visiter | visitar | vizite | verbos | | cr_ar_er |
 truc | coisa, treco | tʁyk | | m | | O "treco" do dia a dia.
@@ -197,10 +197,10 @@ mort | morte; morto | mɔʁ | | f | |
 amour | amor | amuʁ | sentimentos | m | |
 guerre | guerra | ɡɛʁ | | f | |
 paix | paz | pɛ | | f | | O X é mudo: "pé". Laisse-moi en paix = me deixa em paz.
-dieu | deus | djø | | m | | Mon Dieu! = meu Deus!
+dieu | deus | djø | | m | | Mon Dieu = meu Deus.
 ciel | céu | sjɛl | tempo | m | |
 terre | terra | tɛʁ | | f | |
-mer | mar | mɛʁ | lugares | f | | La mer (feminino). Soa igual a mère (mãe)!
+mer | mar | mɛʁ | lugares | f | | La mer é feminino. Soa igual a mère (mãe).
 soleil | sol | sɔlɛj | tempo | m | |
 lune | lua | lyn | tempo | f | |
 feu | fogo; semáforo | fø | transporte | m | | Feu rouge = sinal vermelho.
@@ -217,7 +217,7 @@ plage | praia | plaʒ | lugares | f | |
 lac | lago | lak | lugares | m | |
 pont | ponte | pɔ̃ | lugares | m | | Só o nasal "põ": o T é mudo.
 route | estrada | ʁut | transporte | f | | A "rota" de carro: estrada.
-chemin | caminho | ʃəmɛ̃ | lugares | m | | O "ca" virou "che": caminho → chemin.
+chemin | caminho | ʃəmɛ̃ | lugares | m | | Da mesma origem de "caminho"; o CA virou CHE.
 quartier | bairro | kaʁtje | lugares | m | | O "quarteirão": bairro.
 village | aldeia, vila | vilaʒ | lugares | m | |
 centre | centro | sɑ̃tʁ | lugares | m | |
@@ -238,8 +238,8 @@ doigt | dedo | dwa | saude | m | | Só se ouve "duá": G e T mudos.
 sang | sangue | sɑ̃ | saude | m | |
 peau | pele | po | saude | f | |
 voix | voz | vwa | | f | |
-santé | saúde | sɑ̃te | saude | f | | À votre santé! = saúde!
-maladie | doença | maladi | saude | f | | Malade (doente) → maladie (doença).
+santé | saúde | sɑ̃te | saude | f | | À votre santé = saúde (no brinde).
+maladie | doença | maladi | saude | f | | Vem de malade (doente): doença.
 service | serviço | sɛʁvis | trabalho | m | cr_icio_ice |
 police | polícia | pɔlis | | f | cr_icio_ice |
 justice | justiça | ʒystis | administracao | f | cr_icio_ice |
@@ -253,7 +253,7 @@ sens | sentido | sɑ̃s | | m | | O S final soa: "sãs".
 point | ponto | pwɛ̃ | | m | |
 moyen | meio (recurso) | mwajɛ̃ | | m | |
 manière | maneira | manjɛʁ | | f | |
-sorte | tipo, espécie | sɔʁt | | f | | Falso amigo: une sorte de = um tipo de. Sorte é chance.
+sorte | tipo, espécie | sɔʁt | | f | | Une sorte de = um tipo de. Sorte, em francês, é chance.
 genre | gênero, tipo | ʒɑ̃ʁ | | m | |
 partie | parte; partida | paʁti | | f | |
 part | parte, pedaço | paʁ | | f | | Quelque part = em algum lugar.
@@ -273,10 +273,10 @@ aide | ajuda | ɛd | | f | |
 besoin | necessidade | bəzwɛ̃ | | m | | Avoir besoin de = precisar de.
 envie | vontade | ɑ̃vi | sentimentos | f | | Avoir envie de = ter vontade de.
 honte | vergonha | ɔ̃t | sentimentos | f | |
-faim | fome | fɛ̃ | | f | | Em francês se TEM fome: j'ai faim.
+faim | fome | fɛ̃ | | f | | Em francês se tem fome: j'ai faim.
 soif | sede | swaf | | f | | J'ai soif = tenho sede.
 sommeil | sono | sɔmɛj | | m | | J'ai sommeil = estou com sono.
-chance | sorte | ʃɑ̃s | | f | | Falso amigo: chance = SORTE. Bonne chance!
+chance | sorte | ʃɑ̃s | | f | | Chance é sorte. Bonne chance = boa sorte.
 force | força | fɔʁs | | f | |
 rêve | sonho | ʁɛv | | m | |
 secret | segredo | səkʁɛ | | m | |
@@ -287,7 +287,7 @@ photo | foto | fɔto | | f | |
 film | filme | film | | m | |
 jeu | jogo; brincadeira | ʒø | | m | |
 sport | esporte | spɔʁ | | m | |
-chanson | canção, música | ʃɑ̃sɔ̃ | | f | | O "ca" virou "cha": canção → chanson.
+chanson | canção, música | ʃɑ̃sɔ̃ | | f | | Vem do latim cantionem, como "canção"; o CA virou CHA.
 journal | jornal | ʒuʁnal | | m | |
 lettre | carta; letra | lɛtʁ | | f | |
 papier | papel | papje | administracao | m | | Les papiers = os documentos.
@@ -347,7 +347,7 @@ robe | vestido | ʁɔb | compras | f | | A "roupa" longa: vestido.
 pantalon | calça | pɑ̃talɔ̃ | compras | m | |
 chaussure | sapato | ʃosyʁ | compras | f | | O "calçado".
 manteau | casaco | mɑ̃to | compras | m | | Um "manto": casaco.
-couleur | cor | kulœʁ | descricao | f | | Cor → couleur (lembre de "colorido").
+couleur | cor | kulœʁ | descricao | f | | Vem do latim colorem, como "cor" e "colorido".
 blanc | branco | blɑ̃ | descricao | | |
 noir | preto | nwaʁ | descricao | | | "Noir" dos filmes: preto.
 rouge | vermelho | ʁuʒ | descricao | | | O "ruge" (blush) é vermelho.
@@ -381,7 +381,7 @@ simple | simples | sɛ̃pl | descricao | | |
 calme | calmo | kalm | descricao | | |
 tranquille | tranquilo | tʁɑ̃kil | descricao | | |
 drôle | engraçado | dʁol | descricao | | |
-bizarre | estranho | bizaʁ | descricao | | | Falso amigo leve: bizarre = ESTRANHO (não "bizarro" exagerado).
+bizarre | estranho | bizaʁ | descricao | | | Bizarre é só estranho, sem o exagero de "bizarro".
 étrange | estranho | etʁɑ̃ʒ | descricao | | |
 normal | normal | nɔʁmal | descricao | | |
 spécial | especial | spesjal | descricao | | |
@@ -392,11 +392,11 @@ gentil | gentil, simpático | ʒɑ̃ti | descricao | | |
 méchant | malvado | meʃɑ̃ | descricao | | |
 sympa | simpático, legal | sɛ̃pa | descricao | | |
 intelligent | inteligente | ɛ̃teliʒɑ̃ | descricao | | |
-bête | bobo, burro | bɛt | descricao | | | Bête = bicho. "Que bicho!" → que bobo.
+bête | bobo, burro | bɛt | descricao | | | Vem do latim bestia, como "besta": bicho, e também bobo. C'est bête = que bobagem.
 fou | louco | fu | descricao | | |
 sérieux | sério | seʁjø | descricao | | |
 énorme | enorme | enɔʁm | descricao | | |
-entier | inteiro | ɑ̃tje | descricao | | | Inteiro → entier. En entier = por inteiro.
+entier | inteiro | ɑ̃tje | descricao | | | Vem do latim integrum, como "inteiro". En entier = por inteiro.
 ancien | antigo; ex- | ɑ̃sjɛ̃ | descricao | | | Antes do nome = ex-: mon ancien travail.
 moderne | moderno | mɔdɛʁn | descricao | | |
 prochain | próximo | pʁɔʃɛ̃ | tempo | | | La semaine prochaine = semana que vem.
@@ -426,7 +426,7 @@ seize | dezesseis | sɛz | numeros | | |
 trente | trinta | tʁɑ̃t | numeros | | |
 quarante | quarenta | kaʁɑ̃t | numeros | | |
 cinquante | cinquenta | sɛ̃kɑ̃t | numeros | | |
-soixante | sessenta | swasɑ̃t | numeros | | | Depois vem soixante-dix (70 = 60 + 10)!
+soixante | sessenta | swasɑ̃t | numeros | | | Depois vem soixante-dix: 70 = 60 + 10.
 zéro | zero | zeʁo | numeros | | |
 million | milhão | miljɔ̃ | numeros | m | cr_ao_on |
 demi | meio | dəmi | numeros | | | Une heure et demie = uma hora e meia.
@@ -473,9 +473,9 @@ bonne nuit | boa noite (ao dormir) | bɔn nɥi | cotidiano | | | Só na hora de 
 bonne journée | tenha um bom dia | bɔn ʒuʁne | cotidiano | | | Para se despedir de manhã ou à tarde.
 de rien | de nada | də ʁjɛ̃ | cotidiano | | | "De nada" palavra por palavra: rien = nada.
 enchanté | muito prazer | ɑ̃ʃɑ̃te | cotidiano | | | "Encantado" em conhecer você.
-ça va | tudo bem | sa va | cotidiano | | | Pergunta e resposta ao mesmo tempo: Ça va? — Ça va!
+ça va | tudo bem | sa va | cotidiano | | | Pergunta e resposta ao mesmo tempo: Ça va? Ça va.
 bon appétit | bom apetite | bɔ̃n‿apeti | cotidiano | | |
-chien | cachorro | ʃjɛ̃ | cotidiano | m | | Chien → "canino".
+chien | cachorro | ʃjɛ̃ | cotidiano | m | | Vem do latim canis, a raiz de "canino".
 chat | gato | ʃa | cotidiano | m | | Soa "xá": o gato tomando chá.
 attention | atenção | atɑ̃sjɔ̃ | cotidiano | f | cr_cao_tion |
 situation | situação | sitɥasjɔ̃ | cotidiano | f | cr_cao_tion |
@@ -495,17 +495,17 @@ courage | coragem | kuʁaʒ | sentimentos | m | cr_agem_age |
 hôpital | hospital | ɔpital | saude | m | cr_circ_s |
 fête | festa | fɛt | cotidiano | f | cr_circ_s |
 goût | gosto, sabor | ɡu | compras | m | cr_circ_s |
-vin | vinho | vɛ̃ | compras | m | | Vin → vinho: nasal aberto, quase "vẽ".
-peur | medo | pœʁ | sentimentos | f | | Peur → "pavor": medo.
+vin | vinho | vɛ̃ | compras | m | | Vem do latim vinum, como "vinho". Soa "vẽ", nasal.
+peur | medo | pœʁ | sentimentos | f | | Vem do latim pavorem, como "pavor": medo.
 cheveux | cabelo | ʃəvø | saude | mpl | | Soa "xevê": os cabelos.
-banque | banco (instituição) | bɑ̃k | banco | f | | Feminino em francês: LA banque.
-compte | conta (bancária) | kɔ̃t | banco | m | | Compte ← compter (contar): a conta.
+banque | banco (instituição) | bɑ̃k | banco | f | | Em francês é feminino: la banque.
+compte | conta (bancária) | kɔ̃t | banco | m | | Vem de compter (contar): a conta.
 carte | cartão | kaʁt | banco | f | | Carte bancaire = cartão do banco.
-prix | preço | pʁi | compras | m | | Prix → "preço" (e prêmio: Grand Prix).
+prix | preço | pʁi | compras | m | | Vem do latim pretium, como "preço". Também é prêmio: le Grand Prix.
 sac | sacola | sak | compras | m | |
-clé | chave | kle | casa | f | | Clé → "clave" (chave musical).
+clé | chave | kle | casa | f | | Vem do latim clavis, como "clave" (a chave musical): chave.
 bras | braço | bʁa | saude | m | | Soa "brá": o S é mudo.
 propre | limpo; próprio | pʁɔpʁ | casa | | | Depois do nome = limpo: une chambre propre. Antes = próprio.
 document | documento | dɔkymɑ̃ | administracao | m | |
-poisson | peixe | pwasɔ̃ | compras | m | | SS = som de S: poisson → "piscicultura" (peixe).
+poisson | peixe | pwasɔ̃ | compras | m | | Vem do latim piscis, a raiz de "piscicultura": peixe. SS soa como S.
 `;
