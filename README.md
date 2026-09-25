@@ -1,5 +1,7 @@
 # Poliglotas — o francês que já é seu vizinho
 
+**App no ar:** <https://poliglotas.netlify.app>
+
 **Poliglotas** é um PWA para acelerar o francês de dois falantes de português brasileiro (perfis **Lucas** e **Eduarda**). Funciona 100% offline depois da primeira abertura e pode ser instalado na tela inicial do celular.
 
 **Stack:** Vite + TypeScript (sem framework) · IndexedDB via [`idb`](https://github.com/jakearchibald/idb) · Web Speech API (TTS) · MediaRecorder + Azure Speech (avaliação de pronúncia) · [`ts-fsrs`](https://github.com/open-spaced-repetition/ts-fsrs) (revisão espaçada) · `vite-plugin-pwa` (service worker/Workbox) · Netlify.
@@ -152,7 +154,7 @@ Cada nota fica salva **por palavra** no IndexedDB, na store `pronunciation_histo
 
 ## Deploy na Netlify
 
-**Produção:** _(link entra aqui depois do primeiro deploy)_
+**Produção:** <https://poliglotas.netlify.app>
 
 O deploy sai **da branch `main`**. O `netlify.toml` já traz tudo:
 - build `npm run build`, pasta `dist`, funções em `netlify/functions`, Node 22;
