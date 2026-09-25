@@ -295,7 +295,10 @@ O TTS é a Web Speech API do próprio aparelho. Ela não entrega o áudio gerado
 
 ## Verificação de qualidade (QA)
 
-Última passada: build de produção (`vite preview`) no Chromium 141, emulando celulares, com um microfone falso tocando uma voz sintética (`tests/fixtures/voz-sintetica.wav`).
+**Versão com Momentos (conteúdo v5).** Resumo em [`docs/RELATORIO.md`](docs/RELATORIO.md):
+81 testes unitários e 27 de ponta a ponta passando (inclusive a trilha inteira com os 37 Momentos, offline, sincronização e axe nos dois temas); em produção, Lighthouse 13.5 com Performance 91–93 e Acessibilidade, Boas práticas e SEO 100, e Lighthouse 11.7.1 com PWA 100.
+
+A tabela abaixo é da versão anterior (sessão diária) e fica como histórico.
 
 | Verificação | Como foi feita | Resultado |
 |---|---|---|

@@ -354,7 +354,7 @@ export const MOMENTOS = [
   {
     id: 'm10', chapter: 'ch3',
     title: 'Primeiro dia na creche',
-    can_do: 'apresentar seu filho na creche',
+    can_do: 'acompanhar a criança no primeiro dia de creche',
     intro: 'Primeiro dia da Léa na creche. A educadora recebe vocês na porta.',
     lines: [
       ['Educadora', '[Bonjour] ! [Vous] [êtes|être|são] [la] [famille] [de] Léa ?', 'Bom dia! Vocês são a família da Léa?'],
