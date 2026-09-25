@@ -4,15 +4,20 @@ import { loadEnv, type Plugin } from 'vite';
 import { defineConfig } from 'vitest/config';
 import { VitePWA } from 'vite-plugin-pwa';
 import { handlePronunciation, type AzureConfig } from './server/pronunciation.ts';
+import { handleSync, memoryStore } from './server/sync.ts';
 
 /**
- * Serve /api/pronunciation durante `vite dev` e `vite preview`, com a mesma
- * lógica da Netlify Function. Assim a chave do Azure (lida do .env, sem
- * prefixo VITE_) fica só no processo Node e nunca vai para o navegador.
+ * Serve /api/pronunciation e /api/sync durante `vite dev` e `vite preview`,
+ * com a mesma lógica das Netlify Functions. A chave do Azure (lida do .env,
+ * sem prefixo VITE_) fica só no processo Node e nunca vai para o navegador;
+ * a sincronização usa uma loja em memória no lugar do Netlify Blobs.
  */
-function azureSpeechApi(cfg: AzureConfig): Plugin {
+function localApi(cfg: AzureConfig): Plugin {
+  const syncStore = memoryStore();
   const middleware = async (req: IncomingMessage, res: ServerResponse, next: () => void) => {
-    if (!req.url?.startsWith('/api/pronunciation')) return next();
+    const url = req.url ?? '';
+    const isSync = url.startsWith('/api/sync');
+    if (!url.startsWith('/api/pronunciation') && !isSync) return next();
     try {
       const chunks: Buffer[] = [];
       for await (const chunk of req) chunks.push(chunk as Buffer);
@@ -20,12 +25,12 @@ function azureSpeechApi(cfg: AzureConfig): Plugin {
       for (const [k, v] of Object.entries(req.headers)) {
         if (typeof v === 'string') headers.set(k, v);
       }
-      const request = new Request(new URL(req.url, 'http://localhost'), {
+      const request = new Request(new URL(url, `http://${req.headers.host ?? 'localhost'}`), {
         method: req.method,
         headers,
         body: req.method === 'POST' ? Buffer.concat(chunks) : undefined,
       });
-      const response = await handlePronunciation(request, cfg);
+      const response = isSync ? await handleSync(request, syncStore) : await handlePronunciation(request, cfg);
       res.statusCode = response.status;
       response.headers.forEach((value, key) => res.setHeader(key, value));
       res.end(Buffer.from(await response.arrayBuffer()));
@@ -36,7 +41,7 @@ function azureSpeechApi(cfg: AzureConfig): Plugin {
     }
   };
   return {
-    name: 'azure-speech-api',
+    name: 'local-api',
     configureServer: (server) => void server.middlewares.use(middleware),
     configurePreviewServer: (server) => void server.middlewares.use(middleware),
   };
@@ -51,7 +56,7 @@ export default defineConfig(({ mode }) => {
       __SEED_VERSION__: JSON.stringify(seedVersion),
     },
     plugins: [
-      azureSpeechApi({ key: env.AZURE_SPEECH_KEY, region: env.AZURE_SPEECH_REGION }),
+      localApi({ key: env.AZURE_SPEECH_KEY, region: env.AZURE_SPEECH_REGION }),
       VitePWA({
         registerType: 'prompt',
         injectRegister: false,

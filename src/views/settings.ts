@@ -1,4 +1,5 @@
 import { selectWrap } from '../ui/components';
+import { describeSyncError, generateSyncCode, getLastSync, getSyncCode, setSyncCode, SyncError, syncNow } from '../lib/sync';
 import { h, render } from '../ui/dom';
 import type { View } from '../ui/router';
 import { navigate } from '../ui/router';
@@ -93,6 +94,74 @@ export const settingsView: View = async () => {
   const soundsToggle = h('input', { type: 'checkbox', class: 'switch', checked: prefs().sounds, 'aria-label': 'Sons de acerto', onchange: () => setPrefs({ sounds: soundsToggle.checked }) });
   const autoplay = h('input', { type: 'checkbox', class: 'switch', checked: prefs().autoplay, 'aria-label': 'Tocar áudio automaticamente', onchange: () => setPrefs({ autoplay: autoplay.checked }) });
 
+  // --- Sincronização entre aparelhos (código de casal) ----------------------
+  const syncBox = h('div', { class: 'stack stack--sm', 'data-testid': 'sync-box' });
+  const when = (iso: string) => {
+    const d = new Date(iso);
+    const today = new Date().toDateString() === d.toDateString();
+    return `${today ? 'hoje' : d.toLocaleDateString('pt-BR')}, ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+  };
+  const runSync = async (status: HTMLElement) => {
+    status.textContent = 'Sincronizando…';
+    try {
+      const r = await syncNow();
+      status.textContent = `Última sincronização: ${when(r.at)}. ${r.updated === 1 ? '1 palavra atualizada' : `${r.updated} palavras atualizadas`} neste aparelho.`;
+      if (r.updated) notifyProgressChanged();
+    } catch (e) {
+      status.textContent = describeSyncError(e instanceof SyncError ? e.code : 'upstream');
+    }
+  };
+  const renderSync = async () => {
+    const code = await getSyncCode();
+    if (!code) {
+      const input = h('input', { class: 'input', type: 'text', autocomplete: 'off', autocapitalize: 'off', spellcheck: false, placeholder: 'código de vocês', 'aria-label': 'Código de sincronização', 'data-testid': 'sync-code-input' });
+      const status = h('p', { class: 'muted', 'aria-live': 'polite', 'data-testid': 'sync-status' });
+      render(
+        syncBox,
+        h('p', { class: 'muted' }, 'Os aparelhos com o mesmo código ficam com o mesmo progresso. Digitem o mesmo código nos dois celulares.'),
+        input,
+        h(
+          'div',
+          { class: 'row row--wrap' },
+          h('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => { input.value = generateSyncCode(); input.focus(); } }, 'Gerar um código'),
+          h(
+            'button',
+            {
+              class: 'btn btn--ghost btn--sm', type: 'button', 'data-testid': 'sync-save',
+              onclick: async () => {
+                if (input.value.trim().length < 8) {
+                  status.textContent = describeSyncError('bad_code');
+                  return;
+                }
+                await setSyncCode(input.value);
+                await renderSync();
+                const st = syncBox.querySelector<HTMLElement>('[data-testid=sync-status]');
+                if (st) await runSync(st);
+              },
+            },
+            'Salvar e sincronizar',
+          ),
+        ),
+        status,
+      );
+      return;
+    }
+    const last = await getLastSync();
+    const status = h('p', { class: 'muted', 'aria-live': 'polite', 'data-testid': 'sync-status' }, last ? `Última sincronização: ${when(last.at)}.` : 'Ainda não sincronizou.');
+    render(
+      syncBox,
+      h('p', { class: 'muted' }, 'Sincroniza sozinho ao abrir o app. Código: ', h('strong', { 'data-testid': 'sync-code' }, code), '.'),
+      status,
+      h(
+        'div',
+        { class: 'row row--wrap' },
+        h('button', { class: 'btn btn--ghost btn--sm', type: 'button', 'data-testid': 'sync-now', onclick: () => void runSync(status) }, 'Sincronizar agora'),
+        h('button', { class: 'btn btn--ghost btn--sm', type: 'button', 'data-testid': 'sync-off', onclick: async () => { await setSyncCode(null); await renderSync(); } }, 'Trocar código'),
+      ),
+    );
+  };
+  void renderSync();
+
   // --- Progresso -----------------------------------------------------------
   const fileInput = h('input', {
     type: 'file', accept: 'application/json,.json', hidden: true, 'data-testid': 'import-file',
@@ -163,9 +232,10 @@ export const settingsView: View = async () => {
         field('Tocar o áudio sozinho', autoplay),
         field('Sons de acerto', soundsToggle),
       ),
+      section('Sincronizar entre aparelhos', syncBox),
       section(
-        'Progresso e sincronização',
-        h('p', { class: 'muted' }, 'Fica tudo neste aparelho. Para levar a outro celular: exporte aqui, importe lá.'),
+        'Cópia em arquivo',
+        h('p', { class: 'muted' }, 'Uma cópia do progresso para guardar ou levar a outro aparelho sem internet.'),
         h(
           'div',
           { class: 'row row--wrap' },

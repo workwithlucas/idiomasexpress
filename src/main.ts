@@ -5,13 +5,14 @@ import '@fontsource/inter/500.css';
 import '@fontsource/inter/600.css';
 import './styles/main.css';
 
+import { getSyncCode, syncNow } from './lib/sync';
 import { registerSW } from 'virtual:pwa-register';
 import { ensureSeeded, getDB } from './db/database';
 import { listUsers, loadContent, repairReviewStates } from './db/repo';
 import { h, render } from './ui/dom';
 import { mountApp } from './ui/layout';
-import { route } from './ui/router';
-import { restoreUser } from './ui/session';
+import { navigate, parseHash, route } from './ui/router';
+import { notifyProgressChanged, restoreUser } from './ui/session';
 import { toast } from './ui/toast';
 import type { TtsProblem } from './lib/tts';
 import { profileView } from './views/profile';
@@ -70,6 +71,7 @@ async function boot(): Promise<void> {
     if (repaired) console.warn(`${repaired} estado(s) de revisão corrompido(s) foram reiniciados.`);
     restoreUser(await listUsers());
     mountApp(app);
+    startAutoSync();
     // Pede armazenamento persistente para o navegador não despejar o IndexedDB
     // (progresso) sob pouco espaço. Chrome concede para sites instalados/usados;
     // no Safari a proteção real vem de instalar na tela inicial (ver README).
@@ -101,6 +103,34 @@ async function boot(): Promise<void> {
       },
     });
   }
+}
+
+/**
+ * Sincronização automática (se houver código de casal): ao abrir o app e ao
+ * voltar para ele (no celular, "abrir" costuma só retomar a página). Nunca
+ * bloqueia nada: sem rede ou com erro, fica para a próxima vez.
+ */
+function startAutoSync(): void {
+  let last = 0;
+  const run = async () => {
+    if (!navigator.onLine || Date.now() - last < 2 * 60_000) return;
+    last = Date.now();
+    try {
+      if (!(await getSyncCode())) return;
+      const r = await syncNow();
+      if (r.updated) {
+        notifyProgressChanged();
+        // Só redesenha a tela Hoje (não interrompe um exercício em andamento).
+        if (parseHash().path === '/') navigate('/');
+      }
+    } catch (e) {
+      console.info('Sincronização adiada:', (e as Error).message);
+    }
+  };
+  void run();
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') void run();
+  });
 }
 
 void boot();

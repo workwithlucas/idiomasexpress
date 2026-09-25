@@ -203,13 +203,25 @@ Deploy por linha de comando (opcional): `npx netlify-cli deploy --build --prod`.
 
 ## Progresso e sincronização entre aparelhos
 
-Tudo fica no **IndexedDB** do navegador, sem servidor de dados. Cada `ReviewState` é gravado com o `user_id` do perfil.
+O progresso fica no IndexedDB de cada aparelho, e o app funciona 100% offline. Há dois jeitos de levar o progresso de um aparelho a outro:
 
-Para levar o progresso para outro aparelho: **Ajustes → Exportar progresso** (baixa um JSON com os dois perfis) e, no outro aparelho, **Importar**. A importação **mescla**: se a mesma palavra do mesmo perfil existir nos dois lados, vence a revisada mais recentemente. Dá para ir e voltar sem perder nada.
+### Sincronizar pelo código de casal (automático)
+1. Em **Ajustes → Sincronizar entre aparelhos**, toque em **Gerar um código** (ou digite um de vocês, com 8 caracteres ou mais) e em **Salvar e sincronizar**.
+2. No outro celular, digite **o mesmo código** e salve. Maiúsculas e espaços extras não fazem diferença.
+3. Pronto: cada aparelho sincroniza sozinho **ao abrir o app** e **ao voltar para ele**, com pelo menos 2 minutos de intervalo. Também há o botão **Sincronizar agora**.
 
-> O progresso fica ligado ao navegador. Limpar os dados do site apaga o progresso: exporte de vez em quando como backup. O app pede ao navegador armazenamento persistente (`navigator.storage.persist()`), mas no iPhone a proteção de verdade é **instalar na tela inicial** (veja "Known issues").
+Como funciona:
+- **Onde fica:** o app manda os estados de revisão (`ReviewState` completo, com `reps`, datas e dados do FSRS) para `/api/sync`, uma Netlify Function que guarda um documento por código no **Netlify Blobs**. Não há conta, chave nem configuração: o Blobs vem pronto para as Functions do site. O código não é guardado, só o hash dele.
+- **Conflitos:** por palavra e por pessoa, vence a revisão mais recente; em empate, a com mais `reps`. O estado vencedor vai inteiro, então `reps` nunca se separa do resto e a alternância reconhecer/produzir continua certa. A importação manual usa a mesma regra (`server/syncMerge.ts`).
+- **Dois aparelhos ao mesmo tempo:** a gravação é condicional (ETag). Se o outro aparelho gravou no meio, a Function relê, mescla de novo e tenta outra vez, então nenhuma revisão se perde.
+- **Offline:** a sincronização é um extra. Sem código, sem internet ou com o servidor fora do ar, nada muda no app, e o status em Ajustes explica.
 
----
+### Cópia em arquivo (manual)
+Em **Ajustes → Cópia em arquivo**:
+- **Exportar progresso** baixa um JSON com os dois perfis;
+- **Importar**, no outro aparelho, mescla esse arquivo pela mesma regra da sincronização.
+
+Serve para backup ou para levar o progresso sem internet.
 
 ## Testar a revisão espaçada sem esperar
 
@@ -350,6 +362,10 @@ Limitações conhecidas que **não** foram corrigidas nesta versão, com o motiv
 27. **O branch de produção da Netlify ainda é `claude/pensive-keller-1e2l48`.** Trocar para `main` pela API exige alterar a configuração do site, o que não foi feito daqui. Enquanto isso, cada commit da `main` é enviado também para esse branch, e a produção reflete a `main`. Para trocar: *Site configuration → Build & deploy → Branches and deploy contexts → Production branch = `main`*.
 28. **Limite por IP da API é de melhor esforço.** Cada instância da Function guarda a própria contagem. Contra abuso sério, o teto real é a cota do F0, que não gera cobrança.
 29. **Dicas de memória: origem só quando é real.** Nas 533 dicas, "vem de…" só aparece quando a origem foi conferida (latim ou francês antigo em comum com o português). Associação sem origem verificável virou dica de som ou de uso. Casos corrigidos: *très*, *vite*, *heureux* (vem de *heur*, sorte, não de *heure*), *tomber*, *petit* e *après* (que não vem de "após").
+30. **O código de casal é a única chave do progresso sincronizado.** Quem souber o código lê e altera o progresso de vocês, porque não há login, de propósito. Use o código gerado pelo app (12 caracteres aleatórios) e não o publique. Para trocar: *Trocar código* nos dois aparelhos.
+31. **A sincronização leva as revisões (`ReviewState`), não o resto.** O histórico de atividade, o histórico de pronúncia e a sessão do dia em andamento continuam por aparelho; a cópia em arquivo leva os dois primeiros. *Por quê:* o pedido era sincronizar a revisão com `reps`. O resto pode entrar depois pelo mesmo endpoint.
+32. **O "modo de teste" (data simulada) também vale na sincronização.** Revisões feitas com a data avançada ficam com data futura e ganham dos conflitos até o tempo real alcançá-las. Use o modo de teste só num aparelho sem código de casal.
+33. **Os documentos sincronizados ficam no Netlify Blobs do site** (loja `poliglotas-sync`). Os de teste criados nas verificações de produção (código `teste-…`) podem ser apagados pelo painel da Netlify, em *Blobs*.
 
 ## Fora do escopo da v1 (de propósito)
 Nenhuma IA generalista, nenhuma conversa livre, nenhuma sincronização automática e nenhum login. A escolha de perfil é local.

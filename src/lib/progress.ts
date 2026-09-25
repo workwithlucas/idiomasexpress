@@ -1,6 +1,7 @@
 import { getDB } from '../db/database';
 import type { Activity, PronunciationRecord, ReviewState, User } from '../db/schema';
 import { isValidReviewState } from './fsrs';
+import { isNewer } from '../../server/syncMerge';
 
 /**
  * Exportação/importação manual de progresso (sincronização entre aparelhos
@@ -74,7 +75,6 @@ export async function importProgress(raw: unknown): Promise<ImportSummary> {
     }
   }
 
-  const rank = (r: ReviewState) => [r.last_review ?? '', r.reps ?? 0] as const;
   for (const incoming of raw.review_states) {
     if (!isValidReviewState(incoming) || !validWords.has(incoming.word_id)) continue;
     const store = tx.objectStore('review_states');
@@ -84,9 +84,8 @@ export async function importProgress(raw: unknown): Promise<ImportSummary> {
       summary.statesAdded++;
       continue;
     }
-    const [li, ri] = [rank(local), rank(incoming)];
-    const incomingNewer = ri[0] > li[0] || (ri[0] === li[0] && ri[1] > li[1]);
-    if (incomingNewer) {
+    // Mesma regra da sincronização (server/syncMerge.ts): revisão mais recente vence; empate → mais reps.
+    if (isNewer(incoming as never, local as never)) {
       await store.put({ ...incoming, created_at: local.created_at < incoming.created_at ? local.created_at : incoming.created_at });
       summary.statesUpdated++;
     } else {
