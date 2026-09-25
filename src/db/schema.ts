@@ -105,6 +105,29 @@ export interface ReviewState {
   created_at: string;
 }
 
+/**
+ * Histórico de pronúncia: a nota de UMA palavra do banco numa gravação avaliada
+ * pelo Azure. Uma frase gravada gera um registro por palavra reconhecida no
+ * banco. Serve para acompanhar a evolução ao longo do tempo.
+ */
+export interface PronunciationRecord {
+  /** uuid (permite mesclar exportações de aparelhos diferentes). */
+  id: string;
+  user_id: string;
+  word_id: string;
+  /** ISO 8601 (UTC). */
+  at: string;
+  /** Nota da palavra (0–100, "AccuracyScore" do Azure). */
+  score: number;
+  /** None | Mispronunciation | Omission | … (do Azure). */
+  error_type: string;
+  /** Nota por sílaba, com as letras (fr-FR não traz o nome do fonema). */
+  syllables: { grapheme: string; accuracy: number }[];
+  /** Frase ou palavra gravada e a nota geral de pronúncia dela. */
+  text: string;
+  overall: number;
+}
+
 export interface User {
   id: string;
   name: string;

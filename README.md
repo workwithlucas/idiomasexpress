@@ -87,32 +87,66 @@ A chave **nunca vai para o navegador**. O app envia o áudio para `/api/pronunci
 
 As duas usam o mesmo código: `server/pronunciation.ts`.
 
-### 1. Criar o recurso no Azure
-1. Em <https://portal.azure.com>, crie um recurso **Speech** (em "Azure AI services"). O plano gratuito **F0** basta para uso pessoal.
-2. Escolha uma região (ex.: `westeurope` ou `francecentral`).
-3. Abra o recurso → **Keys and Endpoint**. Copie **KEY 1** e a **Location/Region**.
+### 1. Criar o recurso Azure Speech gratuito (passo a passo)
+1. **Conta:** entre em <https://portal.azure.com> com uma conta Microsoft. Sem assinatura, crie uma conta gratuita em <https://azure.microsoft.com/free>. O cartão pedido é só para confirmar identidade: o plano F0 abaixo não cobra nada.
+2. **Criar o recurso:** no topo do portal, busque **"Speech services"** (ou "Serviços de Fala") → **Create / Criar**.
+3. Preencha:
+   - **Subscription:** a sua assinatura.
+   - **Resource group:** *Create new* → `poliglotas` (qualquer nome).
+   - **Region:** a mais perto, ex.: **France Central** (`francecentral`) ou **West Europe** (`westeurope`). A avaliação de pronúncia em fr-FR funciona nas duas.
+   - **Name:** um nome único, ex.: `poliglotas-fala-lucas`.
+   - **Pricing tier:** **Free F0**. Ele dá **5 horas de áudio por mês**, e cada gravação do app tem poucos segundos, o que dá milhares de notas por mês. Cada assinatura só pode ter **um** recurso F0 de Speech.
+4. **Review + create → Create.** Espere o "Deployment complete" (menos de 1 minuto) e clique em **Go to resource**.
+5. **Pegar a chave e a região:** no menu do recurso, abra **Resource Management → Keys and Endpoint**.
+   - **KEY 1** (botão de copiar): é a sua `AZURE_SPEECH_KEY`.
+   - **Location/Region** (ex.: `francecentral`): é a sua `AZURE_SPEECH_REGION`. Use o código, em minúsculas e sem espaço, não o nome "France Central".
 
-### 2. Colar a chave para desenvolvimento local
+### 2. Colar no `.env` (desenvolvimento local)
 
 ```bash
 cp .env.example .env
 ```
 
-Edite o `.env` (ele está no `.gitignore` e **não é commitado**):
+Edite o `.env` na raiz do projeto. Ele está no `.gitignore` e **nunca é commitado**:
 
 ```env
 AZURE_SPEECH_KEY=cole-a-KEY-1-aqui
-AZURE_SPEECH_REGION=westeurope
+AZURE_SPEECH_REGION=francecentral
 ```
 
-Reinicie o `npm run dev`. Em **Ajustes → Avaliação de pronúncia** o status deve aparecer como "configurado".
+Reinicie o `npm run dev` (ou `npm run preview`): o `.env` só é lido quando o servidor sobe. Confira em **Ajustes → Serviço de nota**:
+
+| O que aparece | O que significa |
+|---|---|
+| **configurado** | Chave aceita. Pronto para usar. |
+| **chave recusada** | O Azure recusou a chave, ou a chave é de outra região. Confira KEY 1 e o código da região. |
+| **sem chave** | O `.env` está vazio ou o servidor não foi reiniciado. |
+
+A checagem da chave usa o serviço de token do Azure e **não gasta** os minutos do plano gratuito.
 
 > As variáveis **não** têm o prefixo `VITE_` de propósito: variáveis `VITE_*` são embutidas no JavaScript público.
+> Se a chave vazar (por exemplo, colada num chat ou num print), gere outra em **Keys and Endpoint → Regenerate Key 1** e atualize o `.env` e a Netlify.
 
 ### 3. Colar a chave na Netlify
 Veja a seção de deploy abaixo (passo 3).
 
-Sem a chave, o módulo 6 continua funcionando para ouvir o modelo, gravar e comparar sua voz; só a nota automática fica desativada.
+### Como a nota se comporta no uso real
+Sem a chave, ou com qualquer falha do Azure, o módulo **Fale e compare** continua servindo para ouvir o modelo, gravar e ver **a melodia**, que é calculada no aparelho e não depende do Azure. Só a nota por som some, com uma mensagem clara:
+
+| Situação | O que a pessoa vê | Tenta de novo? |
+|---|---|---|
+| Gravação curta (< 0,5 s) ou sem voz audível | "Grave de novo…", **sem chamar o Azure** (não gasta cota) | Gravando de novo |
+| Azure não reconheceu a fala (ele devolve "sucesso" com nota 0) | "Não deu pra entender a frase. Grave de novo…" em vez de "nota 0" | Gravando de novo |
+| Rede lenta / Azure demorou (> 15 s no servidor, 20 s no app) | "A nota demorou demais…"; a tela continua livre | Botão **Tentar de novo** (mesma gravação) |
+| Muitas notas seguidas (HTTP 429 sem cota) | "Espere alguns segundos…" | Botão **Tentar de novo** |
+| Cota do F0 esgotada (5 h/mês) | "O limite gratuito do Azure deste mês acabou…" | Não: a nota fica desligada até sair da tela |
+| Chave inválida ou de outra região | "A chave do Azure não foi aceita (veja o README)", avisado **antes** de gravar | Não |
+| Sem chave no servidor | "A nota por som ainda não foi ligada neste app" | Não |
+| Offline | "Sem internet agora…" | Quando voltar a conexão |
+
+O resultado mostra a **nota geral** (0–100) em destaque, as notas de sons, fluidez e frase completa, e cada palavra. As palavras que valem treinar (nota < 80 ou erro apontado pelo Azure) ficam destacadas com o token `accent`. Dentro da palavra, a **sílaba** mais fraca também fica em destaque. Em fr-FR o Azure devolve as sílabas com as letras ("ca", "fé"), mas não o nome dos fonemas.
+
+Cada nota fica salva **por palavra** no IndexedDB, na store `pronunciation_history`, com data, nota, tipo de erro, sílabas e a frase gravada. Isso permite ver a evolução depois. Ainda não há tela para esse histórico; ele entra na exportação e na importação de progresso.
 
 ---
 
@@ -227,6 +261,7 @@ O TTS é a Web Speech API do próprio aparelho. Ela não entrega o áudio gerado
 | Acessibilidade | axe-core em todas as telas e estados, claro e escuro | 0 violações (com o `accent` claro #B54A2B, item 21) |
 | Lighthouse 13.5 (mobile) | Primeira visita e tela "Hoje" com perfil | 100 em Performance, Acessibilidade, Boas práticas e SEO |
 | Lighthouse 11.7.1 (último com PWA) | Primeira visita | PWA 100 · 0 erros de instalabilidade |
+| Azure real (chave em `francecentral`) | App no navegador → MediaRecorder → WAV → proxy → Azure, com fala francesa (espeak-ng). Depois com o `.env` vazio e com chave errada | Nota real em ~1,4 s (94 na frase certa; 77, com "croissant" marcado "faltou", numa frase trocada), melodia junto e histórico salvo. Sem chave e com chave errada: mensagem clara, melodia funcionando, 0 erros |
 | Seed v3 (800 palavras) | Build v2 com progresso real (sessão completa) → mesma origem com o build v3 | Progresso idêntico (reps por palavra), 8 cenas novas, nova sessão intercalada completa, 0 erros |
 | Estabilidade dos testes | 47 unitários; 15 E2E × 3 repetições (e × 2 após o último ajuste) | 47/47 · 45/45 · 30/30 |
 
@@ -240,7 +275,9 @@ Limitações conhecidas que **não** foram corrigidas nesta versão, com o motiv
     A Web Speech API usa as vozes instaladas no sistema. Se não houver voz francesa, o app **desativa o áudio e avisa** (em vez de ler francês com sotaque de outra língua); Ajustes explica como instalar a voz. Em navegadores que não informam lista de vozes (alguns WebViews), o app pede `fr-FR` pelo atributo `lang`, e é o sistema que escolhe. *Por quê:* não há TTS embutido offline na v1 (seria um novo recurso, com Azure TTS ou arquivos de áudio).
 4. **`audio_generated` não guarda áudio.** A Web Speech API não entrega o áudio sintetizado. O campo marca só que a palavra já foi falada com sucesso naquele aparelho. *Por quê:* limitação da API (veja "Sobre o áudio").
 5. **A primeira abertura precisa de internet.** O app e o seed (~230 KB, ~52 KB comprimido) só ficam disponíveis offline depois de baixados uma vez. Sem rede na primeira visita, o navegador mostra a própria página de erro. *Por quê:* é o funcionamento normal de um PWA; não há como servir algo antes de o service worker existir.
-6. **A avaliação de pronúncia precisa de internet e de chave.** Offline ou sem chave, o módulo 6 continua servindo para ouvir, gravar e comparar, mas sem nota. A chamada real ao Azure **não foi executada nesta passada** (não havia chave): os testes usam uma resposta simulada com o formato documentado pela Microsoft, e o proxy foi testado com chave inválida (erro tratado). *Por quê:* a chave é pessoal. Confira com a sua na primeira gravação.
+6. **A avaliação de pronúncia precisa de internet e de chave.** Offline ou sem chave, o módulo 6 continua servindo para ouvir, gravar e comparar, mas sem nota.
+    - **Teste real:** foi feito com uma chave real (região `francecentral`) e fala francesa sintetizada pelo espeak-ng. Os testes automáticos continuam usando respostas simuladas, para não gastar a cota nem depender de rede.
+    - **Cota esgotada:** o formato real da resposta **não pôde ser provocado** (exigiria gastar as 5 h do mês). O app reconhece 429, e 403 ou 429 com "quota" no texto, que é o que a documentação da Microsoft descreve.
 7. **iPhone sem instalar: o progresso pode ser apagado depois de 7 dias sem uso.** O Safari limpa o armazenamento de sites que não são abertos por 7 dias, a menos que o app esteja **na tela inicial**. O app pede armazenamento persistente, mas o Safari não garante. *Por quê:* é uma política do WebKit. **Instale na tela inicial e exporte o progresso de vez em quando.**
 8. **Os intervalos longos do FSRS variam um pouco.** Intervalos a partir de ~2,5 dias recebem um "fuzz" aleatório (ex.: "Fácil" numa palavra nova = 8–12 dias). *Por quê:* é intencional no FSRS, para as revisões não se acumularem no mesmo dia.
 9. **O limite de "palavras novas por dia" inclui as adicionadas manualmente** (botão de marcador nos módulos). *Por quê:* comportamento definido na v1 (o limite vale para o total de palavras que entram no dia); mudar seria mudança de regra, não correção.
@@ -272,6 +309,8 @@ Limitações conhecidas que **não** foram corrigidas nesta versão, com o motiv
     - **Pronúncia (IPA):** revisada à mão, sem um falante nativo.
     - **Cenas antigas:** as 6 genéricas (creche, banco, entrevista, médico, mercado, commune) foram substituídas pelas versões de Luxemburgo, que reaproveitam todas as palavras e moldes delas. Manter as duas versões deixaria dois cards "Banco" na tela. Um link salvo para uma cena antiga (ex.: `#/situacoes/sc_creche`) mostra "Situação não encontrada".
     - **Ícones das cenas Transporte e Vizinhança:** usam o pino e a pessoa, já existentes. Desenhar ícones novos seria mudança de interface, fora do escopo desta etapa.
+24. **O histórico de pronúncia ainda não tem tela.** Os dados já são gravados por palavra (`pronunciation_history`) e vão junto na exportação de progresso. A tela de evolução fica para uma próxima etapa.
+25. **Frases fora do banco não entram no histórico.** Numa frase, só as palavras que existem no banco ganham registro. Palavras que não estão no banco (ex.: "croissant") aparecem na nota, mas não no histórico.
 
 ## Fora do escopo da v1 (de propósito)
 Nenhuma IA generalista, nenhuma conversa livre, nenhuma sincronização automática e nenhum login. A escolha de perfil é local.

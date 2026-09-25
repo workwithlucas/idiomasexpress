@@ -1,13 +1,16 @@
 import { h, render } from '../ui/dom';
 import { icon } from '../ui/icons';
 import type { View } from '../ui/router';
-import { content, logActivity } from '../db/repo';
+import { content, logActivity, savePronunciation } from '../db/repo';
 import { currentUser } from '../ui/session';
 import { playButton } from '../ui/components';
 import { getNativeTiming, speak, stopSpeaking } from '../lib/tts';
 import { describeMicError, recordingSupported, recordingUnavailableReason, VoiceRecorder } from '../lib/recorder';
-import { decodeMono16k, toWav16kMono, WAV_RATE } from '../lib/wav';
-import { assessPronunciation, azureStatus, PronunciationError, type AzureStatus, type PronunciationResult, type WordScore } from '../lib/pronunciation';
+import { decodeMono16k, encodePcm16Wav, WAV_RATE } from '../lib/wav';
+import {
+  assessPronunciation, azureStatus, checkSpeech, describePronunciationError, PronunciationError,
+  type AzureStatus, type PronunciationErrorCode, type PronunciationResult, type SpeechCheck, type WordScore,
+} from '../lib/pronunciation';
 import { fillFrame, pickRandom, primaryPt } from '../lib/text';
 import { PitchTracker } from '../lib/pitchTracker';
 import { analyzeSamples } from '../lib/pitch';
@@ -33,8 +36,12 @@ const ERROR_LABELS: Record<string, string> = {
   Monotone: 'sem melodia',
 };
 
-function tone(score: number): 'good' | 'ok' | 'bad' {
-  return score >= 80 ? 'good' : score >= 60 ? 'ok' : 'bad';
+/** Abaixo disto (ou com erro apontado pelo Azure) a palavra/sílaba ganha destaque. */
+const FOCUS_BELOW = 80;
+const needsWork = (w: WordScore) => w.errorType !== 'None' || w.accuracy < FOCUS_BELOW;
+
+function verdict(score: number): string {
+  return score >= 85 ? 'Muito bom!' : score >= 70 ? 'Bom — dá pra lapidar' : score >= 50 ? 'Já dá pra entender' : 'Vamos treinar mais';
 }
 
 function randomWord(): Target {
@@ -57,8 +64,12 @@ export const speakingView: View = ({ query }) => {
   const tracker = new PitchTracker();
   let recordingUrl: string | null = null;
   let recordedBlob: Blob | null = null;
+  /** Amostras 16 kHz da gravação (decodificadas uma vez; usadas na checagem, na melodia e no WAV). */
+  let recordedSamples: Float32Array | null = null;
+  let speech: SpeechCheck | null = null;
   let timer: number | undefined;
-  let azure: AzureStatus | 'checking' = 'checking';
+  /** 'quota' e 'invalid_key' valem até sair da tela: não adianta insistir. */
+  let azure: AzureStatus | 'checking' | 'quota' = 'checking';
   let starting = false;
   let left = false; // saiu da tela enquanto o pedido de permissão estava aberto
   let attempt = 0; // descarta resultados de uma gravação antiga
@@ -75,6 +86,8 @@ export const speakingView: View = ({ query }) => {
     if (recordingUrl) URL.revokeObjectURL(recordingUrl);
     recordingUrl = null;
     recordedBlob = null;
+    recordedSamples = null;
+    speech = null;
     render(errorBox);
     render(resultBox);
   };
@@ -193,8 +206,17 @@ export const speakingView: View = ({ query }) => {
       void logActivity(currentUser().id, 'speaking', 'record', { word_id: target.wordId });
       renderRecorder('recorded');
       renderResultShell();
+      const blob = recordedBlob;
+      const samples = await decodeMono16k(blob).catch((e) => {
+        console.warn('Não foi possível decodificar a gravação.', e);
+        return null;
+      });
+      if (myAttempt !== attempt) return;
+      recordedSamples = samples;
+      speech = samples ? checkSpeech(samples, WAV_RATE) : null;
+      renderAzurePanel();
       // Melodia e nota são independentes: a melodia é local e sai sempre.
-      void showProsody(recordedBlob, frames, myAttempt);
+      void showProsody(samples, frames, myAttempt);
     } catch (e) {
       renderRecorder('idle');
       render(errorBox, h('div', { class: 'callout callout--error' }, icon('alert', 20), h('p', null, (e as Error).message)));
@@ -207,12 +229,12 @@ export const speakingView: View = ({ query }) => {
     renderAzurePanel();
   };
 
-  const showProsody = async (blob: Blob, liveFrames: ReturnType<PitchTracker['stop']>, myAttempt: number) => {
+  const showProsody = async (samples: Float32Array | null, liveFrames: ReturnType<PitchTracker['stop']>, myAttempt: number) => {
     let user: UserContour | null = userContour(liveFrames);
-    if (!user) {
+    if (!user && samples) {
       // Plano B: analisa o arquivo gravado (mesmo algoritmo, sem depender do tempo real).
       try {
-        user = userContour(analyzeSamples(await decodeMono16k(blob), WAV_RATE));
+        user = userContour(analyzeSamples(samples, WAV_RATE));
       } catch (e) {
         console.warn('Não foi possível analisar a gravação.', e);
       }
@@ -243,76 +265,113 @@ export const speakingView: View = ({ query }) => {
     );
   };
 
+  const note = (code: PronunciationErrorCode, testid = 'azure-status') => {
+    const d = describePronunciationError(code);
+    return h(
+      'div',
+      { class: 'soft-note', 'data-testid': testid, dataset: { code } },
+      icon('info', 16),
+      h('span', null, d.text),
+      d.retry && h('button', { class: 'chip-btn', type: 'button', onclick: evaluate, 'data-testid': 'assess-retry' }, icon('refresh', 14), 'Tentar de novo'),
+    );
+  };
+
   const renderAzurePanel = () => {
+    if (!recordedBlob) return;
+    // Curta ou silenciosa: pede outra gravação antes de gastar a cota do Azure.
+    if (speech === 'too_short' || speech === 'silent') {
+      render(azureBox, note(speech, 'recording-check'));
+      return;
+    }
+    if (azure === 'checking') return;
     if (azure === 'configured') {
       render(
         azureBox,
         h('button', { class: 'btn btn--ghost btn--block', type: 'button', onclick: evaluate, 'data-testid': 'evaluate' }, icon('sparkles', 18), 'Ver nota da pronúncia'),
       );
-    } else if (azure !== 'checking') {
-      render(
-        azureBox,
-        h(
-          'p',
-          { class: 'soft-note', 'data-testid': 'azure-status' },
-          icon('info', 16),
-          azure === 'not_configured'
-            ? 'A nota por som ainda não foi ligada neste app (veja o README). A melodia acima funciona sem ela.'
-            : azure === 'offline'
-              ? 'Sem internet: a nota por som volta quando conectar. A melodia acima funciona offline.'
-              : 'A nota por som está fora do ar agora. A melodia acima continua valendo.',
-        ),
-      );
+      return;
     }
+    const code: Record<Exclude<typeof azure, 'configured' | 'checking'>, PronunciationErrorCode> = {
+      not_configured: 'not_configured',
+      invalid_key: 'auth',
+      quota: 'quota',
+      offline: 'offline',
+      unreachable: 'upstream',
+    };
+    render(azureBox, note(code[azure]));
   };
 
   const evaluate = async () => {
     if (!recordedBlob) return;
     const myAttempt = attempt;
-    render(azureBox, h('div', { class: 'card loading' }, h('span', { class: 'spinner' }), 'Calculando a nota…'));
+    render(azureBox, h('div', { class: 'card loading', 'data-testid': 'assess-loading' }, h('span', { class: 'spinner' }), 'Calculando a nota…'));
     try {
-      const wav = await toWav16kMono(recordedBlob);
+      const samples = recordedSamples ?? (await decodeMono16k(recordedBlob));
+      const wav = new Blob([encodePcm16Wav(samples, WAV_RATE)], { type: 'audio/wav' });
       const result = await assessPronunciation(wav, target.text);
       if (myAttempt !== attempt) return;
-      void logActivity(currentUser().id, 'speaking', 'assess', { word_id: target.wordId, score: result.pronunciation });
+      const userId = currentUser().id;
+      void logActivity(userId, 'speaking', 'assess', { word_id: target.wordId, score: result.pronunciation });
+      // Histórico por palavra (para ver a evolução depois); falhar aqui não atrapalha a nota.
+      void savePronunciation(userId, target.text, result, target.wordId).catch((e) => console.warn('Histórico de pronúncia não salvo.', e));
       renderScore(result);
     } catch (e) {
       if (myAttempt !== attempt) return;
       console.warn('Nota de pronúncia indisponível:', e);
-      // Mensagem curta e sem jargão; o detalhe técnico fica no console.
-      const code = e instanceof PronunciationError ? e.code : 'upstream';
-      const msg =
-        code === 'offline' || code === 'network'
-          ? 'Sem conexão para a nota agora. A melodia acima continua valendo.'
-          : code === 'no_speech'
-            ? 'Não deu pra ouvir a frase inteira. Tente de novo, mais perto do microfone.'
-            : 'Não deu pra calcular a nota agora. A melodia acima continua valendo.';
-      render(azureBox, h('p', { class: 'soft-note', 'data-testid': 'assess-error' }, icon('info', 16), msg));
+      const code: PronunciationErrorCode = e instanceof PronunciationError ? e.code : 'upstream';
+      // Chave recusada ou cota esgotada: desliga a nota nesta tela, sem insistir.
+      if (code === 'auth') azure = 'invalid_key';
+      if (code === 'quota') azure = 'quota';
+      if (code === 'not_configured') azure = 'not_configured';
+      render(azureBox, note(code, 'assess-error'));
     }
   };
 
   const renderScore = (r: PronunciationResult) => {
-    const detail = h('div', { class: 'phonemes' });
-    const showWord = (w: WordScore) =>
+    const detail = h('div', { class: 'phonemes', 'data-testid': 'word-detail' });
+    const showWord = (w: WordScore) => {
+      // Sílabas com as letras (fr-FR não traz o nome do fonema). A(s) pior(es) em destaque.
+      const syl = w.syllables ?? [];
+      const parts = syl.length ? syl.map((y) => ({ label: y.grapheme, accuracy: y.accuracy })) : (w.phonemes ?? []).filter((p) => p.phoneme).map((p) => ({ label: p.phoneme, accuracy: p.accuracy }));
+      const min = Math.min(...parts.map((p) => p.accuracy));
       render(
         detail,
-        h('div', { class: 'phonemes__head' }, h('strong', { lang: 'fr' }, w.word), playButton(w.word, { size: 'sm' }), h('span', { class: `score-tag score-tag--${tone(w.accuracy)}` }, `${w.accuracy}`)),
-        w.phonemes.length ? h('ul', { class: 'phonemes__list' }, w.phonemes.map((p) => h('li', { class: `phoneme phoneme--${tone(p.accuracy)}` }, h('span', { class: 'phoneme__sym' }, p.phoneme), h('span', null, String(p.accuracy))))) : null,
+        h('div', { class: 'phonemes__head' }, h('strong', { lang: 'fr' }, w.word), playButton(w.word, { size: 'sm' }), h('span', { class: `score-tag${needsWork(w) ? ' score-tag--focus' : ''}` }, `${w.accuracy}`)),
+        parts.length > 1 &&
+          h(
+            'ul',
+            { class: 'phonemes__list', 'data-testid': 'syllables' },
+            parts.map((p) => h('li', { class: `phoneme${p.accuracy < FOCUS_BELOW && p.accuracy === min ? ' phoneme--focus' : ''}` }, h('span', { class: 'phoneme__sym', lang: 'fr' }, p.label), h('span', null, String(p.accuracy)))),
+          ),
+        w.errorType !== 'None' && h('p', { class: 'hint' }, `O Azure marcou: ${ERROR_LABELS[w.errorType] ?? 'diferente'}.`),
       );
+    };
+    const focus = r.words.filter(needsWork);
     render(
       azureBox,
       h(
         'div',
         { class: 'card result', 'data-testid': 'assess-result' },
         h('p', { class: 'eyebrow' }, 'Nota por som'),
-        h('div', { class: 'rings' }, scoreRing('Geral', r.pronunciation), scoreRing('Sons', r.accuracy), scoreRing('Fluidez', r.fluency), scoreRing('Completa', r.completeness)),
+        h(
+          'div',
+          { class: 'score-main' },
+          scoreRing(r.pronunciation),
+          h(
+            'div',
+            { class: 'score-main__text' },
+            h('strong', { 'data-testid': 'overall-verdict' }, verdict(r.pronunciation)),
+            h('span', null, `Sons ${r.accuracy} · Fluidez ${r.fluency} · Frase completa ${r.completeness}`),
+          ),
+        ),
+        focus.length > 0 && h('p', { class: 'focus-legend' }, h('span', { class: 'focus-legend__mark', 'aria-hidden': 'true' }), 'Em destaque: o que vale treinar. Toque numa palavra para ver as sílabas.'),
         h(
           'div',
           { class: 'word-scores' },
           r.words.map((w) =>
             h(
               'button',
-              { class: `word-score word-score--${tone(w.accuracy)}`, type: 'button', onclick: () => showWord(w) },
+              { class: `word-score${needsWork(w) ? ' word-score--focus' : ''}`, type: 'button', onclick: () => showWord(w), 'data-focus': needsWork(w) ? 'true' : undefined },
               h('span', { lang: 'fr' }, w.word),
               h('small', null, w.errorType !== 'None' ? ERROR_LABELS[w.errorType] ?? String(w.accuracy) : String(w.accuracy)),
             ),
@@ -349,7 +408,8 @@ export const speakingView: View = ({ query }) => {
   };
 };
 
-function scoreRing(label: string, value: number): HTMLElement {
+/** Anel da nota geral (0–100). */
+function scoreRing(value: number): HTMLElement {
   const r = 26;
   const circ = 2 * Math.PI * r;
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -357,5 +417,5 @@ function scoreRing(label: string, value: number): HTMLElement {
   svg.innerHTML =
     `<circle cx="32" cy="32" r="${r}" class="ring__track"/>` +
     `<circle cx="32" cy="32" r="${r}" class="ring__value" stroke-dasharray="${circ}" stroke-dashoffset="${circ * (1 - value / 100)}" transform="rotate(-90 32 32)"/>`;
-  return h('div', { class: `ring ring--${tone(value)}` }, h('div', { class: 'ring__chart' }, svg, h('strong', null, String(value))), h('span', null, label));
+  return h('div', { class: 'ring ring--main', 'data-testid': 'overall-score' }, h('div', { class: 'ring__chart' }, svg, h('strong', null, String(value))), h('span', null, 'Nota geral'));
 }

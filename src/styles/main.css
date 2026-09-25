@@ -1292,10 +1292,29 @@ ol {
   gap: var(--space-3);
 }
 
-.rings {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-2);
+/* Nota por som: a nota geral em destaque; o accent marca SÓ o que vale
+   treinar (palavras e sílabas com nota baixa). Nada de verde/vermelho. */
+.score-main {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.score-main__text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.score-main__text strong {
+  font: var(--type-subtitle);
+  color: var(--ink);
+}
+
+.score-main__text span {
+  font: var(--type-body-sm);
+  color: var(--ink-soft);
 }
 
 .ring {
@@ -1303,23 +1322,15 @@ ol {
   flex-direction: column;
   align-items: center;
   gap: var(--space-1);
+  flex: none;
   font: var(--type-body-sm);
   color: var(--ink-soft);
-  --tone: var(--accent);
-}
-
-.ring--ok {
-  --tone: var(--ink-soft);
-}
-
-.ring--bad {
-  --tone: var(--ink);
 }
 
 .ring__chart {
   position: relative;
-  width: 64px;
-  height: 64px;
+  width: 72px;
+  height: 72px;
 }
 
 .ring__chart svg {
@@ -1332,23 +1343,40 @@ ol {
   inset: 0;
   display: grid;
   place-items: center;
-  font: var(--type-subtitle);
+  font: var(--type-title);
   color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
 
 .ring__track {
   fill: none;
-  stroke: var(--surface);
-  stroke-width: 7;
+  stroke: var(--border);
+  stroke-width: 6;
 }
 
 .ring__value {
   fill: none;
-  stroke: var(--tone);
-  stroke-width: 7;
+  stroke: var(--primary);
+  stroke-width: 6;
   stroke-linecap: round;
   transition: stroke-dashoffset var(--motion) ease-out;
+}
+
+.focus-legend {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font: var(--type-body-sm);
+  color: var(--ink-soft);
+}
+
+.focus-legend__mark {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--accent);
+  background: var(--surface-soft);
 }
 
 .word-scores {
@@ -1363,25 +1391,24 @@ ol {
   align-items: center;
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-sm);
-  border: 1.5px solid;
+  border: 1.5px solid var(--border);
   background: var(--surface-raised);
+  color: var(--ink);
   font: var(--type-button);
 }
 
 .word-score small {
   font: var(--type-body-sm);
-}
-
-.word-score--good {
-  border-color: var(--accent);
-  color: var(--ink);
-}
-
-.word-score--ok,
-.word-score--bad {
-  border-color: var(--border);
   color: var(--ink-soft);
+}
+
+.word-score--focus {
+  border-color: var(--accent);
   background: var(--surface-soft);
+}
+
+.word-score--focus small {
+  color: var(--ink);
 }
 
 .phonemes {
@@ -1419,40 +1446,50 @@ ol {
   min-width: 44px;
   padding: var(--space-2) var(--space-2);
   border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border);
   background: var(--surface-raised);
+  color: var(--ink-soft);
   font: var(--type-body-sm);
-  border-bottom: 2px solid;
 }
 
 .phoneme__sym {
   font: var(--type-subtitle);
+  color: var(--ink);
 }
 
-.phoneme--good {
+.phoneme--focus {
   border-color: var(--accent);
-}
-
-.phoneme--ok,
-.phoneme--bad {
-  border-color: var(--border);
   background: var(--surface-soft);
+  color: var(--ink);
 }
 
 .score-tag {
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-full);
+  background: var(--surface-raised);
+  border: 1.5px solid var(--border);
+  color: var(--ink);
   font: var(--type-body-sm);
 }
 
-.score-tag--good {
+.score-tag--focus {
   background: var(--accent);
+  border-color: var(--accent);
   color: var(--on-accent);
 }
 
-.score-tag--ok,
-.score-tag--bad {
-  background: var(--surface-soft);
-  color: var(--ink-soft);
+.soft-note {
+  flex-wrap: wrap;
+}
+
+.soft-note > span {
+  flex: 1 1 60%;
+  min-width: 0;
+}
+
+/* "Tentar de novo" alinha com o texto (depois do ícone de 16px). */
+.soft-note .chip-btn {
+  margin-left: calc(16px + var(--space-2));
 }
 
 /* ---- Revisão ------------------------------------------------------------- */

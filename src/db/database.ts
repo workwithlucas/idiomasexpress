@@ -1,6 +1,6 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import type {
-  Activity, CognateRule, FalseCognate, Frame, MinimalPair, ReadingRule, ReviewState, Scene, SeedData, User, Word,
+  Activity, CognateRule, FalseCognate, Frame, MinimalPair, PronunciationRecord, ReadingRule, ReviewState, Scene, SeedData, User, Word,
 } from './schema';
 
 export interface AppDB extends DBSchema {
@@ -19,12 +19,18 @@ export interface AppDB extends DBSchema {
   };
   activity: { key: string; value: Activity; indexes: { by_user_at: [string, string] } };
   meta: { key: string; value: { key: string; value: unknown } };
+  pronunciation_history: {
+    key: string;
+    value: PronunciationRecord;
+    indexes: { by_user_word_at: [string, string, string]; by_user_at: [string, string] };
+  };
 }
 
 export type DB = IDBPDatabase<AppDB>;
 
 const DB_NAME = 'idiomasexpress';
-const DB_VERSION = 1;
+/** 1: v1 · 2: + pronunciation_history. */
+const DB_VERSION = 2;
 
 /** Tabelas de conteúdo: substituídas quando chega um seed novo. */
 export const CONTENT_STORES = [
@@ -38,31 +44,46 @@ let dbPromise: Promise<DB> | null = null;
 
 export function getDB(): Promise<DB> {
   dbPromise ??= openDB<AppDB>(DB_NAME, DB_VERSION, {
-    upgrade(db) {
-      const words = db.createObjectStore('words', { keyPath: 'id' });
-      words.createIndex('by_rank', 'freq_rank');
-      words.createIndex('by_theme', 'theme');
-      db.createObjectStore('cognate_rules', { keyPath: 'id' });
-      db.createObjectStore('false_cognates', { keyPath: 'id' });
-      db.createObjectStore('reading_rules', { keyPath: 'id' });
-      db.createObjectStore('minimal_pairs', { keyPath: 'id' });
-      db.createObjectStore('frames', { keyPath: 'id' });
-      db.createObjectStore('scenes', { keyPath: 'id' });
-      db.createObjectStore('users', { keyPath: 'id' });
-      const rs = db.createObjectStore('review_states', { keyPath: ['user_id', 'word_id'] });
-      rs.createIndex('by_user', 'user_id');
-      // ISO 8601 em UTC ordena lexicograficamente = cronologicamente,
-      // o que permite buscar "vencidos até agora" com um IDBKeyRange.
-      rs.createIndex('by_user_due', ['user_id', 'due_at']);
-      const act = db.createObjectStore('activity', { keyPath: 'id' });
-      act.createIndex('by_user_at', ['user_id', 'at']);
-      db.createObjectStore('meta', { keyPath: 'key' });
+    upgrade(db, oldVersion) {
+      if (oldVersion < 1) createV1Stores(db);
+      if (oldVersion < 2) {
+        const ph = db.createObjectStore('pronunciation_history', { keyPath: 'id' });
+        ph.createIndex('by_user_word_at', ['user_id', 'word_id', 'at']);
+        ph.createIndex('by_user_at', ['user_id', 'at']);
+      }
     },
     blocked() {
       console.warn('IndexedDB bloqueado por outra aba aberta com versão antiga.');
     },
+    blocking() {
+      // Uma aba com versão nova quer atualizar o banco: libera a conexão desta.
+      void dbPromise?.then((db) => db.close());
+      dbPromise = null;
+    },
   });
   return dbPromise;
+}
+
+/** Stores da versão 1 do banco (criadas numa instalação nova). */
+function createV1Stores(db: IDBPDatabase<AppDB>): void {
+  const words = db.createObjectStore('words', { keyPath: 'id' });
+  words.createIndex('by_rank', 'freq_rank');
+  words.createIndex('by_theme', 'theme');
+  db.createObjectStore('cognate_rules', { keyPath: 'id' });
+  db.createObjectStore('false_cognates', { keyPath: 'id' });
+  db.createObjectStore('reading_rules', { keyPath: 'id' });
+  db.createObjectStore('minimal_pairs', { keyPath: 'id' });
+  db.createObjectStore('frames', { keyPath: 'id' });
+  db.createObjectStore('scenes', { keyPath: 'id' });
+  db.createObjectStore('users', { keyPath: 'id' });
+  const rs = db.createObjectStore('review_states', { keyPath: ['user_id', 'word_id'] });
+  rs.createIndex('by_user', 'user_id');
+  // ISO 8601 em UTC ordena lexicograficamente = cronologicamente,
+  // o que permite buscar "vencidos até agora" com um IDBKeyRange.
+  rs.createIndex('by_user_due', ['user_id', 'due_at']);
+  const act = db.createObjectStore('activity', { keyPath: 'id' });
+  act.createIndex('by_user_at', ['user_id', 'at']);
+  db.createObjectStore('meta', { keyPath: 'key' });
 }
 
 export async function getMeta<T>(key: string): Promise<T | undefined> {

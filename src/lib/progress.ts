@@ -1,5 +1,5 @@
 import { getDB } from '../db/database';
-import type { Activity, ReviewState, User } from '../db/schema';
+import type { Activity, PronunciationRecord, ReviewState, User } from '../db/schema';
 import { isValidReviewState } from './fsrs';
 
 /**
@@ -14,16 +14,19 @@ export interface ProgressFile {
   users: User[];
   review_states: ReviewState[];
   activity: Activity[];
+  /** Desde a versão 2 do banco; arquivos antigos não têm (continuam válidos). */
+  pronunciation_history?: PronunciationRecord[];
 }
 
 export async function exportProgress(): Promise<ProgressFile> {
   const db = await getDB();
-  const [users, review_states, activity] = await Promise.all([
+  const [users, review_states, activity, pronunciation_history] = await Promise.all([
     db.getAll('users'),
     db.getAll('review_states'),
     db.getAll('activity'),
+    db.getAll('pronunciation_history'),
   ]);
-  return { app: 'idiomasexpress', type: 'progress', version: 1, exported_at: new Date().toISOString(), users, review_states, activity };
+  return { app: 'idiomasexpress', type: 'progress', version: 1, exported_at: new Date().toISOString(), users, review_states, activity, pronunciation_history };
 }
 
 export function downloadJson(data: unknown, filename: string): void {
@@ -41,6 +44,7 @@ export interface ImportSummary {
   statesUpdated: number;
   statesKept: number;
   activityAdded: number;
+  pronunciationAdded: number;
 }
 
 function isProgressFile(x: unknown): x is ProgressFile {
@@ -60,8 +64,8 @@ function isProgressFile(x: unknown): x is ProgressFile {
 export async function importProgress(raw: unknown): Promise<ImportSummary> {
   if (!isProgressFile(raw)) throw new Error('Arquivo inválido: não é uma exportação de progresso do Poliglotas.');
   const db = await getDB();
-  const tx = db.transaction(['users', 'review_states', 'activity', 'words'], 'readwrite');
-  const summary: ImportSummary = { statesAdded: 0, statesUpdated: 0, statesKept: 0, activityAdded: 0 };
+  const tx = db.transaction(['users', 'review_states', 'activity', 'words', 'pronunciation_history'], 'readwrite');
+  const summary: ImportSummary = { statesAdded: 0, statesUpdated: 0, statesKept: 0, activityAdded: 0, pronunciationAdded: 0 };
 
   const validWords = new Set(await tx.objectStore('words').getAllKeys());
   for (const u of raw.users) {
@@ -96,6 +100,16 @@ export async function importProgress(raw: unknown): Promise<ImportSummary> {
     if (!(await store.get(a.id))) {
       await store.put(a);
       summary.activityAdded++;
+    }
+  }
+
+  for (const r of raw.pronunciation_history ?? []) {
+    const ok = typeof r?.id === 'string' && typeof r.user_id === 'string' && typeof r.word_id === 'string' &&
+      typeof r.at === 'string' && typeof r.score === 'number' && validWords.has(r.word_id);
+    const store = tx.objectStore('pronunciation_history');
+    if (ok && !(await store.get(r.id))) {
+      await store.put({ ...r, syllables: Array.isArray(r.syllables) ? r.syllables : [] });
+      summary.pronunciationAdded++;
     }
   }
   await tx.done;

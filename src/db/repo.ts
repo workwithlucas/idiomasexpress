@@ -1,9 +1,11 @@
 import { getDB, getMeta, type ContentOrder } from './database';
 import type {
-  Activity, CognateRule, FalseCognate, Frame, MinimalPair, ModuleId, ReadingRule, ReviewResult, ReviewState, Scene, User, Word,
+  Activity, CognateRule, FalseCognate, Frame, MinimalPair, ModuleId, PronunciationRecord, ReadingRule, ReviewResult, ReviewState, Scene, User, Word,
 } from './schema';
 import { dayKey, endOfLocalDay, now, startOfLocalDay } from '../lib/clock';
 import { isValidReviewState, newReviewState, review as fsrsReview, MATURE_STABILITY_DAYS } from '../lib/fsrs';
+import { scoredWords } from '../lib/pronunciationHistory';
+import type { PronunciationResult } from '../lib/pronunciation';
 
 /** Conteúdo é pequeno (~500 palavras) e só muda com um seed novo:
  *  carregamos tudo em memória uma vez para as telas ficarem instantâneas. */
@@ -237,4 +239,35 @@ export async function getDiscovered(userId: string): Promise<Set<string>> {
   const out = new Set<string>();
   for (const a of await getActivity(userId)) if (a.kind.startsWith('discover:')) out.add(a.kind.slice('discover:'.length));
   return out;
+}
+
+// ---- Histórico de pronúncia ----------------------------------------------
+
+/** Guarda a nota de cada palavra do banco presente na gravação. Devolve os registros salvos. */
+export async function savePronunciation(
+  userId: string,
+  text: string,
+  result: PronunciationResult,
+  targetWordId?: string,
+): Promise<PronunciationRecord[]> {
+  const at = now().toISOString();
+  const words = contentCache?.words ?? [];
+  const records: PronunciationRecord[] = scoredWords(result, words, targetWordId).map((s) => ({
+    id: crypto.randomUUID(),
+    user_id: userId,
+    at,
+    text,
+    overall: result.pronunciation,
+    ...s,
+  }));
+  if (!records.length) return records;
+  const tx = (await getDB()).transaction('pronunciation_history', 'readwrite');
+  await Promise.all([...records.map((r) => tx.store.put(r)), tx.done]);
+  return records;
+}
+
+/** Evolução de uma palavra, da nota mais antiga para a mais recente. */
+export async function getPronunciationHistory(userId: string, wordId: string): Promise<PronunciationRecord[]> {
+  const range = IDBKeyRange.bound([userId, wordId, ''], [userId, wordId, '\uffff']);
+  return (await getDB()).getAllFromIndex('pronunciation_history', 'by_user_word_at', range);
 }

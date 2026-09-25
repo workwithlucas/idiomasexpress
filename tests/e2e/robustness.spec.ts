@@ -237,3 +237,142 @@ test('Azure falhando (erro 500): nota avisa com calma, melodia continua', async 
   // O 500 aparece como falha de rede no console (esperado); nada além disso.
   expect(errors.filter((e) => !e.includes('500') && !e.includes('Nota de pronúncia indisponível'))).toEqual([]);
 });
+
+// ---- Nota por som: uso real e contínuo --------------------------------------
+
+/** Grava ~2,6 s com o microfone falso (voz sintética) na tela Fale e compare. */
+async function recordSentence(page: Page) {
+  await page.goto(`/#/fala?texto=${encodeURIComponent('Je voudrais un café.')}`);
+  await page.getByTestId('rec-start').click();
+  await page.waitForTimeout(2600);
+  await page.getByTestId('rec-stop').click();
+  await expect(page.getByTestId('prosody-tips')).toBeVisible(); // a melodia sai sempre
+}
+
+const okResult = {
+  recognizedText: 'Je voudrais un café.', accuracy: 81, fluency: 90, completeness: 100, pronunciation: 78,
+  words: [
+    { word: 'Je', accuracy: 92, errorType: 'None', phonemes: [], syllables: [{ grapheme: 'je', accuracy: 92 }] },
+    { word: 'voudrais', accuracy: 88, errorType: 'None', phonemes: [], syllables: [{ grapheme: 'vou', accuracy: 90 }, { grapheme: 'drais', accuracy: 86 }] },
+    { word: 'un', accuracy: 85, errorType: 'None', phonemes: [], syllables: [{ grapheme: 'un', accuracy: 85 }] },
+    { word: 'café', accuracy: 52, errorType: 'Mispronunciation', phonemes: [], syllables: [{ grapheme: 'ca', accuracy: 95 }, { grapheme: 'fé', accuracy: 31 }] },
+  ],
+};
+
+test('nota real: geral em destaque, pior palavra/sílaba em accent, histórico salvo por palavra', async ({ page, context }) => {
+  const errors = collectErrors(page);
+  await context.grantPermissions(['microphone']);
+  await page.route('**/api/pronunciation**', (route) =>
+    route.request().method() === 'GET' ? route.fulfill({ json: { configured: true, valid: true } }) : route.fulfill({ json: okResult }),
+  );
+  await login(page);
+  await recordSentence(page);
+  await page.getByTestId('evaluate').click();
+  await expect(page.getByTestId('overall-score')).toContainText('78');
+  await expect(page.getByTestId('prosody')).toBeVisible(); // nota e melodia na mesma tela
+  // Só "café" fica em destaque; e dentro dela, a sílaba "fé".
+  await expect(page.locator('.word-score--focus')).toHaveText(['cafésoou diferente']);
+  await expect(page.getByTestId('syllables').locator('.phoneme--focus')).toHaveText(['fé31']);
+  // O destaque usa o token accent (nada de vermelho/verde).
+  const accent = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim());
+  const border = await page.locator('.word-score--focus').evaluate((el) => getComputedStyle(el).borderTopColor);
+  const hex = (rgb: string) => '#' + rgb.match(/\d+/g)!.slice(0, 3).map((n) => Number(n).toString(16).padStart(2, '0')).join('').toUpperCase();
+  expect(hex(border)).toBe(accent.toUpperCase());
+  // Histórico: uma linha por palavra do banco reconhecida na frase.
+  const hist = await page.evaluate(() => new Promise<{ word_id: string; score: number; overall: number }[]>((resolve) => {
+    const req = indexedDB.open('idiomasexpress');
+    req.onsuccess = () => {
+      const all = req.result.transaction('pronunciation_history').objectStore('pronunciation_history').getAll();
+      all.onsuccess = () => resolve(all.result);
+    };
+  }));
+  expect(hist.map((r) => [r.word_id, r.score]).sort()).toEqual([['w_cafe', 52], ['w_je', 92], ['w_un', 85]]);
+  expect(hist.every((r) => r.overall === 78)).toBe(true);
+  expect(errors).toEqual([]);
+});
+
+test('cota do plano gratuito esgotada: avisa, não oferece "tentar de novo", melodia continua', async ({ page, context }) => {
+  await context.grantPermissions(['microphone']);
+  let posts = 0;
+  await page.route('**/api/pronunciation**', (route) => {
+    if (route.request().method() === 'GET') return route.fulfill({ json: { configured: true, valid: true } });
+    posts++;
+    return route.fulfill({ status: 429, json: { error: 'quota', message: 'O limite de uso do plano do Azure acabou. (HTTP 403: Out of call volume quota)' } });
+  });
+  await login(page);
+  await recordSentence(page);
+  await page.getByTestId('evaluate').click();
+  await expect(page.getByTestId('assess-error')).toContainText('limite gratuito do Azure deste mês acabou');
+  await expect(page.getByTestId('assess-error')).not.toContainText('HTTP');
+  await expect(page.getByTestId('assess-retry')).toHaveCount(0);
+  await expect(page.getByTestId('prosody')).toBeVisible();
+  // Nova gravação na mesma tela: não insiste no Azure.
+  await page.getByTestId('rec-start').click();
+  await page.waitForTimeout(1500);
+  await page.getByTestId('rec-stop').click();
+  await expect(page.getByTestId('azure-status')).toContainText('limite gratuito');
+  await expect(page.getByTestId('evaluate')).toHaveCount(0);
+  expect(posts).toBe(1);
+});
+
+test('chave recusada pelo Azure: mensagem clara já antes de avaliar, melodia continua', async ({ page, context }) => {
+  await context.grantPermissions(['microphone']);
+  await page.route('**/api/pronunciation**', (route) => route.fulfill({ json: { configured: true, valid: false } }));
+  await login(page);
+  await recordSentence(page);
+  await expect(page.getByTestId('azure-status')).toContainText('chave do Azure não foi aceita');
+  await expect(page.getByTestId('evaluate')).toHaveCount(0);
+  await expect(page.getByTestId('contour-user').first()).toBeVisible();
+  await page.goto('/#/ajustes');
+  await expect(page.getByTestId('azure-settings-status')).toHaveText('chave recusada');
+});
+
+test('Azure demorou (timeout): mensagem amigável, tela livre e "tentar de novo" funciona', async ({ page, context }) => {
+  await context.grantPermissions(['microphone']);
+  let fail = true;
+  await page.route('**/api/pronunciation**', async (route) => {
+    if (route.request().method() === 'GET') return route.fulfill({ json: { configured: true } });
+    if (fail) return route.fulfill({ status: 504, json: { error: 'timeout', message: 'O Azure demorou demais para responder.' } });
+    return route.fulfill({ json: okResult });
+  });
+  await login(page);
+  await recordSentence(page);
+  await page.getByTestId('evaluate').click();
+  await expect(page.getByTestId('assess-error')).toContainText('demorou demais');
+  await expect(page.getByTestId('rec-start')).toBeEnabled(); // nada travado
+  fail = false;
+  await page.getByTestId('assess-retry').click();
+  await expect(page.getByTestId('overall-score')).toContainText('78');
+});
+
+test('gravação silenciosa: pede para gravar de novo e nem chama o Azure', async ({ page, context }) => {
+  await context.grantPermissions(['microphone']);
+  // Microfone "mudo": um stream de áudio só com silêncio.
+  await page.addInitScript(() => {
+    navigator.mediaDevices.getUserMedia = async () => {
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      gain.gain.value = 0;
+      const dest = ctx.createMediaStreamDestination();
+      osc.connect(gain).connect(dest);
+      osc.start();
+      return dest.stream;
+    };
+  });
+  let posts = 0;
+  await page.route('**/api/pronunciation**', (route) => {
+    if (route.request().method() === 'GET') return route.fulfill({ json: { configured: true, valid: true } });
+    posts++;
+    return route.fulfill({ json: okResult });
+  });
+  await login(page);
+  await page.goto(`/#/fala?texto=${encodeURIComponent('Je voudrais un café.')}`);
+  await page.getByTestId('rec-start').click();
+  await page.waitForTimeout(1500);
+  await page.getByTestId('rec-stop').click();
+  await expect(page.getByTestId('recording-check')).toContainText('Grave de novo');
+  await expect(page.getByTestId('evaluate')).toHaveCount(0);
+  await expect(page.getByTestId('rec-start')).toBeEnabled();
+  expect(posts).toBe(0);
+});

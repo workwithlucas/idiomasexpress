@@ -114,8 +114,9 @@ export const settingsView: View = async () => {
   const azureBox = h('span', { class: 'status status--checking' }, 'verificando…');
   void azureStatus().then((s) => {
     azureBox.className = `status status--${s}`;
-    azureBox.textContent = s === 'configured' ? 'configurado' : s === 'not_configured' ? 'sem chave' : s === 'offline' ? 'sem internet' : 'indisponível';
-    if (s === 'offline') azureBox.className = 'status status--unreachable';
+    azureBox.textContent = s === 'configured' ? 'configurado' : s === 'not_configured' ? 'sem chave' : s === 'invalid_key' ? 'chave recusada' : s === 'offline' ? 'sem internet' : 'indisponível';
+    if (s === 'offline' || s === 'invalid_key') azureBox.className = 'status status--unreachable';
+    azureBox.dataset.testid = 'azure-settings-status';
   });
 
   // --- Data simulada (testes) ----------------------------------------------
