@@ -238,3 +238,18 @@ test('offline: o Momento inteiro funciona sem rede, com melodia e aviso da nota'
   expect(failed, `pedidos que falharam offline: ${failed.join(', ')}`).toEqual([]);
   await context.setOffline(false);
 });
+
+test('par mínimo no fim da escuta: tocado com a outra voz, sem certo/errado em cor', async ({ page }) => {
+  await stubSpeech(page, TWO_FRENCH_VOICES);
+  await page.goto('/');
+  await page.click('[data-user="u_lucas"]');
+  await page.goto('/#/momento/m03');
+  const q = page.getByTestId('pair-question');
+  await expect(q).toContainText('Ela disse vu ou vous?');
+  await q.locator('.opt[data-word="w_vu"]').click();
+  await expect(q).toContainText('Quase.');
+  await q.locator('.opt[data-word="w_vous"]').click();
+  await expect(q).toContainText('Isso. Era vous');
+  const voices = new Set((await spoken(page)).filter((s) => s.text === 'vous').map((s) => s.voice));
+  expect(voices).toEqual(new Set(['Thomas'])); // a voz de "Você", não a da atendente
+});

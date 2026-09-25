@@ -2145,3 +2145,8 @@ li:last-child > .list-row,
   flex-direction: column;
   gap: var(--space-3);
 }
+
+/* No Momento (tela cheia), os avisos ficam acima do botão do rodapé. */
+body.is-full .toasts {
+  bottom: calc(var(--safe-bottom) + 96px);
+}

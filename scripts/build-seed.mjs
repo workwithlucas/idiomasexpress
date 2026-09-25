@@ -254,6 +254,11 @@ const momentos = MOMENTOS.map((mo, i) => {
   const reallyNew = distinct.filter((id) => !seenWords.has(id) && !hasBridge(id));
   if (i > 0 && reused.length / distinct.length < 0.4) fail(`${ctx}: só ${reused.length} de ${distinct.length} palavras já apareceram antes (mínimo 40%)`);
   if (reallyNew.length > 6) fail(`${ctx}: ${reallyNew.length} palavras realmente novas (máximo 6): ${reallyNew.join(', ')}`);
+  if (process.env.REPORT) {
+    const fr = (id) => words.find((w) => w.id === id)?.fr ?? id;
+    console.log(`${mo.id} ${mo.title}: ${distinct.length} palavras, ${reused.length} já vistas (${Math.round((reused.length / distinct.length) * 100)}%), ` +
+      `ponte ${distinct.filter(hasBridge).length}, realmente novas ${reallyNew.length}: ${reallyNew.map(fr).join(', ')}`);
+  }
   distinct.forEach((id) => seenWords.add(id));
 
   // Chave

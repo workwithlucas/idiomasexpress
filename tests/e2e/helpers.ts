@@ -121,8 +121,10 @@ export async function doReencontros(page: Page): Promise<{ word?: string; direct
     await expect.poll(async () => {
       const c = page.getByTestId('reencontro');
       if (!(await c.isVisible().catch(() => false))) return 'fim';
-      return (await c.getAttribute('data-word')) ?? (await c.getAttribute('data-kind'));
-    }).not.toBe(before);
+      // O cartão pode sair da tela entre as duas leituras: nunca espera por ele.
+      const attr = (name: string) => c.getAttribute(name, { timeout: 300 }).catch(() => null);
+      return (await attr('data-word')) ?? (await attr('data-kind')) ?? 'fim';
+    }, { message: `reencontro ${i + 1} (${before}) não avançou; vistos: ${JSON.stringify(seen)}` }).not.toBe(before);
   }
   return seen;
 }
