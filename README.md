@@ -256,8 +256,8 @@ Os testes do seed (`tests/unit/seed.test.ts`) conferem ainda que:
 - nenhum molde preenchido quebra a elisão (ex.: "ce antibiotique");
 - nenhum par mínimo se repete.
 
-- `momentos.mjs`: os **9 capítulos** (na ordem da vida de quem chega, cada um ligado a uma cena) e os **Momentos**. O build confere: 4 a 6 falas entre uma pessoa e "Você"; toda palavra marcada existe no banco; a partir do 2º Momento, **pelo menos 40% das palavras já apareceram** e **no máximo 6 são realmente novas** (nunca vistas e sem ponte); cada chave é nova uma vez só e usa 3 exemplos tirados do diálogo; o molde sai de uma fala e tem 4 a 5 opções; tipografia francesa (espaço fino antes de ! ? : ;) aplicada automaticamente.
-- `bridges.mjs`: as **pontes** com o português (`igual`, `parecida`, `origem`, com justificativa obrigatória para `origem`). Palavras com regra de cognato ganham a ponte `regra` automaticamente.
+- `momentos.mjs`: os **9 capítulos** (na ordem da vida de quem chega, cada um ligado a uma cena) e os **37 Momentos** (5 no primeiro capítulo, 4 nos demais), cada um com uma chave diferente: 11 de leitura e som, 9 de gramática e 17 pontes de cognato. O build confere: 4 a 6 falas entre uma pessoa e "Você"; toda palavra marcada existe no banco; a partir do 2º Momento, **pelo menos 40% das palavras já apareceram** e **no máximo 6 são realmente novas** (nunca vistas e sem ponte); cada chave é nova uma vez só e usa 3 exemplos tirados do diálogo; o molde sai de uma fala e tem 4 a 5 opções; tipografia francesa (espaço fino antes de ! ? : ;) aplicada automaticamente.
+- `bridges.mjs`: as **pontes** com o português (439 no total, contando as de regra) (`igual`, `parecida`, `origem`, com justificativa obrigatória para `origem`). Palavras com regra de cognato ganham a ponte `regra` automaticamente.
 - `words-momentos.mjs`: palavras que os diálogos usam e ainda não estavam no banco.
 
 Para mudar o conteúdo: edite esses arquivos e rode `npm run seed`. O seed leva uma impressão digital (`hash`): na próxima abertura, o app atualiza as tabelas de conteúdo **sem apagar o progresso** (ReviewState, reps, Momentos concluídos, histórico de pronúncia).

@@ -177,3 +177,25 @@ describe('seed v5: capítulos, Momentos e pontes', () => {
     }
   });
 });
+
+describe('currículo completo', () => {
+  it('37 Momentos: 5 no capítulo 1 e 4 nos demais, com 37 chaves diferentes', () => {
+    expect(data.momentos).toHaveLength(37);
+    for (const c of data.chapters) expect(data.momentos.filter((m) => m.chapter_id === c.id).length, c.id).toBe(c.id === 'ch1' ? 5 : 4);
+    expect(new Set(data.momentos.map((m) => m.key.ref_id)).size).toBe(37);
+  });
+
+  it('capítulos 1 a 3 com os títulos do protótipo', () => {
+    expect(data.momentos.slice(0, 13).map((m) => m.title)).toEqual([
+      'Um café, por favor', 'Me apresentar', 'Não entendi, pode repetir?', 'Quanto custa?', 'Onde fica?',
+      'Chegar ao guichê', 'Dizer o seu endereço', 'Os documentos da família', 'Marcar um horário',
+      'Primeiro dia na creche', 'Avisar que a criança está doente', 'Combinar o horário de buscar', 'Conversar com a educadora',
+    ]);
+  });
+
+  it('as chaves seguem a ordem de utilidade: primeiro leitura e sons, cada capítulo do Como funciona aparece', () => {
+    expect(data.momentos.slice(0, 7).every((m) => m.key.kind === 'leitura' || m.key.kind === 'som')).toBe(true);
+    const chapters = new Set(data.momentos.map((m) => m.key.chapter));
+    for (let n = 1; n <= 13; n++) expect(chapters.has(n), `capítulo ${n} do Como funciona`).toBe(true);
+  });
+});

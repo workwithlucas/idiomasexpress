@@ -324,7 +324,7 @@ const momentos = MOMENTOS.map((mo, i) => {
 });
 for (const c of chapters) {
   const n = momentos.filter((m) => m.chapter_id === c.id).length;
-  if (n > (PER_CHAPTER[c.id] ?? 4)) fail(`capítulo ${c.id}: ${n} momentos (máximo ${PER_CHAPTER[c.id] ?? 4})`);
+  if (n !== (PER_CHAPTER[c.id] ?? 4)) fail(`capítulo ${c.id}: ${n} momentos (esperado ${PER_CHAPTER[c.id] ?? 4})`);
 }
 // Os momentos seguem a ordem dos capítulos.
 momentos.forEach((m, i) => {

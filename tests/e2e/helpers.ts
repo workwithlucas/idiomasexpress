@@ -86,7 +86,8 @@ export async function completeMomento(page: Page, opts: { slot?: string; record?
   await page.locator('[data-testid=step-key] > .opts .opt[data-right="true"]').click();
   for (const card of await page.getByTestId('apply').all()) await card.locator('.opt[data-right="true"]').click();
   await next.click();
-  await page.locator('.chip').filter({ hasText: opts.slot ?? 'café' }).first().click();
+  if (opts.slot) await page.locator('.chip').filter({ hasText: opts.slot }).first().click();
+  else await page.locator('.chip').first().click();
   await next.click();
   await expect(page.getByTestId('step-speak')).toBeVisible();
   if (opts.record) {
